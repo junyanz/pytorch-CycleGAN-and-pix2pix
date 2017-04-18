@@ -4,7 +4,7 @@
 
 # CycleGAN and pix2pix in PyTorch
 
-This is our ongoing PyTorch implementation for both unpaired and paired image-to-image translation. Check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix)  if you would like to reproduce the exact results in the paper. The code was written by [Jun-Yan Zhu](https://github.com/junyanz) and [Taesung Park](https://github.com/taesung89).  
+This is our ongoing PyTorch implementation for both unpaired and paired image-to-image translation. Check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix)  if you would like to reproduce the exact same results in the paper. The code was written by [Jun-Yan Zhu](https://github.com/junyanz) and [Taesung Park](https://github.com/taesung89).  
 
 
 #### CycleGAN: [[Project]](https://junyanz.github.io/CycleGAN/) [[Paper]](https://arxiv.org/pdf/1703.10593.pdf) [[Torch]](https://github.com/junyanz/CycleGAN)
@@ -34,7 +34,7 @@ In CVPR 2017.
 
 ## Prerequisites
 - Linux or OSX.
-- Python 2 and 3.
+- Python 2 or Python 3.
 - CPU or NVIDIA GPU + CUDA CuDNN.
 
 ## Getting Started
@@ -89,7 +89,7 @@ More example scripts can be found at `scripts` directory.
 ### CycleGAN Datasets
 Download the CycleGAN datasets using the following script:
 ```bash
-bash ./datasets/download_CycleGAN_dataset.sh dataset_name
+bash ./datasets/download_cyclegan_dataset.sh dataset_name
 ```
 - `facades`: 400 images from the [CMP Facades dataset](http://cmp.felk.cvut.cz/~tylecr1/facade/).
 - `cityscapes`: 2975 images from the [Cityscapes training set](https://www.cityscapes-dataset.com/).
