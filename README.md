@@ -14,8 +14,8 @@ This is our ongoing PyTorch implementation for both unpaired and paired image-to
 
 <img src="https://phillipi.github.io/pix2pix/images/teaser_v3.png" width="1000px"/>
 
-### [[EdgesCats Demo]](https://affinelayer.com/pixsrv/)  
-<img src='imgs/edges2cats.jpg' width="800px"/>
+### EdgesCats: [[Demo]](https://affinelayer.com/pixsrv/) [[Twitter]](https://twitter.com/search?vertical=default&q=pix2pix&src=typd) [[pix2pix-tensorflow]](https://github.com/affinelayer/pix2pix-tensorflow)
+<img src='imgs/edges2cats.jpg' width="600px"/>
 
 If you use this code for your research, please cite:
 
