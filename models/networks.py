@@ -26,18 +26,19 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm, gpu_ids=[]):
         norm_layer = InstanceNormalization
     else:
         print('normalization layer [%s] is not found' % norm)
-    if use_gpu:
-        assert(torch.cuda.is_available())
-        
+
+    assert(torch.cuda.is_available() == use_gpu)
     if which_model_netG == 'resnet_9blocks':
         netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer, n_blocks=9, gpu_ids=gpu_ids)
     elif which_model_netG == 'resnet_6blocks':
-        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer, n_blocks=6, gpu_ids=gpu_ids)
-    elif which_model_netG == 'unet':
-        netG = UnetGenerator(input_nc, output_nc, ngf, norm_layer, gpu_ids=gpu_ids)
+        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer, 6, gpu_ids=gpu_ids)
+    elif which_model_netG == 'unet_128':
+        netG = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer, gpu_ids=gpu_ids)
+    elif which_model_netG == 'unet_256':
+        netG = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer, gpu_ids=gpu_ids)
     else:
         print('Generator model name [%s] is not recognized' % which_model_netG)
-    if use_gpu:
+    if len(gpu_ids) > 0:
         netG.cuda()
     netG.apply(weights_init)
     return netG
@@ -47,9 +48,7 @@ def define_D(input_nc, ndf, which_model_netD,
              n_layers_D=3, use_sigmoid=False, gpu_ids=[]):
     netD = None
     use_gpu = len(gpu_ids) > 0
-    if use_gpu:
-        assert(torch.cuda.is_available())
-
+    assert(torch.cuda.is_available() == use_gpu)
     if which_model_netD == 'basic':
         netD = define_D(input_nc, ndf, 'n_layers', use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
     elif which_model_netD == 'n_layers':
@@ -143,7 +142,7 @@ class ResnetGenerator(nn.Module):
 
         mult = 2**n_downsampling
         for i in range(n_blocks):
-            model += [Resnet_block(ngf * mult, 'zero', norm_layer=norm_layer)]
+            model += [ResnetBlock(ngf * mult, 'zero', norm_layer=norm_layer)]
 
         for i in range(n_downsampling):
             mult = 2**(n_downsampling - i)
@@ -165,11 +164,10 @@ class ResnetGenerator(nn.Module):
             return self.model(input)
 
 
-
 # Define a resnet block
-class Resnet_block(nn.Module):
+class ResnetBlock(nn.Module):
     def __init__(self, dim, padding_type, norm_layer):
-        super(Resnet_block, self).__init__()
+        super(ResnetBlock, self).__init__()
         self.conv_block = self.build_conv_block(dim, padding_type, norm_layer)
 
     def build_conv_block(self, dim, padding_type, norm_layer):
@@ -193,14 +191,34 @@ class Resnet_block(nn.Module):
         return out
 
 
-# Defines the Unet geneator.
+# Defines the Unet generator.
+# |num_downs|: number of downsamplings in UNet. For example,
+# if |num_downs| == 7, image of size 128x128 will become of size 1x1 
+# at the bottleneck
 class UnetGenerator(nn.Module):
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, gpu_ids=[]):
+    def __init__(self, input_nc, output_nc, num_downs, ngf=64,
+                 norm_layer=nn.BatchNorm2d, gpu_ids=[]):
         super(UnetGenerator, self).__init__()
         self.input_nc = input_nc
         self.output_nc = output_nc
         self.ngf = ngf
         self.gpu_ids = gpu_ids
+
+        # currently support only input_nc == output_nc
+        assert(input_nc == output_nc)
+
+        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, innermost=True)
+
+        for i in range(num_downs - 5):
+            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, unet_block)
+
+        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, unet_block)
+        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, unet_block)
+        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, unet_block)
+        unet_block = UnetSkipConnectionBlock(input_nc, ngf, unet_block,
+                                             outermost=True)
+
+        self.model = unet_block
 
     def forward(self, input):
         if isinstance(input.data, torch.cuda.FloatTensor) and self.gpu_ids:
@@ -208,6 +226,54 @@ class UnetGenerator(nn.Module):
         else:
             return self.model(input)
 
+
+# Defines the submodule with skip connection.
+# X -------------------identity---------------------- X
+#   |-- downsampling -- |submodule| -- upsampling --|
+class UnetSkipConnectionBlock(nn.Module):
+    def __init__(self, outer_nc, inner_nc,
+                 submodule=None, outermost=False, innermost=False):        
+        super(UnetSkipConnectionBlock, self).__init__()
+        self.outer_nc = outer_nc
+        self.inner_nc = inner_nc
+        self.innermost = innermost
+        downconv = nn.Conv2d(outer_nc, inner_nc, kernel_size=4,
+                             stride=2, padding=1)
+        downrelu = nn.LeakyReLU(0.2, True)
+        downnorm = nn.BatchNorm2d(inner_nc)
+        uprelu = nn.ReLU(True)
+        upnorm = nn.BatchNorm2d(outer_nc)
+
+        if outermost:
+            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
+                                        kernel_size=4, stride=2,
+                                        padding=1, output_padding=0)
+            down = [downconv]
+            up = [uprelu, upconv, nn.Tanh()]
+            model = down + [submodule] + up
+        elif innermost:
+            upconv = nn.ConvTranspose2d(inner_nc, outer_nc,
+                                        kernel_size=4, stride=2,
+                                        padding=1, output_padding=0)
+            down = [downrelu, downconv]
+            up = [uprelu, upconv, upnorm]
+            model = down + up
+        else:
+            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
+                                        kernel_size=4, stride=2,
+                                        padding=1, output_padding=0)
+            down = [downrelu, downconv, downnorm]
+            up = [uprelu, upconv, upnorm]
+            model = down + [submodule] + up
+
+        self.model = nn.Sequential(*model)
+
+    def forward(self, x):        
+        #print(self.outer_nc, self.inner_nc, self.innermost)
+        #print(x.size())
+        #print(self.model(x).size())
+        return torch.cat([self.model(x), x], 1)
+        
 
 
 # Defines the PatchGAN discriminator with the specified arguments.

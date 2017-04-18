@@ -27,7 +27,7 @@ class Visualizer():
     def display_current_results(self, visuals, epoch):
         if self.display_id > 0: # show images in the browser
             idx = 0
-            for label, image_numpy in visuals:
+            for label, image_numpy in visuals.items():
                 image_numpy = np.flipud(image_numpy)
                 self.display.image(image_numpy, title=label,
                                    win=self.display_id + idx)
