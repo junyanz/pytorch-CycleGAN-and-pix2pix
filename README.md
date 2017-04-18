@@ -1,10 +1,12 @@
 <img src='imgs/horse2zebra.gif' align="right" width=384>
 
-<br><br><br>
+<br>
 
 # CycleGAN and pix2pix in PyTorch
 
-This is our ongoing PyTorch implementation for both unpaired and paired image-to-image translation. Check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix)  if you would like to reproduce the exact same results in the paper. The code was written by [Jun-Yan Zhu](https://github.com/junyanz) and [Taesung Park](https://github.com/taesung89).  
+This is our ongoing PyTorch implementation for both unpaired and paired image-to-image translation. Check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix)  if you would like to reproduce the exact same results in the paper.
+
+The code was written by [Jun-Yan Zhu](https://github.com/junyanz) and [Taesung Park](https://github.com/taesung89).  
 
 
 #### CycleGAN: [[Project]](https://junyanz.github.io/CycleGAN/) [[Paper]](https://arxiv.org/pdf/1703.10593.pdf) [[Torch]](https://github.com/junyanz/CycleGAN)
@@ -129,10 +131,11 @@ python datasets/combine_A_and_B.py --fold_A /path/to/data/A --fold_B /path/to/da
 This will combine each pair of images (A,B) into a single image file, ready for training.
 
 ## TODO
-- add Unet architecture
-- add one-direction test model
-- fully test instance normalization from [fast-neural-style project](https://github.com/darkstar112358/fast-neural-style)
-- fully test CPU mode and multi-GPU mode
+- add reflection and other padding layers.
+- add one-direction test model.
+- fully test Unet architecture.
+- fully test instance normalization layer from [fast-neural-style project](https://github.com/darkstar112358/fast-neural-style).
+- fully test CPU mode and multi-GPU mode.
 
 ## Related Projects:
 [CycleGAN](https://github.com/junyanz/CycleGAN): Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks  
