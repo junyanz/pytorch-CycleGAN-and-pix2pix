@@ -8,11 +8,11 @@ This is our ongoing PyTorch implementation for both unpaired and paired image-to
 
 
 #### CycleGAN: [[Project]](https://junyanz.github.io/CycleGAN/) [[Paper]](https://arxiv.org/pdf/1703.10593.pdf) [[Torch]](https://github.com/junyanz/CycleGAN)
-<img src="https://junyanz.github.io/CycleGAN/images/teaser_high_res.jpg" width="800"/>
+<img src="https://junyanz.github.io/CycleGAN/images/teaser_high_res.jpg" width="900"/>
 
 #### Pix2pix:  [[Project]](https://phillipi.github.io/pix2pix/) [[Paper]](https://arxiv.org/pdf/1611.07004v1.pdf) [[Torch]](https://github.com/phillipi/pix2pix)
 
-<img src="https://phillipi.github.io/pix2pix/images/teaser_v3.png" width="1000px"/>
+<img src="https://phillipi.github.io/pix2pix/images/teaser_v3.png" width="900px"/>
 
 #### [[EdgesCats Demo]](https://affinelayer.com/pixsrv/)  [[pix2pix-tensorflow]](https://github.com/affinelayer/pix2pix-tensorflow)   
 Written by [Christopher Hesse](https://twitter.com/christophrhesse)  
