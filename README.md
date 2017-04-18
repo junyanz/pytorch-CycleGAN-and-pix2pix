@@ -1,20 +1,24 @@
 <img src='imgs/horse2zebra.gif' align="right" width=384>
 
-<br><br><br>
+<br>
 
 # CycleGAN and pix2pix in PyTorch
 
-This is our ongoing PyTorch implementation for both unpaired and paired image-to-image translation. Check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix)  if you would like to reproduce the exact results in the paper. The code was written by [Jun-Yan Zhu](https://github.com/junyanz) and [Taesung Park](https://github.com/taesung89).  
+This is our ongoing PyTorch implementation for both unpaired and paired image-to-image translation. Check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix)  if you would like to reproduce the exact same results in the paper.
+
+The code was written by [Jun-Yan Zhu](https://github.com/junyanz) and [Taesung Park](https://github.com/taesung89).  
 
 
-### CycleGAN: [[Project]](https://junyanz.github.io/CycleGAN/) [[Paper]](https://arxiv.org/pdf/1703.10593.pdf) [[Torch]](https://github.com/junyanz/CycleGAN)
-<img src="https://junyanz.github.io/CycleGAN/images/teaser_high_res.jpg" width="800"/>
+#### CycleGAN: [[Project]](https://junyanz.github.io/CycleGAN/) [[Paper]](https://arxiv.org/pdf/1703.10593.pdf) [[Torch]](https://github.com/junyanz/CycleGAN)
+<img src="https://junyanz.github.io/CycleGAN/images/teaser_high_res.jpg" width="900"/>
 
-### Pix2pix:  [[Project]](https://phillipi.github.io/pix2pix/) [[Paper]](https://arxiv.org/pdf/1611.07004v1.pdf) [[Torch]](https://github.com/phillipi/pix2pix)
+#### Pix2pix:  [[Project]](https://phillipi.github.io/pix2pix/) [[Paper]](https://arxiv.org/pdf/1611.07004v1.pdf) [[Torch]](https://github.com/phillipi/pix2pix)
 
-<img src="https://phillipi.github.io/pix2pix/images/teaser_v3.png" width="1000px"/>
+<img src="https://phillipi.github.io/pix2pix/images/teaser_v3.png" width="900px"/>
 
-### EdgesCats: [[Demo]](https://affinelayer.com/pixsrv/) [[Twitter]](https://twitter.com/search?vertical=default&q=pix2pix&src=typd) [[pix2pix-tensorflow]](https://github.com/affinelayer/pix2pix-tensorflow)
+#### [[EdgesCats Demo]](https://affinelayer.com/pixsrv/)  [[pix2pix-tensorflow]](https://github.com/affinelayer/pix2pix-tensorflow)   
+Written by [Christopher Hesse](https://twitter.com/christophrhesse)  
+
 <img src='imgs/edges2cats.jpg' width="600px"/>
 
 If you use this code for your research, please cite:
@@ -32,7 +36,7 @@ In CVPR 2017.
 
 ## Prerequisites
 - Linux or OSX.
-- Python 2 and 3.
+- Python 2 or Python 3.
 - CPU or NVIDIA GPU + CUDA CuDNN.
 
 ## Getting Started
@@ -87,7 +91,7 @@ More example scripts can be found at `scripts` directory.
 ### CycleGAN Datasets
 Download the CycleGAN datasets using the following script:
 ```bash
-bash ./datasets/download_CycleGAN_dataset.sh dataset_name
+bash ./datasets/download_cyclegan_dataset.sh dataset_name
 ```
 - `facades`: 400 images from the [CMP Facades dataset](http://cmp.felk.cvut.cz/~tylecr1/facade/).
 - `cityscapes`: 2975 images from the [Cityscapes training set](https://www.cityscapes-dataset.com/).
@@ -127,10 +131,11 @@ python datasets/combine_A_and_B.py --fold_A /path/to/data/A --fold_B /path/to/da
 This will combine each pair of images (A,B) into a single image file, ready for training.
 
 ## TODO
-- add Unet architecture
-- add one-direction test model
-- fully test instance normalization from [fast-neural-style project](https://github.com/darkstar112358/fast-neural-style)
-- fully test CPU mode and multi-GPU mode
+- add reflection and other padding layers.
+- add one-direction test model.
+- fully test Unet architecture.
+- fully test instance normalization layer from [fast-neural-style project](https://github.com/darkstar112358/fast-neural-style).
+- fully test CPU mode and multi-GPU mode.
 
 ## Related Projects:
 [CycleGAN](https://github.com/junyanz/CycleGAN): Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks  
