@@ -13,6 +13,8 @@ class PairedData(object):
         self.stop_B = False
 
     def __iter__(self):
+        self.stop_A = False
+        self.stop_B = False
         self.data_loader_A_iter = iter(self.data_loader_A)
         self.data_loader_B_iter = iter(self.data_loader_B)
         return self
@@ -37,6 +39,8 @@ class PairedData(object):
                 B, B_paths = next(self.data_loader_B_iter)
 
         if self.stop_A and self.stop_B:
+            self.stop_A = False
+            self.stop_B = False
             raise StopIteration()
         else:
             return {'A': A, 'A_paths': A_paths,
