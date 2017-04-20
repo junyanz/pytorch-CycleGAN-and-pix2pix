@@ -55,7 +55,7 @@ class Visualizer():
     # errors: dictionary of error labels and values
     def plot_current_errors(self, epoch, counter_ratio, opt, errors):
         if not hasattr(self, 'plot_data'):
-            self.plot_data = {'X':[],'Y':[], 'legend':errors.keys()}
+            self.plot_data = {'X':[],'Y':[], 'legend':list(errors.keys())}
         self.plot_data['X'].append(epoch + counter_ratio)
         self.plot_data['Y'].append([errors[k] for k in self.plot_data['legend']])
         self.vis.line(
