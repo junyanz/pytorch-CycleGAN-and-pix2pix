@@ -3,8 +3,6 @@ import os
 import ntpath
 import time
 from . import util
-from . import html
-from pdb import set_trace as st
 
 class Visualizer():
     def __init__(self, opt):
@@ -51,7 +49,7 @@ class Visualizer():
                     links.append(img_path)
                 webpage.add_images(ims, txts, links, width=self.win_size)
             webpage.save()
-            # st()
+    
     # errors: dictionary of error labels and values
     def plot_current_errors(self, epoch, counter_ratio, opt, errors):
         if not hasattr(self, 'plot_data'):
