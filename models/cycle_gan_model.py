@@ -202,11 +202,10 @@ class CycleGANModel(BaseModel):
                                 ('real_B', real_B), ('fake_A', fake_A), ('rec_B', rec_B)])
 
     def save(self, label):
-        use_gpu = self.gpu_ids is not None
-        self.save_network(self.netG_A, 'G_A', label, use_gpu)
-        self.save_network(self.netD_A, 'D_A', label, use_gpu)
-        self.save_network(self.netG_B, 'G_B', label, use_gpu)
-        self.save_network(self.netD_B, 'D_B', label, use_gpu)
+        self.save_network(self.netG_A, 'G_A', label, self.gpu_ids)
+        self.save_network(self.netD_A, 'D_A', label, self.gpu_ids)
+        self.save_network(self.netG_B, 'G_B', label, self.gpu_ids)
+        self.save_network(self.netD_B, 'D_B', label, self.gpu_ids)
 
     def update_learning_rate(self):
         lrd = self.opt.lr / self.opt.niter_decay
