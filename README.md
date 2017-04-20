@@ -44,7 +44,7 @@ In CVPR 2017.
 ## Getting Started
 ### Installation
 - Install PyTorch and dependencies from http://pytorch.org/
-- Install python libraries [dominate](https://github.com/Knio/dominate).
+- Install python libraries [dominate](https://github.com/Knio/dominate) and [visdom](https://github.com/facebookresearch/visdom) (optional).
 - Clone this repo:
 ```bash
 git clone https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix
@@ -74,12 +74,12 @@ bash ./datasets/download_pix2pix_dataset.sh facades
 ```
 - Train a model:
 ```bash
-python train.py --dataroot ./datasets/facades --name facades_pix2pix --gpu_ids 0 --model pix2pix --align_data --which_direction BtoA
+python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_model_netG unet_256 --align_data --which_direction BtoA
 ```
 To view results as the model trains, check out the html file `./checkpoints/facades_pix2pix/web/index.html`
 - Test the model:
 ```bash
-python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --phase val --align_data --which_direction BtoA
+python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_model_netG unet_256 --align_data --which_direction BtoA
 ```
 The test results will be saved to a html file here: `./results/facades_pix2pix/latest_val/index.html`.
 
@@ -87,8 +87,9 @@ More example scripts can be found at `scripts` directory.
 
 ## Training/test Details
 - See `options/train_options.py` and `options/base_options.py` for training flags; see `optoins/test_options.py` and `options/base_options.py` for test flags.
-- CPU/GPU: Set `--gpu_ids -1` to use CPU mode; set `--gpu_ids 0,1,2` for multi-GPU mode.
+- CPU/GPU (default `--gpu_ids 0`): Set `--gpu_ids -1` to use CPU mode; set `--gpu_ids 0,1,2` for multi-GPU mode.
 - During training, you can visualize the result of current training. If you set `--display_id 0`, we will periodically save the training results to `[opt.checkpoints_dir]/[opt.name]/web/`. If you set `--display_id` > 0, the results will be shown on a local graphics web server launched by [visdom](https://github.com/facebookresearch/visdom). To do this, you should visdom installed. You need to invoke `python -m visdom.server` to start the server. The default server URL is `http://localhost:8097`. `display_id` corresponds to the window ID that is displayed on the `visdom` server. 
+
 
 ### CycleGAN Datasets
 Download the CycleGAN datasets using the following script:

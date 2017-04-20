@@ -17,9 +17,7 @@ class PairedData(object):
         return self
 
     def __next__(self):
-        # st()
         AB, AB_paths = next(self.data_loader_iter)
-        # st()
         w_total = AB.size(3)
         w = int(w_total / 2)
         h = AB.size(2)
@@ -55,7 +53,7 @@ class AlignedDataLoader(BaseDataLoader):
             batch_size=self.opt.batchSize,
             shuffle=not self.opt.serial_batches,
             num_workers=int(self.opt.nThreads))
-            
+
         self.dataset = dataset
         self.paired_data = PairedData(data_loader, opt.fineSize)
 
