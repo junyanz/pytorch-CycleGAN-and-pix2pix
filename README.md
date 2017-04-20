@@ -88,7 +88,7 @@ More example scripts can be found at `scripts` directory.
 ## Training/test Details
 - See `options/train_options.py` and `options/base_options.py` for training flags; see `optoins/test_options.py` and `options/base_options.py` for test flags.
 - CPU/GPU: Set `--gpu_ids -1` to use CPU mode; set `--gpu_ids 0,1,2` for multi-GPU mode.
-- During training, you can visualize the result of current training. If you set `--display_id 0`, we will periodically save the training results to `[opt.checkpoints_dir]/[opt.name]/web/`. If you set `--display_id` > 0, the results will be shown on a local graphics web server launched by [visdom](https://github.com/facebookresearch/visdom). To do this, you should visdom installed. You need to invoke `python -m visdom.server` to start the server.
+- During training, you can visualize the result of current training. If you set `--display_id 0`, we will periodically save the training results to `[opt.checkpoints_dir]/[opt.name]/web/`. If you set `--display_id` > 0, the results will be shown on a local graphics web server launched by [visdom](https://github.com/facebookresearch/visdom). To do this, you should visdom installed. You need to invoke `python -m visdom.server` to start the server. The default server URL is `http://localhost:8097`
 
 ### CycleGAN Datasets
 Download the CycleGAN datasets using the following script:
