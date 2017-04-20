@@ -8,7 +8,7 @@ import util.util as util
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
-
+from pdb import set_trace as st
 
 class Pix2PixModel(BaseModel):
     def name(self):
@@ -108,6 +108,7 @@ class Pix2PixModel(BaseModel):
         self.loss_G.backward()
 
     def optimize_parameters(self):
+        # st()
         self.forward()
 
         self.optimizer_D.zero_grad()
@@ -132,9 +133,8 @@ class Pix2PixModel(BaseModel):
         return OrderedDict([('real_A', real_A), ('fake_B', fake_B), ('real_B', real_B)])
 
     def save(self, label):
-        use_gpu = self.gpu_ids is not None
-        self.save_network(self.netG, 'G', label, use_gpu)
-        self.save_network(self.netD, 'D', label, use_gpu)
+        self.save_network(self.netG, 'G', label, self.gpu_ids)
+        self.save_network(self.netD, 'D', label, self.gpu_ids)
 
     def update_learning_rate(self):
         lrd = self.opt.lr / self.opt.niter_decay

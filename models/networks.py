@@ -32,7 +32,7 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm, gpu_ids=[]):
     if which_model_netG == 'resnet_9blocks':
         netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer, n_blocks=9, gpu_ids=gpu_ids)
     elif which_model_netG == 'resnet_6blocks':
-        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer, 6, gpu_ids=gpu_ids)
+        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer, n_blocks=6, gpu_ids=gpu_ids)
     elif which_model_netG == 'unet_128':
         netG = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer, gpu_ids=gpu_ids)
     elif which_model_netG == 'unet_256':
@@ -40,7 +40,7 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm, gpu_ids=[]):
     else:
         print('Generator model name [%s] is not recognized' % which_model_netG)
     if len(gpu_ids) > 0:
-        netG.cuda()
+        netG.cuda(device_id=gpu_ids[0])
     netG.apply(weights_init)
     return netG
 
@@ -59,7 +59,7 @@ def define_D(input_nc, ndf, which_model_netD,
         print('Discriminator model name [%s] is not recognized' %
               which_model_netD)
     if use_gpu:
-        netD.cuda()
+        netD.cuda(device_id=gpu_ids[0])
     netD.apply(weights_init)
     return netD
 
@@ -213,8 +213,7 @@ class UnetGenerator(nn.Module):
         unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, unet_block)
         unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, unet_block)
         unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, unet_block)
-        unet_block = UnetSkipConnectionBlock(input_nc, ngf, unet_block,
-                                             outermost=True)
+        unet_block = UnetSkipConnectionBlock(output_nc, ngf, unet_block, outermost=True)
 
         self.model = unet_block
 
