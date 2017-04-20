@@ -44,7 +44,11 @@ In CVPR 2017.
 ## Getting Started
 ### Installation
 - Install PyTorch and dependencies from http://pytorch.org/
-- Install python libraries [dominate](https://github.com/Knio/dominate) and [visdom](https://github.com/facebookresearch/visdom) (optional).
+- Install python libraries [visdom](https://github.com/facebookresearch/visdom) and [dominate](https://github.com/Knio/dominate).
+```bash
+pip install visdom
+pip install dominate
+```
 - Clone this repo:
 ```bash
 git clone https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix

@@ -32,7 +32,7 @@ class BaseOptions():
         self.parser.add_argument('--norm', type=str, default='batch', help='batch normalization or instance normalization')
         self.parser.add_argument('--serial_batches', action='store_true', help='if true, takes images in order to make batches, otherwise takes them randomly')
         self.parser.add_argument('--display_winsize', type=int, default=256,  help='display window size')
-        self.parser.add_argument('--display_id', type=int, default=0, help='window id of the web display')
+        self.parser.add_argument('--display_id', type=int, default=1, help='window id of the web display')
         self.parser.add_argument('--identity', type=float, default=0.0, help='use identity mapping. Setting identity other than 1 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set optidentity = 0.1')
 
         self.initialized = True
