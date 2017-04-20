@@ -3,17 +3,19 @@ import os
 import ntpath
 import time
 from . import util
+from . import html
 
 class Visualizer():
     def __init__(self, opt):
         # self.opt = opt
         self.display_id = opt.display_id
+        self.use_html = not opt.no_html
         self.name = opt.name
         if self.display_id > 0:
             import visdom
             self.vis = visdom.Visdom()
-        else:
-            from . import html
+
+        if self.use_html:
             self.web_dir = os.path.join(opt.checkpoints_dir, opt.name, 'web')
             self.img_dir = os.path.join(self.web_dir, 'images')
             self.win_size = opt.display_winsize
@@ -30,7 +32,8 @@ class Visualizer():
                 self.vis.image(image_numpy.transpose([2,0,1]), opts=dict(title=label),
                                    win=self.display_id + idx)
                 idx += 1
-        else:  # save images to a web directory
+
+        if self.use_html: # save images to a html file
             for label, image_numpy in visuals.items():
                 img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))
                 util.save_image(image_numpy, img_path)
@@ -49,7 +52,7 @@ class Visualizer():
                     links.append(img_path)
                 webpage.add_images(ims, txts, links, width=self.win_size)
             webpage.save()
-    
+
     # errors: dictionary of error labels and values
     def plot_current_errors(self, epoch, counter_ratio, opt, errors):
         if not hasattr(self, 'plot_data'):

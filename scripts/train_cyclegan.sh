@@ -1,1 +1,1 @@
-python train.py --dataroot=./datasets/maps --name maps_cyclegan --save_epoch_freq 5
+python train.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
