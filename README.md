@@ -60,13 +60,15 @@ cd pytorch-CycleGAN-and-pix2pix
 ```bash
 bash ./datasets/download_cyclegan_dataset.sh maps
 ```
-- Train a model (`bash ./scripts/train_cyclegan.sh`):
+- Train a model:
 ```bash
+# ./scripts/train_cyclegan.sh
 python train.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
 ```
 - To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097. To see more intermediate results, check out `./checkpoints/maps_cyclegan/web/index.html`
-- Test the model (`bash ./scripts/test_cyclegan.sh`):
+- Test the model:
 ```bash
+#!./scripts/test_cyclegan.sh
 python test.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan --phase test
 ```
 The test results will be saved to a html file here: `./results/maps_cyclegan/latest_test/index.html`.
@@ -76,13 +78,15 @@ The test results will be saved to a html file here: `./results/maps_cyclegan/lat
 ```bash
 bash ./datasets/download_pix2pix_dataset.sh facades
 ```
-- Train a model (`bash ./scripts/train_pix2pix.sh`):
+- Train a model:
 ```bash
+#!./scripts/train_pix2pix.sh
 python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_model_netG unet_256 --which_direction BtoA --lambda_A 100 --align_data --no_lsgan
 ```
 - To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097. To see more intermediate results, check out  `./checkpoints/facades_pix2pix/web/index.html`
 - Test the model (`bash ./scripts/test_pix2pix.sh`):
 ```bash
+#!./scripts/test_pix2pix.sh
 python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_model_netG unet_256 --which_direction BtoA --align_data
 ```
 The test results will be saved to a html file here: `./results/facades_pix2pix/latest_val/index.html`.
