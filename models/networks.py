@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from pdb import set_trace as st
+import numpy as np
 
 ###############################################################################
 # Functions
@@ -279,8 +280,9 @@ class NLayerDiscriminator(nn.Module):
         self.gpu_ids = gpu_ids
 
         kw = 4
+        padw = int(np.ceil((kw-1)/2))
         sequence = [
-            nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=2),
+            nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw),
             nn.LeakyReLU(0.2, True)
         ]
 
@@ -291,7 +293,7 @@ class NLayerDiscriminator(nn.Module):
             nf_mult = min(2**n, 8)
             sequence += [
                 nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult,
-                                kernel_size=kw, stride=2, padding=2),
+                                kernel_size=kw, stride=2, padding=padw),
                 # TODO: use InstanceNorm
                 nn.BatchNorm2d(ndf * nf_mult),
                 nn.LeakyReLU(0.2, True)
@@ -301,13 +303,13 @@ class NLayerDiscriminator(nn.Module):
         nf_mult = min(2**n_layers, 8)
         sequence += [
             nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult,
-                            kernel_size=1, stride=2, padding=2),
+                            kernel_size=kw, stride=1, padding=padw),
             # TODO: useInstanceNorm
             nn.BatchNorm2d(ndf * nf_mult),
             nn.LeakyReLU(0.2, True)
         ]
 
-        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=1)]
+        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]
 
         if use_sigmoid:
             sequence += [nn.Sigmoid()]
