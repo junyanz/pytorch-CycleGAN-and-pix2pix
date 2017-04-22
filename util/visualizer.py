@@ -9,7 +9,8 @@ class Visualizer():
     def __init__(self, opt):
         # self.opt = opt
         self.display_id = opt.display_id
-        self.use_html = not opt.no_html
+        self.use_html = opt.isTrain and not opt.no_html
+        self.win_size = opt.display_winsize
         self.name = opt.name
         if self.display_id > 0:
             import visdom
@@ -18,7 +19,6 @@ class Visualizer():
         if self.use_html:
             self.web_dir = os.path.join(opt.checkpoints_dir, opt.name, 'web')
             self.img_dir = os.path.join(self.web_dir, 'images')
-            self.win_size = opt.display_winsize
             print('create web directory %s...' % self.web_dir)
             util.mkdirs([self.web_dir, self.img_dir])
 
