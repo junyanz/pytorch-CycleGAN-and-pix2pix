@@ -4,6 +4,7 @@ import torchvision.transforms as transforms
 from data.base_data_loader import BaseDataLoader
 from data.image_folder import ImageFolder
 from pdb import set_trace as st
+# pip install future --upgrade
 from builtins import object
 
 class PairedData(object):

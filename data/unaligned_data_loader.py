@@ -2,6 +2,7 @@ import torch.utils.data
 import torchvision.transforms as transforms
 from data.base_data_loader import BaseDataLoader
 from data.image_folder import ImageFolder
+# pip install future --upgrade
 from builtins import object
 from pdb import set_trace as st
 
