@@ -1,7 +1,7 @@
 import argparse
 import os
 from util import util
-from pdb import set_trace as st
+
 class BaseOptions():
     def __init__(self):
         self.parser = argparse.ArgumentParser()

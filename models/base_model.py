@@ -1,6 +1,5 @@
 import os
 import torch
-from pdb import set_trace as st
 
 class BaseModel():
     def name(self):

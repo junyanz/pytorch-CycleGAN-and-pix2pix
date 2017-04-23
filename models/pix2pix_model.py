@@ -2,13 +2,11 @@ import numpy as np
 import torch
 import os
 from collections import OrderedDict
-from pdb import set_trace as st
 from torch.autograd import Variable
 import util.util as util
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
-from pdb import set_trace as st
 
 class Pix2PixModel(BaseModel):
     def name(self):
@@ -55,7 +53,7 @@ class Pix2PixModel(BaseModel):
             print('-----------------------------------------------')
 
     def set_input(self, input):
-        AtoB = self.opt.which_direction is 'AtoB'
+        AtoB = self.opt.which_direction == 'AtoB'
         input_A = input['A' if AtoB else 'B']
         input_B = input['B' if AtoB else 'A']
         self.input_A.resize_(input_A.size()).copy_(input_A)
@@ -108,7 +106,6 @@ class Pix2PixModel(BaseModel):
         self.loss_G.backward()
 
     def optimize_parameters(self):
-        # st()
         self.forward()
 
         self.optimizer_D.zero_grad()

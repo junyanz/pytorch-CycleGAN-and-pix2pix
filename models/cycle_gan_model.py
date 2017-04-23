@@ -2,7 +2,6 @@ import numpy as np
 import torch
 import os
 from collections import OrderedDict
-from pdb import set_trace as st
 from torch.autograd import Variable
 import itertools
 import util.util as util
@@ -72,7 +71,7 @@ class CycleGANModel(BaseModel):
             print('-----------------------------------------------')
 
     def set_input(self, input):
-        AtoB = self.opt.which_direction is 'AtoB'
+        AtoB = self.opt.which_direction == 'AtoB'
         input_A = input['A' if AtoB else 'B']
         input_B = input['B' if AtoB else 'A']
         self.input_A.resize_(input_A.size()).copy_(input_A)
