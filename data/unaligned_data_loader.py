@@ -52,7 +52,7 @@ class UnalignedDataLoader(BaseDataLoader):
         BaseDataLoader.initialize(self, opt)
         transform = transforms.Compose([
                                        transforms.Scale(opt.loadSize),
-                                       transforms.CenterCrop(opt.fineSize),
+                                       transforms.RandomCrop(opt.fineSize),
                                        transforms.ToTensor(),
                                        transforms.Normalize((0.5, 0.5, 0.5),
                                                             (0.5, 0.5, 0.5))])

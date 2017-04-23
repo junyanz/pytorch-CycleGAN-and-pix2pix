@@ -25,7 +25,6 @@ class PairedData(object):
 
         w_offset = random.randint(0, max(0, w - self.fineSize - 1))
         h_offset = random.randint(0, max(0, h - self.fineSize - 1))
-
         A = AB[:, :, h_offset:h_offset + self.fineSize,
                w_offset:w_offset + self.fineSize]
         B = AB[:, :, h_offset:h_offset + self.fineSize,
@@ -40,8 +39,7 @@ class AlignedDataLoader(BaseDataLoader):
         self.fineSize = opt.fineSize
         transform = transforms.Compose([
             # TODO: Scale
-            #transforms.Scale((opt.loadSize * 2, opt.loadSize)),
-            #transforms.CenterCrop(opt.fineSize),
+            transforms.Scale(opt.loadSize),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5),
                                  (0.5, 0.5, 0.5))])
