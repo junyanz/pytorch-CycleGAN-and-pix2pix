@@ -22,9 +22,9 @@ class OneDirectionTestModel(BaseModel):
                                         opt.norm, opt.use_dropout,
                                         self.gpu_ids)
         which_epoch = opt.which_epoch
-        AtoB = self.opt.which_direction == 'AtoB'
-        which_network = 'G_A' if AtoB else 'G_B'
-        self.load_network(self.netG_A, which_network, which_epoch)
+        #AtoB = self.opt.which_direction == 'AtoB'
+        #which_network = 'G_A' if AtoB else 'G_B'
+        self.load_network(self.netG_A, 'G', which_epoch)
 
         print('---------- Networks initialized -------------')
         networks.print_network(self.netG_A)
