@@ -35,6 +35,8 @@ class BaseOptions():
         self.parser.add_argument('--display_id', type=int, default=1, help='window id of the web display')
         self.parser.add_argument('--identity', type=float, default=0.0, help='use identity mapping. Setting identity other than 1 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set optidentity = 0.1')
         self.parser.add_argument('--use_dropout', action='store_true', help='use dropout for the generator')
+        self.parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
+
         self.initialized = True
 
     def parse(self):
