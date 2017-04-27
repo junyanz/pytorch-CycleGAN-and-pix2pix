@@ -52,9 +52,7 @@ class BaseOptions():
             if id >= 0:
                 self.opt.gpu_ids.append(id)
 
-        args = dict((name, getattr(self.opt, name)) for name in dir(self.opt)
-                    if not name.startswith('_'))
-
+        args = vars(self.opt)
 
         print('------------ Options -------------')
         for k, v in sorted(args.items()):
