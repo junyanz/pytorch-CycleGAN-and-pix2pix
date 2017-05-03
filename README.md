@@ -143,11 +143,7 @@ This will combine each pair of images (A,B) into a single image file, ready for 
 
 ## TODO
 - add reflection and other padding layers.
-- add one-direction test mode for CycleGAN.
 - add more preprocessing options.
-- fully test Unet architecture.
-- fully test instance normalization layer from [fast-neural-style project](https://github.com/darkstar112358/fast-neural-style).
-- fully test CPU mode and multi-GPU mode.
 
 ## Related Projects:
 [CycleGAN](https://github.com/junyanz/CycleGAN): Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks  
