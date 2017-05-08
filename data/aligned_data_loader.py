@@ -43,12 +43,16 @@ class AlignedDataLoader(BaseDataLoader):
     def initialize(self, opt):
         BaseDataLoader.initialize(self, opt)
         self.fineSize = opt.fineSize
-        transform = transforms.Compose([
+
+        transformations = [
             # TODO: Scale
             transforms.Scale(opt.loadSize),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5),
-                                 (0.5, 0.5, 0.5))])
+                                 (0.5, 0.5, 0.5))]
+        if opt.isTrain and not opt.no_flip:
+            transformations.insert(1, transforms.RandomHorizontalFlip())
+        transform = transforms.Compose(transformations)
 
         # Dataset A
         dataset = ImageFolder(root=opt.dataroot + '/' + opt.phase,

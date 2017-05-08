@@ -20,7 +20,6 @@ class BaseOptions():
         self.parser.add_argument('--which_model_netG', type=str, default='resnet_9blocks', help='selects model to use for netG')
         self.parser.add_argument('--n_layers_D', type=int, default=3, help='only used if which_model_netD==n_layers')
         self.parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2')
-        self.parser.add_argument('--flip'  , action='store_true', help='if flip the images for data argumentation')
         self.parser.add_argument('--name', type=str, default='experiment_name', help='name of the experiment. It decides where to store samples and models')
         self.parser.add_argument('--align_data', action='store_true',
                                 help='if True, the datasets are loaded from "test" and "train" directories and the data pairs are aligned')

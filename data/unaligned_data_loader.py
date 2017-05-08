@@ -53,12 +53,14 @@ class PairedData(object):
 class UnalignedDataLoader(BaseDataLoader):
     def initialize(self, opt):
         BaseDataLoader.initialize(self, opt)
-        transform = transforms.Compose([
-                                       transforms.Scale(opt.loadSize),
-                                       transforms.RandomCrop(opt.fineSize),
-                                       transforms.ToTensor(),
-                                       transforms.Normalize((0.5, 0.5, 0.5),
-                                                            (0.5, 0.5, 0.5))])
+        transformations = [transforms.Scale(opt.loadSize),
+                           transforms.RandomCrop(opt.fineSize),
+                           transforms.ToTensor(),
+                           transforms.Normalize((0.5, 0.5, 0.5),
+                                                (0.5, 0.5, 0.5))]
+        if opt.isTrain and not opt.no_flip:
+            transformations.insert(1, transforms.RandomHorizontalFlip())
+        transform = transforms.Compose(transformations)
 
         # Dataset A
         dataset_A = ImageFolder(root=opt.dataroot + '/' + opt.phase + 'A',
