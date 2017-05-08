@@ -1,3 +1,4 @@
+import random
 import torch.utils.data
 import torchvision.transforms as transforms
 from data.base_data_loader import BaseDataLoader
@@ -7,12 +8,13 @@ from builtins import object
 from pdb import set_trace as st
 
 class PairedData(object):
-    def __init__(self, data_loader_A, data_loader_B, max_dataset_size):
+    def __init__(self, data_loader_A, data_loader_B, max_dataset_size, flip):
         self.data_loader_A = data_loader_A
         self.data_loader_B = data_loader_B
         self.stop_A = False
         self.stop_B = False
         self.max_dataset_size = max_dataset_size
+        self.flip = flip
 
     def __iter__(self):
         self.stop_A = False
@@ -47,6 +49,11 @@ class PairedData(object):
             raise StopIteration()
         else:
             self.iter += 1
+            if self.flip and random.random() < 0.5:
+                idx = [i for i in range(A.size(3) - 1, -1, -1)]
+                idx = torch.LongTensor(idx)
+                A = A.index_select(3, idx)
+                B = B.index_select(3, idx)
             return {'A': A, 'A_paths': A_paths,
                     'B': B, 'B_paths': B_paths}
 
@@ -58,8 +65,6 @@ class UnalignedDataLoader(BaseDataLoader):
                            transforms.ToTensor(),
                            transforms.Normalize((0.5, 0.5, 0.5),
                                                 (0.5, 0.5, 0.5))]
-        if opt.isTrain and not opt.no_flip:
-            transformations.insert(1, transforms.RandomHorizontalFlip())
         transform = transforms.Compose(transformations)
 
         # Dataset A
@@ -81,7 +86,9 @@ class UnalignedDataLoader(BaseDataLoader):
             num_workers=int(self.opt.nThreads))
         self.dataset_A = dataset_A
         self.dataset_B = dataset_B
-        self.paired_data = PairedData(data_loader_A, data_loader_B, self.opt.max_dataset_size)
+        flip = opt.isTrain and not opt.no_flip
+        self.paired_data = PairedData(data_loader_A, data_loader_B, 
+                                      self.opt.max_dataset_size, flip)
 
     def name(self):
         return 'UnalignedDataLoader'

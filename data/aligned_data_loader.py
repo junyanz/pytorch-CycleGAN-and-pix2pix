@@ -1,4 +1,5 @@
 import random
+import numpy as np
 import torch.utils.data
 import torchvision.transforms as transforms
 from data.base_data_loader import BaseDataLoader
@@ -8,10 +9,11 @@ from pdb import set_trace as st
 from builtins import object
 
 class PairedData(object):
-    def __init__(self, data_loader, fineSize, max_dataset_size):
+    def __init__(self, data_loader, fineSize, max_dataset_size, flip):
         self.data_loader = data_loader
         self.fineSize = fineSize
         self.max_dataset_size = max_dataset_size
+        self.flip = flip
         # st()
 
     def __iter__(self):
@@ -36,6 +38,14 @@ class PairedData(object):
         B = AB[:, :, h_offset:h_offset + self.fineSize,
                w + w_offset:w + w_offset + self.fineSize]
 
+        if self.flip and random.random() < 0.5:
+            idx = [i for i in range(A.size(3) - 1, -1, -1)]
+            idx = torch.LongTensor(idx)
+            A = A.index_select(3, idx)
+            B = B.index_select(3, idx)
+
+            
+
         return {'A': A, 'A_paths': AB_paths, 'B': B, 'B_paths': AB_paths}
 
 
@@ -50,8 +60,6 @@ class AlignedDataLoader(BaseDataLoader):
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5),
                                  (0.5, 0.5, 0.5))]
-        if opt.isTrain and not opt.no_flip:
-            transformations.insert(1, transforms.RandomHorizontalFlip())
         transform = transforms.Compose(transformations)
 
         # Dataset A
@@ -64,7 +72,10 @@ class AlignedDataLoader(BaseDataLoader):
             num_workers=int(self.opt.nThreads))
 
         self.dataset = dataset
-        self.paired_data = PairedData(data_loader, opt.fineSize, opt.max_dataset_size)
+
+        flip = opt.isTrain and not opt.no_flip
+        self.paired_data = PairedData(data_loader, opt.fineSize, 
+                                      opt.max_dataset_size, flip)
 
     def name(self):
         return 'AlignedDataLoader'
