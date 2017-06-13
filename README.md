@@ -99,6 +99,13 @@ The test results will be saved to a html file here: `./results/facades_pix2pix/l
 
 More example scripts can be found at `scripts` directory.
 
+### Apply a pre-trained model
+If you would like to apply a pre-trained model to a collection of input photos (without image pairs), please use `--dataset_mode single` and `--model test` options. Here is a script to apply a pix2pix model to facade label maps (stored in the directory `facades/testB`).
+``` bash
+#!./scripts/test_single.sh
+python test.py --dataroot ./datasets/facades/testB/ --name facades_pix2pix --model test --which_model_netG unet_256 --which_direction BtoA --dataset_mode single --use_dropout
+```
+
 ## Training/test Details
 - See `options/train_options.py` and `options/base_options.py` for training flags; see `options/test_options.py` and `options/base_options.py` for test flags.
 - CPU/GPU (default `--gpu_ids 0`): Set `--gpu_ids -1` to use CPU mode; set `--gpu_ids 0,1,2` for multi-GPU mode. You need a large batch size (e.g. `--batchSize 32`) to benefit from multiple gpus.  
