@@ -5,9 +5,9 @@ from .base_model import BaseModel
 from . import networks
 
 
-class OneDirectionTestModel(BaseModel):
+class TestModel(BaseModel):
     def name(self):
-        return 'OneDirectionTestModel'
+        return 'TestModel'
 
     def initialize(self, opt):
         BaseModel.initialize(self, opt)
@@ -48,4 +48,3 @@ class OneDirectionTestModel(BaseModel):
         real_A = util.tensor2im(self.real_A.data)
         fake_B = util.tensor2im(self.fake_B.data)
         return OrderedDict([('real_A', real_A), ('fake_B', fake_B)])
-

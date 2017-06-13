@@ -2,6 +2,7 @@ import argparse
 import os
 from util import util
 
+
 class BaseOptions():
     def __init__(self):
         self.parser = argparse.ArgumentParser()
@@ -21,10 +22,9 @@ class BaseOptions():
         self.parser.add_argument('--n_layers_D', type=int, default=3, help='only used if which_model_netD==n_layers')
         self.parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2')
         self.parser.add_argument('--name', type=str, default='experiment_name', help='name of the experiment. It decides where to store samples and models')
-        self.parser.add_argument('--align_data', action='store_true',
-                                help='if True, the datasets are loaded from "test" and "train" directories and the data pairs are aligned')
+        self.parser.add_argument('--dataset_mode', type=str, default='unaligned', help='chooses how datasets are loaded. [unaligned | aligned | single]')
         self.parser.add_argument('--model', type=str, default='cycle_gan',
-                                 help='chooses which model to use. cycle_gan, one_direction_test, pix2pix, ...')
+                                 help='chooses which model to use. cycle_gan, pix2pix, test')
         self.parser.add_argument('--which_direction', type=str, default='AtoB', help='AtoB or BtoA')
         self.parser.add_argument('--nThreads', default=2, type=int, help='# threads for loading data')
         self.parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
@@ -35,6 +35,8 @@ class BaseOptions():
         self.parser.add_argument('--identity', type=float, default=0.0, help='use identity mapping. Setting identity other than 1 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set optidentity = 0.1')
         self.parser.add_argument('--use_dropout', action='store_true', help='use dropout for the generator')
         self.parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
+        self.parser.add_argument('--resize_or_crop', type=str, default='resize_and_crop', help='scaling and cropping of images at load time [resize_and_crop|crop|scale_width]')
+        self.parser.add_argument('--no_flip', action='store_true', help='if specified, do not flip the images for data argumentation')
 
         self.initialized = True
 
@@ -59,7 +61,7 @@ class BaseOptions():
         print('-------------- End ----------------')
 
         # save to the disk
-        expr_dir =  os.path.join(self.opt.checkpoints_dir, self.opt.name)
+        expr_dir = os.path.join(self.opt.checkpoints_dir, self.opt.name)
         util.mkdirs(expr_dir)
         file_name = os.path.join(expr_dir, 'opt.txt')
         with open(file_name, 'wt') as opt_file:

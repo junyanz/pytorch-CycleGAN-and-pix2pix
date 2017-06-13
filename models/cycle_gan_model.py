@@ -10,6 +10,7 @@ from .base_model import BaseModel
 from . import networks
 import sys
 
+
 class CycleGANModel(BaseModel):
     def name(self):
         return 'CycleGANModel'
@@ -27,18 +28,18 @@ class CycleGANModel(BaseModel):
         # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
 
         self.netG_A = networks.define_G(opt.input_nc, opt.output_nc,
-                                     opt.ngf, opt.which_model_netG, opt.norm, opt.use_dropout, self.gpu_ids)
+                                        opt.ngf, opt.which_model_netG, opt.norm, opt.use_dropout, self.gpu_ids)
         self.netG_B = networks.define_G(opt.output_nc, opt.input_nc,
-                                    opt.ngf, opt.which_model_netG, opt.norm, opt.use_dropout, self.gpu_ids)
+                                        opt.ngf, opt.which_model_netG, opt.norm, opt.use_dropout, self.gpu_ids)
 
         if self.isTrain:
             use_sigmoid = opt.no_lsgan
             self.netD_A = networks.define_D(opt.output_nc, opt.ndf,
-                                         opt.which_model_netD,
-                                         opt.n_layers_D, opt.norm, use_sigmoid, self.gpu_ids)
+                                            opt.which_model_netD,
+                                            opt.n_layers_D, opt.norm, use_sigmoid, self.gpu_ids)
             self.netD_B = networks.define_D(opt.input_nc, opt.ndf,
-                                         opt.which_model_netD,
-                                         opt.n_layers_D, opt.norm, use_sigmoid, self.gpu_ids)
+                                            opt.which_model_netD,
+                                            opt.n_layers_D, opt.norm, use_sigmoid, self.gpu_ids)
         if not self.isTrain or opt.continue_train:
             which_epoch = opt.which_epoch
             self.load_network(self.netG_A, 'G_A', which_epoch)
@@ -58,10 +59,8 @@ class CycleGANModel(BaseModel):
             # initialize optimizers
             self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_A.parameters(), self.netG_B.parameters()),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
-            self.optimizer_D_A = torch.optim.Adam(self.netD_A.parameters(),
-                                                lr=opt.lr, betas=(opt.beta1, 0.999))
-            self.optimizer_D_B = torch.optim.Adam(self.netD_B.parameters(),
-                                                lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizer_D_A = torch.optim.Adam(self.netD_A.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizer_D_B = torch.optim.Adam(self.netD_B.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
             print('---------- Networks initialized -------------')
             networks.print_network(self.netG_A)
@@ -89,9 +88,9 @@ class CycleGANModel(BaseModel):
 
         self.real_B = Variable(self.input_B, volatile=True)
         self.fake_A = self.netG_B.forward(self.real_B)
-        self.rec_B  = self.netG_A.forward(self.fake_A)
+        self.rec_B = self.netG_A.forward(self.fake_A)
 
-    #get image paths
+    # get image paths
     def get_image_paths(self):
         return self.image_paths
 
@@ -114,7 +113,7 @@ class CycleGANModel(BaseModel):
 
     def backward_D_B(self):
         fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B =  self.backward_D_basic(self.netD_B, self.real_A, fake_A)
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A)
 
     def backward_G(self):
         lambda_idt = self.opt.identity
@@ -167,7 +166,6 @@ class CycleGANModel(BaseModel):
         self.backward_D_B()
         self.optimizer_D_B.step()
 
-
     def get_current_errors(self):
         D_A = self.loss_D_A.data[0]
         G_A = self.loss_G_A.data[0]
@@ -187,10 +185,10 @@ class CycleGANModel(BaseModel):
     def get_current_visuals(self):
         real_A = util.tensor2im(self.real_A.data)
         fake_B = util.tensor2im(self.fake_B.data)
-        rec_A  = util.tensor2im(self.rec_A.data)
+        rec_A = util.tensor2im(self.rec_A.data)
         real_B = util.tensor2im(self.real_B.data)
         fake_A = util.tensor2im(self.fake_A.data)
-        rec_B  = util.tensor2im(self.rec_B.data)
+        rec_B = util.tensor2im(self.rec_B.data)
         if self.opt.identity > 0.0:
             idt_A = util.tensor2im(self.idt_A.data)
             idt_B = util.tensor2im(self.idt_B.data)

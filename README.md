@@ -44,6 +44,12 @@ In CVPR 2017.
 ## Getting Started
 ### Installation
 - Install PyTorch and dependencies from http://pytorch.org/
+- Install Torch vision from the source.
+```bash
+git clone https://github.com/pytorch/vision
+cd vision
+python setup.py install
+```
 - Install python libraries [visdom](https://github.com/facebookresearch/visdom) and [dominate](https://github.com/Knio/dominate).
 ```bash
 pip install visdom
@@ -81,13 +87,13 @@ bash ./datasets/download_pix2pix_dataset.sh facades
 - Train a model:
 ```bash
 #!./scripts/train_pix2pix.sh
-python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_model_netG unet_256 --which_direction BtoA --lambda_A 100 --align_data --use_dropout --no_lsgan
+python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_model_netG unet_256 --which_direction BtoA --lambda_A 100 --dataset_mode aligned --use_dropout --no_lsgan
 ```
 - To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097. To see more intermediate results, check out  `./checkpoints/facades_pix2pix/web/index.html`
 - Test the model (`bash ./scripts/test_pix2pix.sh`):
 ```bash
 #!./scripts/test_pix2pix.sh
-python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_model_netG unet_256 --which_direction BtoA --align_data
+python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_model_netG unet_256 --which_direction BtoA --dataset_mode aligned
 ```
 The test results will be saved to a html file here: `./results/facades_pix2pix/latest_val/index.html`.
 
