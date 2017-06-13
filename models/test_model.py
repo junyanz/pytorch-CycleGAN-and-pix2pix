@@ -10,37 +10,32 @@ class TestModel(BaseModel):
         return 'TestModel'
 
     def initialize(self, opt):
+        assert(not opt.isTrain)
         BaseModel.initialize(self, opt)
+        self.input_A = self.Tensor(opt.batchSize, opt.input_nc, opt.fineSize, opt.fineSize)
 
-        nb = opt.batchSize
-        size = opt.fineSize
-        self.input_A = self.Tensor(nb, opt.input_nc, size, size)
-
-        assert(not self.isTrain)
-        self.netG_A = networks.define_G(opt.input_nc, opt.output_nc,
-                                        opt.ngf, opt.which_model_netG,
-                                        opt.norm, opt.use_dropout,
-                                        self.gpu_ids)
+        self.netG = networks.define_G(opt.input_nc, opt.output_nc,
+                                      opt.ngf, opt.which_model_netG,
+                                      opt.norm, opt.use_dropout,
+                                      self.gpu_ids)
         which_epoch = opt.which_epoch
-        #AtoB = self.opt.which_direction == 'AtoB'
-        #which_network = 'G_A' if AtoB else 'G_B'
-        self.load_network(self.netG_A, 'G', which_epoch)
+        self.load_network(self.netG, 'G', which_epoch)
 
         print('---------- Networks initialized -------------')
-        networks.print_network(self.netG_A)
+        networks.print_network(self.netG)
         print('-----------------------------------------------')
 
     def set_input(self, input):
-        AtoB = self.opt.which_direction == 'AtoB'
-        input_A = input['A' if AtoB else 'B']
+        # we need to use single_dataset mode
+        input_A = input['A']
         self.input_A.resize_(input_A.size()).copy_(input_A)
-        self.image_paths = input['A_paths' if AtoB else 'B_paths']
+        self.image_paths = input['A_paths']
 
     def test(self):
         self.real_A = Variable(self.input_A)
-        self.fake_B = self.netG_A.forward(self.real_A)
+        self.fake_B = self.netG.forward(self.real_A)
 
-    #get image paths
+    # get image paths
     def get_image_paths(self):
         return self.image_paths
 

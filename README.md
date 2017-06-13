@@ -149,7 +149,6 @@ This will combine each pair of images (A,B) into a single image file, ready for 
 
 ## TODO
 - add reflection and other padding layers.
-- add more preprocessing options.
 
 ## Related Projects:
 [CycleGAN](https://github.com/junyanz/CycleGAN): Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks  

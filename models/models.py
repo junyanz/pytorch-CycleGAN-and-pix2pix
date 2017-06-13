@@ -13,7 +13,7 @@ def create_model(opt):
     elif opt.model == 'test':
         assert(opt.dataset_mode == 'single')
         from .test_model import TestModel
-        model = OneDirectionTestModel()
+        model = TestModel()
     else:
         raise ValueError("Model [%s] not recognized." % opt.model)
     model.initialize(opt)
