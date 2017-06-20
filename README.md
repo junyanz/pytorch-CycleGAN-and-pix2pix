@@ -154,10 +154,25 @@ python datasets/combine_A_and_B.py --fold_A /path/to/data/A --fold_B /path/to/da
 
 This will combine each pair of images (A,B) into a single image file, ready for training.
 
-## TODO
-- add reflection and other padding layers.
+## Citation
+If you use this code for your research, please cite our papers.
+```
+@article{CycleGAN2017,
+  title={Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks},
+  author={Zhu, Jun-Yan and Park, Taesung and Isola, Phillip and Efros, Alexei A},
+  journal={arXiv preprint arXiv:1703.10593},
+  year={2017}
+}
 
-## Related Projects:
+@article{pix2pix2016,
+  title={Image-to-Image Translation with Conditional Adversarial Networks},
+  author={Isola, Phillip and Zhu, Jun-Yan and Zhou, Tinghui and Efros, Alexei A},
+  journal={arxiv},
+  year={2016}
+}
+```
+
+## Related Projects
 [CycleGAN](https://github.com/junyanz/CycleGAN): Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks  
 [pix2pix](https://github.com/phillipi/pix2pix): Image-to-image translation with conditional adversarial nets  
 [iGAN](https://github.com/junyanz/iGAN): Interactive Image Generation via Generative Adversarial Networks
