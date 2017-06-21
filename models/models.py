@@ -1,4 +1,4 @@
-
+# coding: utf-8
 def create_model(opt):
     model = None
     print(opt.model)
@@ -15,7 +15,7 @@ def create_model(opt):
         from .test_model import TestModel
         model = TestModel()
     else:
-        raise ValueError("Model [%s] not recognized." % opt.model)
+        raise ValueError("Model [{}] not recognized.".format(opt.model))
     model.initialize(opt)
-    print("model [%s] was created" % (model.name()))
+    print("model [{}] was created".format(model.name()))
     return model
