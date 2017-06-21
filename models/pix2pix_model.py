@@ -39,7 +39,8 @@ class Pix2PixModel(BaseModel):
             self.fake_AB_pool = ImagePool(opt.pool_size)
             self.old_lr = opt.lr
             # define loss functions
-            self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)
+            self.criterionGAN = networks.GANLoss(
+                use_lsgan=not opt.no_lsgan, tensor=self.Tensor)
             self.criterionL1 = torch.nn.L1Loss()
 
             # initialize optimizers
@@ -79,7 +80,8 @@ class Pix2PixModel(BaseModel):
     def backward_D(self):
         # Fake
         # stop backprop to the generator by detaching fake_B
-        fake_AB = self.fake_AB_pool.query(torch.cat((self.real_A, self.fake_B), 1))
+        fake_AB = self.fake_AB_pool.query(
+            torch.cat((self.real_A, self.fake_B), 1))
         self.pred_fake = self.netD.forward(fake_AB.detach())
         self.loss_D_fake = self.criterionGAN(self.pred_fake, False)
 
@@ -100,7 +102,8 @@ class Pix2PixModel(BaseModel):
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
 
         # Second, G(A) = B
-        self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_A
+        self.loss_G_L1 = self.criterionL1(
+            self.fake_B, self.real_B) * self.opt.lambda_A
 
         self.loss_G = self.loss_G_GAN + self.loss_G_L1
 

@@ -1,3 +1,4 @@
+# coding: utf-8
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -11,9 +12,10 @@ def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
         m.weight.data.normal_(0.0, 0.02)
-    elif classname.find('BatchNorm2d') != -1 or  classname.find('InstanceNorm2d') != -1:
+    elif classname.find('BatchNorm2d') != -1 or classname.find('InstanceNorm2d') != -1:
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
+
 
 def get_norm_layer(norm_type):
     if norm_type == 'batch':
@@ -21,8 +23,9 @@ def get_norm_layer(norm_type):
     elif norm_type == 'instance':
         norm_layer = nn.InstanceNorm2d
     else:
-        print('normalization layer [%s] is not found' % norm)
+        print('normalization layer [{}] is not found'.format(norm_type))
     return norm_layer
+
 
 def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, gpu_ids=[]):
     netG = None
@@ -33,13 +36,17 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
         assert(torch.cuda.is_available())
 
     if which_model_netG == 'resnet_9blocks':
-        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, gpu_ids=gpu_ids)
+        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer,
+                               use_dropout=use_dropout, n_blocks=9, gpu_ids=gpu_ids)
     elif which_model_netG == 'resnet_6blocks':
-        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, gpu_ids=gpu_ids)
+        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer,
+                               use_dropout=use_dropout, n_blocks=6, gpu_ids=gpu_ids)
     elif which_model_netG == 'unet_128':
-        netG = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids)
+        netG = UnetGenerator(input_nc, output_nc, 7, ngf,
+                             norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids)
     elif which_model_netG == 'unet_256':
-        netG = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids)
+        netG = UnetGenerator(input_nc, output_nc, 8, ngf,
+                             norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids)
     else:
         print('Generator model name [%s] is not recognized' % which_model_netG)
     if len(gpu_ids) > 0:
@@ -57,9 +64,11 @@ def define_D(input_nc, ndf, which_model_netD,
     if use_gpu:
         assert(torch.cuda.is_available())
     if which_model_netD == 'basic':
-        netD = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
+        netD = NLayerDiscriminator(
+            input_nc, ndf, n_layers=3, norm_layer=norm_layer, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
     elif which_model_netD == 'n_layers':
-        netD = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
+        netD = NLayerDiscriminator(
+            input_nc, ndf, n_layers_D, norm_layer=norm_layer, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
     else:
         print('Discriminator model name [%s] is not recognized' %
               which_model_netD)
@@ -74,7 +83,7 @@ def print_network(net):
     for param in net.parameters():
         num_params += param.numel()
     print(net)
-    print('Total number of parameters: %d' % num_params)
+    print('Total number of parameters: {}'.format(num_params))
 
 
 ##############################################################################
@@ -87,8 +96,8 @@ def print_network(net):
 # but it abstracts away the need to create the target label tensor
 # that has the same size as the input
 class GANLoss(nn.Module):
-    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0,
-                 tensor=torch.FloatTensor):
+
+    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0, tensor=torch.FloatTensor):
         super(GANLoss, self).__init__()
         self.real_label = target_real_label
         self.fake_label = target_fake_label
@@ -107,14 +116,16 @@ class GANLoss(nn.Module):
                             (self.real_label_var.numel() != input.numel()))
             if create_label:
                 real_tensor = self.Tensor(input.size()).fill_(self.real_label)
-                self.real_label_var = Variable(real_tensor, requires_grad=False)
+                self.real_label_var = Variable(
+                    real_tensor, requires_grad=False)
             target_tensor = self.real_label_var
         else:
             create_label = ((self.fake_label_var is None) or
                             (self.fake_label_var.numel() != input.numel()))
             if create_label:
                 fake_tensor = self.Tensor(input.size()).fill_(self.fake_label)
-                self.fake_label_var = Variable(fake_tensor, requires_grad=False)
+                self.fake_label_var = Variable(
+                    fake_tensor, requires_grad=False)
             target_tensor = self.fake_label_var
         return target_tensor
 
@@ -128,6 +139,7 @@ class GANLoss(nn.Module):
 # Code and idea originally from Justin Johnson's architecture.
 # https://github.com/jcjohnson/fast-neural-style/
 class ResnetGenerator(nn.Module):
+
     def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, gpu_ids=[]):
         assert(n_blocks >= 0)
         super(ResnetGenerator, self).__init__()
@@ -150,7 +162,8 @@ class ResnetGenerator(nn.Module):
 
         mult = 2**n_downsampling
         for i in range(n_blocks):
-            model += [ResnetBlock(ngf * mult, 'zero', norm_layer=norm_layer, use_dropout=use_dropout)]
+            model += [ResnetBlock(ngf * mult, 'zero',
+                                  norm_layer=norm_layer, use_dropout=use_dropout)]
 
         for i in range(n_downsampling):
             mult = 2**(n_downsampling - i)
@@ -174,9 +187,11 @@ class ResnetGenerator(nn.Module):
 
 # Define a resnet block
 class ResnetBlock(nn.Module):
+
     def __init__(self, dim, padding_type, norm_layer, use_dropout):
         super(ResnetBlock, self).__init__()
-        self.conv_block = self.build_conv_block(dim, padding_type, norm_layer, use_dropout)
+        self.conv_block = self.build_conv_block(
+            dim, padding_type, norm_layer, use_dropout)
 
     def build_conv_block(self, dim, padding_type, norm_layer, use_dropout):
         conv_block = []
@@ -206,6 +221,7 @@ class ResnetBlock(nn.Module):
 # if |num_downs| == 7, image of size 128x128 will become of size 1x1
 # at the bottleneck
 class UnetGenerator(nn.Module):
+
     def __init__(self, input_nc, output_nc, num_downs, ngf=64,
                  norm_layer=nn.BatchNorm2d, use_dropout=False, gpu_ids=[]):
         super(UnetGenerator, self).__init__()
@@ -217,16 +233,21 @@ class UnetGenerator(nn.Module):
         # construct unet structure
         unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, innermost=True)
         for i in range(num_downs - 5):
-            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
-        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(output_nc, ngf, unet_block, outermost=True, norm_layer=norm_layer)
+            unet_block = UnetSkipConnectionBlock(
+                ngf * 8, ngf * 8, unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
+        unet_block = UnetSkipConnectionBlock(
+            ngf * 4, ngf * 8, unet_block, norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(
+            ngf * 2, ngf * 4, unet_block, norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(
+            ngf, ngf * 2, unet_block, norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(
+            output_nc, ngf, unet_block, outermost=True, norm_layer=norm_layer)
 
         self.model = unet_block
 
     def forward(self, input):
-        if  self.gpu_ids and isinstance(input.data, torch.cuda.FloatTensor):
+        if self.gpu_ids and isinstance(input.data, torch.cuda.FloatTensor):
             return nn.parallel.data_parallel(self.model, input, self.gpu_ids)
         else:
             return self.model(input)
@@ -236,6 +257,7 @@ class UnetGenerator(nn.Module):
 # X -------------------identity---------------------- X
 #   |-- downsampling -- |submodule| -- upsampling --|
 class UnetSkipConnectionBlock(nn.Module):
+
     def __init__(self, outer_nc, inner_nc,
                  submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm2d, use_dropout=False):
         super(UnetSkipConnectionBlock, self).__init__()
@@ -249,23 +271,20 @@ class UnetSkipConnectionBlock(nn.Module):
         upnorm = norm_layer(outer_nc, affine=True)
 
         if outermost:
-            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
-                                        kernel_size=4, stride=2,
-                                        padding=1)
+            upconv = nn.ConvTranspose2d(
+                inner_nc * 2, outer_nc, kernel_size=4, stride=2, padding=1)
             down = [downconv]
             up = [uprelu, upconv, nn.Tanh()]
             model = down + [submodule] + up
         elif innermost:
-            upconv = nn.ConvTranspose2d(inner_nc, outer_nc,
-                                        kernel_size=4, stride=2,
-                                        padding=1)
+            upconv = nn.ConvTranspose2d(
+                inner_nc, outer_nc, kernel_size=4, stride=2, padding=1)
             down = [downrelu, downconv]
             up = [uprelu, upconv, upnorm]
             model = down + up
         else:
-            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
-                                        kernel_size=4, stride=2,
-                                        padding=1)
+            upconv = nn.ConvTranspose2d(
+                inner_nc * 2, outer_nc, kernel_size=4, stride=2, padding=1)
             down = [downrelu, downconv, downnorm]
             up = [uprelu, upconv, upnorm]
 
@@ -285,12 +304,13 @@ class UnetSkipConnectionBlock(nn.Module):
 
 # Defines the PatchGAN discriminator with the specified arguments.
 class NLayerDiscriminator(nn.Module):
+
     def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d, use_sigmoid=False, gpu_ids=[]):
         super(NLayerDiscriminator, self).__init__()
         self.gpu_ids = gpu_ids
 
         kw = 4
-        padw = int(np.ceil((kw-1)/2))
+        padw = int(np.ceil((kw - 1) / 2))
         sequence = [
             nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw),
             nn.LeakyReLU(0.2, True)
@@ -303,7 +323,7 @@ class NLayerDiscriminator(nn.Module):
             nf_mult = min(2**n, 8)
             sequence += [
                 nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult,
-                                kernel_size=kw, stride=2, padding=padw),
+                          kernel_size=kw, stride=2, padding=padw),
                 # TODO: use InstanceNorm
                 norm_layer(ndf * nf_mult, affine=True),
                 nn.LeakyReLU(0.2, True)
@@ -313,13 +333,14 @@ class NLayerDiscriminator(nn.Module):
         nf_mult = min(2**n_layers, 8)
         sequence += [
             nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult,
-                            kernel_size=kw, stride=1, padding=padw),
+                      kernel_size=kw, stride=1, padding=padw),
             # TODO: useInstanceNorm
             norm_layer(ndf * nf_mult, affine=True),
             nn.LeakyReLU(0.2, True)
         ]
 
-        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]
+        sequence += [nn.Conv2d(ndf * nf_mult, 1,
+                               kernel_size=kw, stride=1, padding=padw)]
 
         if use_sigmoid:
             sequence += [nn.Sigmoid()]
@@ -327,7 +348,7 @@ class NLayerDiscriminator(nn.Module):
         self.model = nn.Sequential(*sequence)
 
     def forward(self, input):
-        if len(self.gpu_ids)  and isinstance(input.data, torch.cuda.FloatTensor):
+        if len(self.gpu_ids) and isinstance(input.data, torch.cuda.FloatTensor):
             return nn.parallel.data_parallel(self.model, input, self.gpu_ids)
         else:
             return self.model(input)
