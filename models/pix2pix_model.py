@@ -48,10 +48,11 @@ class Pix2PixModel(BaseModel):
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
 
-            print('---------- Networks initialized -------------')
-            networks.print_network(self.netG)
+        print('---------- Networks initialized -------------')
+        networks.print_network(self.netG)
+        if self.isTrain:
             networks.print_network(self.netD)
-            print('-----------------------------------------------')
+        print('-----------------------------------------------')
 
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
