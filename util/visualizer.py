@@ -31,6 +31,11 @@ class Visualizer():
     def display_current_results(self, visuals, epoch):
         if self.display_id > 0: # show images in the browser
             if self.display_single_pane_ncols > 0:
+                h, w = next(iter(visuals.values())).shape[:2]
+                table_css = """<style>
+    table {border-collapse: separate; border-spacing:4px; white-space:nowrap; text-align:center}
+    table td {width: %dpx; height: %dpx; padding: 4px; outline: 4px solid black}
+</style>""" % (w, h)
                 ncols = self.display_single_pane_ncols
                 title = self.name
                 label_html = ''
@@ -45,17 +50,18 @@ class Visualizer():
                     if idx % ncols == 0:
                         label_html += '<tr>%s</tr>' % label_html_row
                         label_html_row = ''
+                white_image = np.ones_like(image_numpy.transpose([2, 0, 1]))*255
                 while idx % ncols != 0:
-                    white_image = np.ones_like(image_numpy.transpose([2, 0, 1]))*255
                     images.append(white_image)
                     label_html_row += '<td></td>'
                     idx += 1
                 if label_html_row != '':
                     label_html += '<tr>%s</tr>' % label_html_row
+                # pane col = image row
                 self.vis.images(images, nrow=ncols, win=self.display_id + 1,
-                              opts=dict(title=title + ' images')) # pane col = image row
-                label_html = '<table style="border-collapse:separate;border-spacing:10px;">%s</table' % label_html
-                self.vis.text(label_html, win = self.display_id + 2,
+                                padding=2, opts=dict(title=title + ' images'))
+                label_html = '<table>%s</table>' % label_html
+                self.vis.text(table_css + label_html, win = self.display_id + 2,
                               opts=dict(title=title + ' labels'))
             else:
                 idx = 1
