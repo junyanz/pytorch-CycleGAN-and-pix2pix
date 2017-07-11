@@ -69,3 +69,8 @@ def mkdirs(paths):
 def mkdir(path):
     if not os.path.exists(path):
         os.makedirs(path)
+
+def symlink(origin_path, dest_path):
+    assert os.path.exists(origin_path), '%s file does not exist' % origin_path
+    if not os.path.exists(dest_path):
+        os.symlink(origin_path, dest_path)
