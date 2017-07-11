@@ -1,6 +1,6 @@
 import os.path
 import torchvision.transforms as transforms
-from data.base_dataset import BaseDataset
+from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
 from PIL import Image
 
@@ -15,21 +15,7 @@ class SingleDataset(BaseDataset):
 
         self.A_paths = sorted(self.A_paths)
 
-        transform_list = []
-        if opt.resize_or_crop == 'resize_and_crop':
-            transform_list.append(transforms.Scale(opt.loadSize))
-
-        if opt.isTrain and not opt.no_flip:
-            transform_list.append(transforms.RandomHorizontalFlip())
-
-        if opt.resize_or_crop != 'no_resize':
-            transform_list.append(transforms.RandomCrop(opt.fineSize))
-
-        transform_list += [transforms.ToTensor(),
-                           transforms.Normalize((0.5, 0.5, 0.5),
-                                                (0.5, 0.5, 0.5))]
-
-        self.transform = transforms.Compose(transform_list)
+        self.transform = get_transform(opt)
 
     def __getitem__(self, index):
         A_path = self.A_paths[index]

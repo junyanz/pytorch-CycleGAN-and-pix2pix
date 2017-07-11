@@ -1,6 +1,6 @@
 import os.path
 import torchvision.transforms as transforms
-from data.base_dataset import BaseDataset
+from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
 from PIL import Image
 import PIL
@@ -21,22 +21,7 @@ class UnalignedDataset(BaseDataset):
         self.B_paths = sorted(self.B_paths)
         self.A_size = len(self.A_paths)
         self.B_size = len(self.B_paths)
-
-        transform_list = []
-        if opt.resize_or_crop == 'resize_and_crop':
-            osize = [opt.loadSize, opt.loadSize]
-            transform_list.append(transforms.Scale(osize, Image.BICUBIC))
-
-        if opt.isTrain and not opt.no_flip:
-            transform_list.append(transforms.RandomHorizontalFlip())
-
-        if opt.resize_or_crop != 'no_resize':
-            transform_list.append(transforms.RandomCrop(opt.fineSize))
-
-        transform_list += [transforms.ToTensor(),
-                           transforms.Normalize((0.5, 0.5, 0.5),
-                                                (0.5, 0.5, 0.5))]
-        self.transform = transforms.Compose(transform_list)
+        self.transform = get_transform(opt)
 
     def __getitem__(self, index):
         A_path = self.A_paths[index % self.A_size]
