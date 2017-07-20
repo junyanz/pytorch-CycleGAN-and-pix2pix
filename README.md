@@ -69,13 +69,13 @@ bash ./datasets/download_cyclegan_dataset.sh maps
 - Train a model:
 ```bash
 #!./scripts/train_cyclegan.sh
-python train.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
+python train.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan --no_dropout
 ```
 - To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097. To see more intermediate results, check out `./checkpoints/maps_cyclegan/web/index.html`
 - Test the model:
 ```bash
 #!./scripts/test_cyclegan.sh
-python test.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan --phase test
+python test.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan --phase test --no_dropout
 ```
 The test results will be saved to a html file here: `./results/maps_cyclegan/latest_test/index.html`.
 
@@ -87,7 +87,7 @@ bash ./datasets/download_pix2pix_dataset.sh facades
 - Train a model:
 ```bash
 #!./scripts/train_pix2pix.sh
-python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_model_netG unet_256 --which_direction BtoA --lambda_A 100 --dataset_mode aligned --use_dropout --no_lsgan --norm batch
+python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_model_netG unet_256 --which_direction BtoA --lambda_A 100 --dataset_mode aligned --no_lsgan --norm batch
 ```
 - To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097. To see more intermediate results, check out  `./checkpoints/facades_pix2pix/web/index.html`
 - Test the model (`bash ./scripts/test_pix2pix.sh`):
@@ -103,7 +103,7 @@ More example scripts can be found at `scripts` directory.
 If you would like to apply a pre-trained model to a collection of input photos (without image pairs), please use `--dataset_mode single` and `--model test` options. Here is a script to apply a pix2pix model to facade label maps (stored in the directory `facades/testB`).
 ``` bash
 #!./scripts/test_single.sh
-python test.py --dataroot ./datasets/facades/testB/ --name facades_pix2pix --model test --which_model_netG unet_256 --which_direction BtoA --dataset_mode single --use_dropout
+python test.py --dataroot ./datasets/facades/testB/ --name facades_pix2pix --model test --which_model_netG unet_256 --which_direction BtoA --dataset_mode single
 ```
 
 ## Training/test Details
