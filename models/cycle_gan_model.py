@@ -199,6 +199,20 @@ class CycleGANModel(BaseModel):
             return OrderedDict([('real_A', real_A), ('fake_B', fake_B), ('rec_A', rec_A),
                                 ('real_B', real_B), ('fake_A', fake_A), ('rec_B', rec_B)])
 
+    def forward_external(self, x, direction):
+        isBatch = x.size(0) > 1
+        if direction == 'AtoB':
+            real_A = Variable(x, volatile=True)
+            fake_B = self.netG_A.forward(real_A)
+            return util.tensor2im(fake_B.data, batch=isBatch)
+        elif direction == 'BtoA':
+            real_B = Variable(x, volatile=True)
+            fake_A = self.netG_B.forward(real_B)
+            return util.tensor2im(fake_A.data, batch=isBatch)
+
+        raise ValueError('`direction must` be "AtoB" or "BtoA"')
+            
+    
     def save(self, label):
         self.save_network(self.netG_A, 'G_A', label, self.gpu_ids)
         self.save_network(self.netD_A, 'D_A', label, self.gpu_ids)

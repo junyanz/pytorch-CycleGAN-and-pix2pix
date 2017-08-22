@@ -32,8 +32,12 @@ def get_transform(opt):
         transform_list.append(transforms.RandomHorizontalFlip())
 
     transform_list += [transforms.ToTensor(),
-                       transforms.Normalize((0.5, 0.5, 0.5),
-                                            (0.5, 0.5, 0.5))]
+                       # this is wrong! because the fake samples are not normalized like this, 
+                       # still they are inferred on the same network, 
+                       #transforms.Normalize((0.5, 0.5, 0.5), 
+                       #                     (0.5, 0.5, 0.5)) 
+                       lambda x: (x - x.min()) / x.max() * 2 - 1, # [-1., 1.]
+                       ]
     return transforms.Compose(transform_list)
 
 def __scale_width(img, target_width):

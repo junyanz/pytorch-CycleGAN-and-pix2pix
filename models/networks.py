@@ -131,6 +131,20 @@ class GANLoss(nn.Module):
 # downsampling/upsampling operations.
 # Code and idea originally from Justin Johnson's architecture.
 # https://github.com/jcjohnson/fast-neural-style/
+
+class Printer(nn.Module):
+    def __init__(self, text='', only_size=True):
+        super(Printer, self).__init__()
+        self.only_size = only_size
+        self.text = text
+    def forward(self, x):
+        print(self.text, end=' ')
+        if self.only_size:
+            print(x.size())
+        else:
+            print(x)
+        return x
+
 class ResnetGenerator(nn.Module):
     def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, gpu_ids=[], padding_type='reflect'):
         assert(n_blocks >= 0)
@@ -149,9 +163,17 @@ class ResnetGenerator(nn.Module):
         for i in range(n_downsampling):
             mult = 2**i
             model += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3,
-                                stride=2, padding=1),
+                                stride=1, padding=1),
+                      nn.MaxPool2d(2),
                       norm_layer(ngf * mult * 2),
-                      nn.ReLU(True)]
+                      nn.ReLU(True),
+                      #Printer('downsample %d'%mult)
+            ]
+            # model += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3,
+            #                     stride=2, padding=1),
+            #           norm_layer(ngf * mult * 2),
+            #           nn.ReLU(True),
+            #           Printer('downsample %d'%mult)]
 
         mult = 2**n_downsampling
         for i in range(n_blocks):
@@ -159,11 +181,22 @@ class ResnetGenerator(nn.Module):
 
         for i in range(n_downsampling):
             mult = 2**(n_downsampling - i)
-            model += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
-                                         kernel_size=3, stride=2,
-                                         padding=1, output_padding=1),
-                      norm_layer(int(ngf * mult / 2)),
-                      nn.ReLU(True)]
+            model += [
+                nn.UpsamplingBilinear2d(scale_factor=2),
+                # nn.Upsample(scale_factor=2, mode='nearest'),
+                nn.Conv2d(ngf * mult, int(ngf * mult / 2), 3, padding=1),
+                norm_layer(int(ngf * mult / 2)),
+                nn.ReLU(True),
+                #Printer('upsample %d'%mult)
+            ]
+
+            # model += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
+            #                              kernel_size=3, stride=2,
+            #                              padding=1, output_padding=1),
+            #           norm_layer(int(ngf * mult / 2)),
+            #           nn.ReLU(True)]
+            #
+
         model += [nn.ReflectionPad2d(3)]
         model += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
         model += [nn.Tanh()]
