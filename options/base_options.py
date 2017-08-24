@@ -9,6 +9,7 @@ class BaseOptions():
         self.initialized = False
 
     def initialize(self):
+        self.parser.add_argument('--seed', type=int, default=None, help='random seed for python, numpy and pytorch')
         self.parser.add_argument('--dataroot', required=True, help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
         self.parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
         self.parser.add_argument('--loadSize', type=int, default=286, help='scale images to this size')
@@ -54,10 +55,19 @@ class BaseOptions():
             id = int(str_id)
             if id >= 0:
                 self.opt.gpu_ids.append(id)
-        
+
         # set gpu ids
         if len(self.opt.gpu_ids) > 0:
             torch.cuda.set_device(self.opt.gpu_ids[0])
+
+        # set seed
+        if self.opt.seed is None:
+            # setting seed to a long > 32 bit sometimes causes error
+            self.opt.seed = torch.initial_seed() & ((1 << 32) - 1)
+        # torch cpu, torch all gpus, np, python seeds are set equal
+        torch.manual_seed(self.opt.seed)
+        np.random.seed(self.opt.seed)
+        random.seed(self.opt.seed)
 
         args = vars(self.opt)
 
