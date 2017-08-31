@@ -91,6 +91,10 @@ class CycleGANModel(BaseModel):
         self.fake_A = self.netG_B.forward(self.real_B)
         self.rec_B = self.netG_A.forward(self.fake_A)
 
+    def set_test_mode(self):
+        self.netG_A.eval()
+        self.netG_B.eval()
+
     # get image paths
     def get_image_paths(self):
         return self.image_paths

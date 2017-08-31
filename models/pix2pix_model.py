@@ -73,6 +73,9 @@ class Pix2PixModel(BaseModel):
         self.fake_B = self.netG.forward(self.real_A)
         self.real_B = Variable(self.input_B, volatile=True)
 
+    def set_test_mode(self):
+        self.netG.eval()
+
     # get image paths
     def get_image_paths(self):
         return self.image_paths

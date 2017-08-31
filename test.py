@@ -21,6 +21,7 @@ visualizer = Visualizer(opt)
 web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
 webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))
 # test
+model.set_test_mode()
 for i, data in enumerate(dataset):
     if i >= opt.how_many:
         break

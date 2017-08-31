@@ -23,6 +23,9 @@ class BaseModel():
     def test(self):
         pass
 
+    def set_test_mode(self):
+        pass
+
     def get_image_paths(self):
         pass
 

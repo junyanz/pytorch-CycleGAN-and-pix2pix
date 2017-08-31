@@ -35,6 +35,9 @@ class TestModel(BaseModel):
         self.real_A = Variable(self.input_A)
         self.fake_B = self.netG.forward(self.real_A)
 
+    def set_test_mode(self):
+        self.netG.eval()
+
     # get image paths
     def get_image_paths(self):
         return self.image_paths
