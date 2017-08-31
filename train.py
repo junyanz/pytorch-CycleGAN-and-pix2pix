@@ -12,15 +12,15 @@ print('#training images = %d' % dataset_size)
 
 model = create_model(opt)
 visualizer = Visualizer(opt)
-
 total_steps = 0
 
-for epoch in range(1, opt.niter + opt.niter_decay + 1):
+for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay + 1):
     epoch_start_time = time.time()
+    epoch_iter = 0
     for i, data in enumerate(dataset):
         iter_start_time = time.time()
         total_steps += opt.batchSize
-        epoch_iter = total_steps - dataset_size * (epoch - 1)
+        epoch_iter += opt.batchSize
         model.set_input(data)
         model.optimize_parameters()
 
