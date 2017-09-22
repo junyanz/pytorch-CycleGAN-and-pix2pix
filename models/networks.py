@@ -311,7 +311,7 @@ class UnetSkipConnectionBlock(nn.Module):
         if self.outermost:
             return self.model(x)
         else:
-            return torch.cat([self.model(x), x], 1)
+            return torch.cat([x, self.model(x)], 1)
 
 
 # Defines the PatchGAN discriminator with the specified arguments.
