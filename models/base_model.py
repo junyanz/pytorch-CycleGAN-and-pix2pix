@@ -51,8 +51,8 @@ class BaseModel():
         save_filename = '%s_net_%s.pth' % (epoch_label, network_label)
         save_path = os.path.join(self.save_dir, save_filename)
         network.load_state_dict(torch.load(save_path))
-
-    def update_learning_rate():
+    # update learning rate (called once every epoch)
+    def update_learning_rate(self):
         for scheduler in self.schedulers:
             scheduler.step()
         lr = self.optimizers[0].param_groups[0]['lr']

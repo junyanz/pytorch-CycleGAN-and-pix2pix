@@ -17,6 +17,7 @@ total_steps = 0
 for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay + 1):
     epoch_start_time = time.time()
     epoch_iter = 0
+
     for i, data in enumerate(dataset):
         iter_start_time = time.time()
         total_steps += opt.batchSize
@@ -47,6 +48,4 @@ for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay + 1):
 
     print('End of epoch %d / %d \t Time Taken: %d sec' %
           (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time))
-
-    if epoch > opt.niter:
-        model.update_learning_rate()
+    model.update_learning_rate()
