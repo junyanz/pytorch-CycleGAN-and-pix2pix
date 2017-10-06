@@ -4,7 +4,7 @@ import ntpath
 import time
 from . import util
 from . import html
-
+from pdb import set_trace as st
 class Visualizer():
     def __init__(self, opt):
         # self.opt = opt
@@ -66,7 +66,6 @@ class Visualizer():
             else:
                 idx = 1
                 for label, image_numpy in visuals.items():
-                    #image_numpy = np.flipud(image_numpy)
                     self.vis.image(image_numpy.transpose([2,0,1]), opts=dict(title=label),
                                        win=self.display_id + idx)
                     idx += 1

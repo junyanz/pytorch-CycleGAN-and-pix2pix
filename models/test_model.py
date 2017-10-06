@@ -17,6 +17,7 @@ class TestModel(BaseModel):
         self.netG = networks.define_G(opt.input_nc, opt.output_nc,
                                       opt.ngf, opt.which_model_netG,
                                       opt.norm, not opt.no_dropout,
+                                      opt.init_type,
                                       self.gpu_ids)
         which_epoch = opt.which_epoch
         self.load_network(self.netG, 'G', which_epoch)
