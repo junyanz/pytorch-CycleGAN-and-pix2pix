@@ -36,10 +36,10 @@ class CycleGANModel(BaseModel):
             use_sigmoid = opt.no_lsgan
             self.netD_A = networks.define_D(opt.output_nc, opt.ndf,
                                             opt.which_model_netD,
-                                            opt.n_layers_D, opt.norm, use_sigmoid, self.gpu_ids)
+                                            opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, self.gpu_ids)
             self.netD_B = networks.define_D(opt.input_nc, opt.ndf,
                                             opt.which_model_netD,
-                                            opt.n_layers_D, opt.norm, use_sigmoid, self.gpu_ids)
+                                            opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, self.gpu_ids)
         if not self.isTrain or opt.continue_train:
             which_epoch = opt.which_epoch
             self.load_network(self.netG_A, 'G_A', which_epoch)
@@ -197,7 +197,7 @@ class CycleGANModel(BaseModel):
         real_B = util.tensor2im(self.real_B.data)
         fake_A = util.tensor2im(self.fake_A.data)
         rec_B = util.tensor2im(self.rec_B.data)
-        if self.opt.identity > 0.0:
+        if self.opt.isTrain and self.opt.identity > 0.0:
             idt_A = util.tensor2im(self.idt_A.data)
             idt_B = util.tensor2im(self.idt_B.data)
             return OrderedDict([('real_A', real_A), ('fake_B', fake_B), ('rec_A', rec_A), ('idt_B', idt_B),
