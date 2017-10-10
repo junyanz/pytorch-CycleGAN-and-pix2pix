@@ -99,12 +99,30 @@ The test results will be saved to a html file here: `./results/facades_pix2pix/l
 
 More example scripts can be found at `scripts` directory.
 
-### Apply a pre-trained model
+### Apply a pre-trained model (CycleGAN)
 If you would like to apply a pre-trained model to a collection of input photos (without image pairs), please use `--dataset_mode single` and `--model test` options. Here is a script to apply a pix2pix model to facade label maps (stored in the directory `facades/testB`).
 ``` bash
 #!./scripts/test_single.sh
 python test.py --dataroot ./datasets/facades/testB/ --name facades_pix2pix --model test --which_model_netG unet_256 --which_direction BtoA --dataset_mode single
 ```
+
+Note: We currently don't have pretrained models using PyTorch. This is in part because the models trained using Torch and PyTorch produce slightly different results, although we were not able to decide which result is better. If you would like to generate the same results that appeared in our paper, we recommend using the pretrained models in the Torch codebase. 
+
+### Apply a pre-trained model (pix2pix)
+
+Download the pre-trained models using `./pretrained_models/download_pix2pix_model.sh`. For example, if you would like to download label2photo model on the Facades dataset, 
+
+```bash
+bash pretrained_models/download_pix2pix_model.sh facades_label2photo
+```
+
+Then generate the results using
+```bash
+python test.py --dataroot ./datasets/facades/ --which_direction BtoA --model pix2pix --name facades_label2photo_pretrained --dataset_mode aligned --which_model_netG unet_256 --norm batch
+```
+Note that we specified `--which_direction BtoA` to accomodate the fact that the Facades dataset's A to B direction is photos to labels. 
+
+Also, the models that are currently available to download can be found by reading the output of `bash pretrained_models/download_pix2pix_model.sh`
 
 ## Training/test Details
 - Flags: see `options/train_options.py` and `options/base_options.py` for all the training flags; see `options/test_options.py` and `options/base_options.py` for all the test flags.
