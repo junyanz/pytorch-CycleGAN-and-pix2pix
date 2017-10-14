@@ -46,6 +46,7 @@ In CVPR 2017.
 <a href="https://github.com/Ldpe2G/DeepLearningForFun/tree/master/Mxnet-Scala/CycleGAN">[Mxnet]</a> (by Ldpe2G),
 <a href="https://github.com/tjwei/GANotebooks">[lasagne/keras]</a> (by tjwei)</p>
 </ul>
+
 ### pix2pix
 <p><a href="https://github.com/affinelayer/pix2pix-tensorflow"> [Tensorflow]</a> (by Christopher Hesse),
 <a href="https://github.com/tjwei/GANotebooks">[tf/torch/keras/lasagne]</a> (by tjwei),
