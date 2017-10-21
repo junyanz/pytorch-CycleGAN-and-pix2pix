@@ -139,7 +139,7 @@ def define_D(input_nc, ndf, which_model_netD,
         raise NotImplementedError('Discriminator model name [%s] is not recognized' %
                                   which_model_netD)
     if use_gpu:
-        netD.cuda(device_id=gpu_ids[0]) # or netG.cuda(device=gpu_ids[0]) for latest version.
+        netD.cuda(device_id=gpu_ids[0]) # or netD.cuda(device=gpu_ids[0]) for latest version.
     init_weights(netD, init_type=init_type)
     return netD
 
