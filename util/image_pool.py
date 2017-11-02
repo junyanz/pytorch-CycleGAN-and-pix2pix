@@ -13,7 +13,7 @@ class ImagePool():
         if self.pool_size == 0:
             return images
         return_images = []
-        for image in images.data:
+        for image in images:
             image = torch.unsqueeze(image, 0)
             if self.num_imgs < self.pool_size:
                 self.num_imgs = self.num_imgs + 1
