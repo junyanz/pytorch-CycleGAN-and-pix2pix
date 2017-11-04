@@ -13,11 +13,11 @@ class Visualizer():
         self.use_html = opt.isTrain and not opt.no_html
         self.win_size = opt.display_winsize
         self.name = opt.name
+        self.opt = opt
         self.saved = False
         if self.display_id > 0:
             import visdom
             self.vis = visdom.Visdom(port=opt.display_port)
-            self.display_single_pane_ncols = opt.display_single_pane_ncols
 
         if self.use_html:
             self.web_dir = os.path.join(opt.checkpoints_dir, opt.name, 'web')
@@ -35,13 +35,13 @@ class Visualizer():
     # |visuals|: dictionary of images to display or save
     def display_current_results(self, visuals, epoch, save_result):
         if self.display_id > 0:  # show images in the browser
-            if self.display_single_pane_ncols > 0:
+            ncols = self.opt.display_single_pane_ncols
+            if ncols > 0:
                 h, w = next(iter(visuals.values())).shape[:2]
                 table_css = """<style>
                         table {border-collapse: separate; border-spacing:4px; white-space:nowrap; text-align:center}
                         table td {width: %dpx; height: %dpx; padding: 4px; outline: 4px solid black}
                         </style>""" % (w, h)
-                ncols = self.display_single_pane_ncols
                 title = self.name
                 label_html = ''
                 label_html_row = ''
@@ -76,7 +76,7 @@ class Visualizer():
                     idx += 1
 
         if self.use_html and (save_result or not self.saved):  # save images to a html file
-            self.saved  = True
+            self.saved = True
             for label, image_numpy in visuals.items():
                 img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))
                 util.save_image(image_numpy, img_path)

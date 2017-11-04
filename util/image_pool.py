@@ -13,7 +13,7 @@ class ImagePool():
 
     def query(self, images):
         if self.pool_size == 0:
-            return images
+            return Variable(images)
         return_images = []
         for image in images:
             image = torch.unsqueeze(image, 0)
