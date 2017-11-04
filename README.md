@@ -123,11 +123,13 @@ The test results will be saved to a html file here: `./results/facades_pix2pix/l
 More example scripts can be found at `scripts` directory.
 
 ### Apply a pre-trained model (CycleGAN)
-If you would like to apply a pre-trained model to a collection of input photos (without image pairs), please use `--dataset_mode single` and `--model test` options. Here is a script to apply a pix2pix model to facade label maps (stored in the directory `facades/testB`).
+If you would like to apply a pre-trained model to a collection of input photos (without image pairs), please use `--dataset_mode single` and `--model test` options. Here is a script to apply a model to facade label maps (stored in the directory `facades/testB`).
 ``` bash
 #!./scripts/test_single.sh
-python test.py --dataroot ./datasets/facades/testB/ --name facades_pix2pix --model test --which_model_netG unet_256 --which_direction BtoA --dataset_mode single
+python test.py --dataroot ./datasets/facades/testA/ --name {my_trained_model_name} --model test --dataset_mode single
 ```
+
+You might have to specify `--which_model_netG` to match the generator architecture of the trained model.
 
 Note: We currently don't have pretrained models using PyTorch. This is in part because the models trained using Torch and PyTorch produce slightly different results, although we were not able to decide which result is better. If you would like to generate the same results that appeared in our paper, we recommend using the pretrained models in the Torch codebase.
 
