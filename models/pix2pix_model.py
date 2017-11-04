@@ -87,12 +87,12 @@ class Pix2PixModel(BaseModel):
         # Fake
         # stop backprop to the generator by detaching fake_B
         fake_AB = self.fake_AB_pool.query(torch.cat((self.real_A, self.fake_B), 1))
-        self.pred_fake = self.netD.forward(fake_AB.detach())
-        self.loss_D_fake = self.criterionGAN(self.pred_fake, False)
+        pred_fake = self.netD.forward(fake_AB.detach())
+        self.loss_D_fake = self.criterionGAN(pred_fake, False)
 
         # Real
         real_AB = torch.cat((self.real_A, self.real_B), 1)
-        self.pred_real = self.netD.forward(real_AB)
+        pred_real = self.netD.forward(real_AB)
         self.loss_D_real = self.criterionGAN(self.pred_real, True)
 
         # Combined loss

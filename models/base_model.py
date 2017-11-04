@@ -44,13 +44,14 @@ class BaseModel():
         save_path = os.path.join(self.save_dir, save_filename)
         torch.save(network.cpu().state_dict(), save_path)
         if len(gpu_ids) and torch.cuda.is_available():
-            network.cuda(device_id=gpu_ids[0]) # network.cuda(device=gpu_ids[0]) for the latest version.
+            network.cuda(device_id=gpu_ids[0])  # network.cuda(device=gpu_ids[0]) for the latest version.
 
     # helper loading function that can be used by subclasses
     def load_network(self, network, network_label, epoch_label):
         save_filename = '%s_net_%s.pth' % (epoch_label, network_label)
         save_path = os.path.join(self.save_dir, save_filename)
         network.load_state_dict(torch.load(save_path))
+
     # update learning rate (called once every epoch)
     def update_learning_rate(self):
         for scheduler in self.schedulers:
