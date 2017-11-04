@@ -217,11 +217,11 @@ class CycleGANModel(BaseModel):
 
     def get_current_visuals(self):
         real_A = util.tensor2im(self.real_A.data)
-        fake_B = util.tensor2im(self.fake_B)
-        rec_A = util.tensor2im(self.rec_A)
+        fake_B = util.tensor2im(self.fake_B.data)
+        rec_A = util.tensor2im(self.rec_A.data)
         real_B = util.tensor2im(self.real_B.data)
-        fake_A = util.tensor2im(self.fake_A)
-        rec_B = util.tensor2im(self.rec_B)
+        fake_A = util.tensor2im(self.fake_A.data)
+        rec_B = util.tensor2im(self.rec_B.data)
         if self.opt.isTrain and self.opt.identity > 0.0:
             idt_A = util.tensor2im(self.idt_A)
             idt_B = util.tensor2im(self.idt_B)
