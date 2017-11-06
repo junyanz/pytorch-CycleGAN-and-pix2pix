@@ -98,7 +98,7 @@ class CycleGANModel(BaseModel):
         real_B = Variable(self.input_B, volatile=True)
         fake_A = self.netG_B.forward(real_B)
         self.rec_B = self.netG_A.forward(fake_A).data
-        self.fake_A = self.fake_A.data
+        self.fake_A = fake_A.data
 
     # get image paths
     def get_image_paths(self):
