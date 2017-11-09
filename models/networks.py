@@ -118,7 +118,7 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % which_model_netG)
     if len(gpu_ids) > 0:
-        netG.cuda(device_id=gpu_ids[0])  # or netG.cuda(device=gpu_ids[0]) for latest version.
+        netG.cuda(gpu_ids[0])
     init_weights(netG, init_type=init_type)
     return netG
 
@@ -139,7 +139,7 @@ def define_D(input_nc, ndf, which_model_netD,
         raise NotImplementedError('Discriminator model name [%s] is not recognized' %
                                   which_model_netD)
     if use_gpu:
-        netD.cuda(device_id=gpu_ids[0])  # or netD.cuda(device=gpu_ids[0]) for latest version.
+        netD.cuda(gpu_ids[0])
     init_weights(netD, init_type=init_type)
     return netD
 
