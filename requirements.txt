@@ -1,0 +1,5 @@
+pytorch==0.2.0
+torchvision==0.1.9
+cuda80==1.0
+visdom==0.1.05
+dominate==2.3.1
