@@ -10,16 +10,15 @@ import numpy as np
 ###############################################################################
 
 
-
 def weights_init_normal(m):
     classname = m.__class__.__name__
     # print(classname)
     if classname.find('Conv') != -1:
-        init.uniform(m.weight.data, 0.0, 0.02)
+        init.normal(m.weight.data, 0.0, 0.02)
     elif classname.find('Linear') != -1:
-        init.uniform(m.weight.data, 0.0, 0.02)
+        init.normal(m.weight.data, 0.0, 0.02)
     elif classname.find('BatchNorm2d') != -1:
-        init.uniform(m.weight.data, 1.0, 0.02)
+        init.normal(m.weight.data, 1.0, 0.02)
         init.constant(m.bias.data, 0.0)
 
 
@@ -27,11 +26,11 @@ def weights_init_xavier(m):
     classname = m.__class__.__name__
     # print(classname)
     if classname.find('Conv') != -1:
-        init.xavier_normal(m.weight.data, gain=1)
+        init.xavier_normal(m.weight.data, gain=0.02)
     elif classname.find('Linear') != -1:
-        init.xavier_normal(m.weight.data, gain=1)
+        init.xavier_normal(m.weight.data, gain=0.02)
     elif classname.find('BatchNorm2d') != -1:
-        init.uniform(m.weight.data, 1.0, 0.02)
+        init.normal(m.weight.data, 1.0, 0.02)
         init.constant(m.bias.data, 0.0)
 
 
@@ -43,7 +42,7 @@ def weights_init_kaiming(m):
     elif classname.find('Linear') != -1:
         init.kaiming_normal(m.weight.data, a=0, mode='fan_in')
     elif classname.find('BatchNorm2d') != -1:
-        init.uniform(m.weight.data, 1.0, 0.02)
+        init.normal(m.weight.data, 1.0, 0.02)
         init.constant(m.bias.data, 0.0)
 
 
@@ -55,7 +54,7 @@ def weights_init_orthogonal(m):
     elif classname.find('Linear') != -1:
         init.orthogonal(m.weight.data, gain=1)
     elif classname.find('BatchNorm2d') != -1:
-        init.uniform(m.weight.data, 1.0, 0.02)
+        init.normal(m.weight.data, 1.0, 0.02)
         init.constant(m.bias.data, 0.0)
 
 
@@ -88,7 +87,7 @@ def get_norm_layer(norm_type='instance'):
 def get_scheduler(optimizer, opt):
     if opt.lr_policy == 'lambda':
         def lambda_rule(epoch):
-            lr_l = 1.0 - max(0, epoch - opt.niter) / float(opt.niter_decay+1)
+            lr_l = 1.0 - max(0, epoch + 1 + opt.epoch_count - opt.niter) / float(opt.niter_decay + 1)
             return lr_l
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda_rule)
     elif opt.lr_policy == 'step':
@@ -119,7 +118,7 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % which_model_netG)
     if len(gpu_ids) > 0:
-        netG.cuda(device_id=gpu_ids[0])
+        netG.cuda(gpu_ids[0])
     init_weights(netG, init_type=init_type)
     return netG
 
@@ -142,7 +141,7 @@ def define_D(input_nc, ndf, which_model_netD,
         raise NotImplementedError('Discriminator model name [%s] is not recognized' %
                                   which_model_netD)
     if use_gpu:
-        netD.cuda(device_id=gpu_ids[0])
+        netD.cuda(gpu_ids[0])
     init_weights(netD, init_type=init_type)
     return netD
 
