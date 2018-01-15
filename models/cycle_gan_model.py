@@ -20,8 +20,6 @@ class CycleGANModel(BaseModel):
 
         nb = opt.batchSize
         size = opt.fineSize
-        self.input_A = self.Tensor(nb, opt.input_nc, size, size)
-        self.input_B = self.Tensor(nb, opt.output_nc, size, size)
 
         # load/define networks
         # The naming conversion is different from those used in the paper
@@ -81,8 +79,11 @@ class CycleGANModel(BaseModel):
         AtoB = self.opt.which_direction == 'AtoB'
         input_A = input['A' if AtoB else 'B']
         input_B = input['B' if AtoB else 'A']
-        self.input_A.resize_(input_A.size()).copy_(input_A)
-        self.input_B.resize_(input_B.size()).copy_(input_B)
+        if len(self.gpu_ids) > 0:
+            input_A = input_A.cuda(self.gpu_ids[0], async=True)
+            input_B = input_B.cuda(self.gpu_ids[0], async=True)
+        self.input_A = input_A
+        self.input_B = input_B
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
