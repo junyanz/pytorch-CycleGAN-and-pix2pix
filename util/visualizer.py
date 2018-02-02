@@ -18,7 +18,7 @@ class Visualizer():
         self.saved = False
         if self.display_id > 0:
             import visdom
-            self.vis = visdom.Visdom(port=opt.display_port)
+            self.vis = visdom.Visdom(server=opt.display_server, port=opt.display_port)
 
         if self.use_html:
             self.web_dir = os.path.join(opt.checkpoints_dir, opt.name, 'web')
