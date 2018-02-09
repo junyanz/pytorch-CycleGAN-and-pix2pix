@@ -4,7 +4,6 @@ from torch.nn import init
 import functools
 from torch.autograd import Variable
 from torch.optim import lr_scheduler
-import numpy as np
 ###############################################################################
 # Functions
 ###############################################################################
@@ -434,6 +433,7 @@ class NLayerDiscriminator(nn.Module):
         else:
             return self.model(input)
 
+
 class PixelDiscriminator(nn.Module):
     def __init__(self, input_nc, ndf=64, norm_layer=nn.BatchNorm2d, use_sigmoid=False, gpu_ids=[]):
         super(PixelDiscriminator, self).__init__()
@@ -442,7 +442,7 @@ class PixelDiscriminator(nn.Module):
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
-            
+
         self.net = [
             nn.Conv2d(input_nc, ndf, kernel_size=1, stride=1, padding=0),
             nn.LeakyReLU(0.2, True),
@@ -461,4 +461,3 @@ class PixelDiscriminator(nn.Module):
             return nn.parallel.data_parallel(self.net, input, self.gpu_ids)
         else:
             return self.net(input)
-

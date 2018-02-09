@@ -1,6 +1,4 @@
-import numpy as np
 import torch
-import os
 from collections import OrderedDict
 from torch.autograd import Variable
 import itertools
@@ -8,7 +6,6 @@ import util.util as util
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
-import sys
 
 
 class CycleGANModel(BaseModel):
@@ -17,10 +14,6 @@ class CycleGANModel(BaseModel):
 
     def initialize(self, opt):
         BaseModel.initialize(self, opt)
-
-        nb = opt.batchSize
-        size = opt.fineSize
-
         # load/define networks
         # The naming conversion is different from those used in the paper
         # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
@@ -200,7 +193,7 @@ class CycleGANModel(BaseModel):
 
     def get_current_errors(self):
         ret_errors = OrderedDict([('D_A', self.loss_D_A), ('G_A', self.loss_G_A), ('Cyc_A', self.loss_cycle_A),
-                                 ('D_B', self.loss_D_B), ('G_B', self.loss_G_B), ('Cyc_B',  self.loss_cycle_B)])
+                                  ('D_B', self.loss_D_B), ('G_B', self.loss_G_B), ('Cyc_B', self.loss_cycle_B)])
         if self.opt.identity > 0.0:
             ret_errors['idt_A'] = self.loss_idt_A
             ret_errors['idt_B'] = self.loss_idt_B

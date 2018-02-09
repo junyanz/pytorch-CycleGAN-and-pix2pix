@@ -1,4 +1,3 @@
-
 def create_model(opt):
     model = None
     print(opt.model)

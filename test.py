@@ -1,4 +1,3 @@
-import time
 import os
 from options.test_options import TestOptions
 from data.data_loader import CreateDataLoader
