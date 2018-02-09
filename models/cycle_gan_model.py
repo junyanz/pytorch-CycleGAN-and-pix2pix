@@ -40,7 +40,6 @@ class CycleGANModel(BaseModel):
                 self.load_network(self.netD_B, 'D_B', which_epoch)
 
         if self.isTrain:
-            self.old_lr = opt.lr
             self.fake_A_pool = ImagePool(opt.pool_size)
             self.fake_B_pool = ImagePool(opt.pool_size)
             # define loss functions
