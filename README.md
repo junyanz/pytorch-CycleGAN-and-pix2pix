@@ -222,19 +222,21 @@ This will combine each pair of images (A,B) into a single image file, ready for 
 ## Citation
 If you use this code for your research, please cite our papers.
 ```
-@article{CycleGAN2017,
-  title={Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks},
+@inproceedings{CycleGAN2017,
+  title={Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networkss},
   author={Zhu, Jun-Yan and Park, Taesung and Isola, Phillip and Efros, Alexei A},
-  journal={arXiv preprint arXiv:1703.10593},
+  booktitle={Computer Vision (ICCV), 2017 IEEE International Conference on},
   year={2017}
 }
 
-@article{pix2pix2016,
+
+@inproceedings{isola2016image,
   title={Image-to-Image Translation with Conditional Adversarial Networks},
   author={Isola, Phillip and Zhu, Jun-Yan and Zhou, Tinghui and Efros, Alexei A},
-  journal={arxiv},
-  year={2016}
+  booktitle={Computer Vision and Pattern Recognition (CVPR), 2017 IEEE Conference on},
+  year={2017}
 }
+
 ```
 
 ## Related Projects
