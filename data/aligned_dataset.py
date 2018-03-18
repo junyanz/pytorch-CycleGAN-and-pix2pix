@@ -18,19 +18,17 @@ class AlignedDataset(BaseDataset):
     def __getitem__(self, index):
         AB_path = self.AB_paths[index]
         AB = Image.open(AB_path).convert('RGB')
-        AB = AB.resize((self.opt.loadSize * 2, self.opt.loadSize), Image.BICUBIC)
-        AB = transforms.ToTensor()(AB)
+        w, h = AB.size
+        w2 = int(w / 2)
+        A = AB.crop((0, 0, w2, h)).resize((self.opt.loadSize, self.opt.loadSize), Image.BICUBIC)
+        B = AB.crop((w2, 0, w, h)).resize((self.opt.loadSize, self.opt.loadSize), Image.BICUBIC)
+        A = transforms.ToTensor()(A)
+        B = transforms.ToTensor()(B)
+        w_offset = random.randint(0, max(0, self.opt.loadSize - self.opt.fineSize - 1))
+        h_offset = random.randint(0, max(0, self.opt.loadSize - self.opt.fineSize - 1))
 
-        w_total = AB.size(2)
-        w = int(w_total / 2)
-        h = AB.size(1)
-        w_offset = random.randint(0, max(0, w - self.opt.fineSize - 1))
-        h_offset = random.randint(0, max(0, h - self.opt.fineSize - 1))
-
-        A = AB[:, h_offset:h_offset + self.opt.fineSize,
-               w_offset:w_offset + self.opt.fineSize]
-        B = AB[:, h_offset:h_offset + self.opt.fineSize,
-               w + w_offset:w + w_offset + self.opt.fineSize]
+        A = A[:, h_offset:h_offset + self.opt.fineSize, w_offset:w_offset + self.opt.fineSize]
+        B = B[:, h_offset:h_offset + self.opt.fineSize, w_offset:w_offset + self.opt.fineSize]
 
         A = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(A)
         B = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(B)
