@@ -145,12 +145,13 @@ def define_D(input_nc, ndf, which_model_netD,
     return netD
 
 
-def print_network(net):
+def print_network(net, verbose=False):
     num_params = 0
     for param in net.parameters():
         num_params += param.numel()
-    print(net)
-    print('Total number of parameters: %d' % num_params)
+    if verbose:
+        print(net)
+    print('Total number of parameters: %.3f M' % (num_params / 1e6))
 
 
 ##############################################################################

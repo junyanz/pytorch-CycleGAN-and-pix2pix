@@ -1,7 +1,6 @@
 import torch
 from collections import OrderedDict
 from torch.autograd import Variable
-import util.util as util
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
@@ -47,9 +46,9 @@ class Pix2PixModel(BaseModel):
                 self.schedulers.append(networks.get_scheduler(optimizer, opt))
 
         print('---------- Networks initialized -------------')
-        networks.print_network(self.netG)
+        networks.print_network(self.netG, opt.verbose)
         if self.isTrain:
-            networks.print_network(self.netD)
+            networks.print_network(self.netD, opt.verbose)
         print('-----------------------------------------------')
 
     def set_input(self, input):
@@ -81,7 +80,7 @@ class Pix2PixModel(BaseModel):
     def backward_D(self):
         # Fake
         # stop backprop to the generator by detaching fake_B
-        fake_AB = self.fake_AB_pool.query(torch.cat((self.real_A, self.fake_B), 1).data)
+        fake_AB = self.fake_AB_pool.query(torch.cat((self.real_A, self.fake_B), 1))
         pred_fake = self.netD(fake_AB.detach())
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
 
@@ -120,17 +119,14 @@ class Pix2PixModel(BaseModel):
         self.optimizer_G.step()
 
     def get_current_errors(self):
-        return OrderedDict([('G_GAN', self.loss_G_GAN.data[0]),
-                            ('G_L1', self.loss_G_L1.data[0]),
-                            ('D_real', self.loss_D_real.data[0]),
-                            ('D_fake', self.loss_D_fake.data[0])
+        return OrderedDict([('G_GAN', self.loss_G_GAN),
+                            ('G_L1', self.loss_G_L1),
+                            ('D_real', self.loss_D_real),
+                            ('D_fake', self.loss_D_fake)
                             ])
 
     def get_current_visuals(self):
-        real_A = util.tensor2im(self.real_A.data)
-        fake_B = util.tensor2im(self.fake_B.data)
-        real_B = util.tensor2im(self.real_B.data)
-        return OrderedDict([('real_A', real_A), ('fake_B', fake_B), ('real_B', real_B)])
+        return OrderedDict([('real_A', self.real_A), ('fake_B', self.fake_B), ('real_B', self.real_B)])
 
     def save(self, label):
         self.save_network(self.netG, 'G', label, self.gpu_ids)

@@ -9,12 +9,12 @@ from scipy.misc import imresize
 
 class Visualizer():
     def __init__(self, opt):
-        # self.opt = opt
         self.display_id = opt.display_id
         self.use_html = opt.isTrain and not opt.no_html
         self.win_size = opt.display_winsize
         self.name = opt.name
         self.opt = opt
+        self.ncols = opt.display_ncols
         self.saved = False
         if self.display_id > 0:
             import visdom
@@ -36,8 +36,9 @@ class Visualizer():
     # |visuals|: dictionary of images to display or save
     def display_current_results(self, visuals, epoch, save_result):
         if self.display_id > 0:  # show images in the browser
-            ncols = self.opt.display_single_pane_ncols
+            ncols = self.ncols
             if ncols > 0:
+                ncols = min(ncols, len(visuals))
                 h, w = next(iter(visuals.values())).shape[:2]
                 table_css = """<style>
                         table {border-collapse: separate; border-spacing:4px; white-space:nowrap; text-align:center}
@@ -46,10 +47,10 @@ class Visualizer():
                 title = self.name
                 label_html = ''
                 label_html_row = ''
-                nrows = int(np.ceil(len(visuals.items()) / ncols))
                 images = []
                 idx = 0
-                for label, image_numpy in visuals.items():
+                for label, image in visuals.items():
+                    image_numpy = util.tensor2im(image)
                     label_html_row += '<td>%s</td>' % label
                     images.append(image_numpy.transpose([2, 0, 1]))
                     idx += 1
@@ -71,25 +72,26 @@ class Visualizer():
                               opts=dict(title=title + ' labels'))
             else:
                 idx = 1
-                for label, image_numpy in visuals.items():
+                for label, image in visuals.items():
+                    image_numpy = util.tensor2im(image)
                     self.vis.image(image_numpy.transpose([2, 0, 1]), opts=dict(title=label),
                                    win=self.display_id + idx)
                     idx += 1
 
         if self.use_html and (save_result or not self.saved):  # save images to a html file
             self.saved = True
-            for label, image_numpy in visuals.items():
+            for label, image in visuals.items():
+                image_numpy = util.tensor2im(image)
                 img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))
                 util.save_image(image_numpy, img_path)
             # update website
             webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, reflesh=1)
             for n in range(epoch, 0, -1):
                 webpage.add_header('epoch [%d]' % n)
-                ims = []
-                txts = []
-                links = []
+                ims, txts, links = [], [], []
 
                 for label, image_numpy in visuals.items():
+                    image_numpy = util.tensor2im(image)
                     img_path = 'epoch%.3d_%s.png' % (n, label)
                     ims.append(img_path)
                     txts.append(label)
@@ -102,7 +104,7 @@ class Visualizer():
         if not hasattr(self, 'plot_data'):
             self.plot_data = {'X': [], 'Y': [], 'legend': list(errors.keys())}
         self.plot_data['X'].append(epoch + counter_ratio)
-        self.plot_data['Y'].append([errors[k] for k in self.plot_data['legend']])
+        self.plot_data['Y'].append([util.tensor2float(errors[k]) for k in self.plot_data['legend']])
         self.vis.line(
             X=np.stack([np.array(self.plot_data['X'])] * len(self.plot_data['legend']), 1),
             Y=np.array(self.plot_data['Y']),
@@ -130,11 +132,10 @@ class Visualizer():
         name = os.path.splitext(short_path)[0]
 
         webpage.add_header(name)
-        ims = []
-        txts = []
-        links = []
+        ims, txts, links = [], [], []
 
-        for label, im in visuals.items():
+        for label, im_data in visuals.items():
+            im = util.tensor2im(im_data)
             image_name = '%s_%s.png' % (name, label)
             save_path = os.path.join(image_dir, image_name)
             h, w, _ = im.shape

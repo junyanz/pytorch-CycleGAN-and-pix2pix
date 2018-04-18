@@ -5,7 +5,7 @@ class TrainOptions(BaseOptions):
     def initialize(self):
         BaseOptions.initialize(self)
         self.parser.add_argument('--display_freq', type=int, default=100, help='frequency of showing training results on screen')
-        self.parser.add_argument('--display_single_pane_ncols', type=int, default=0, help='if positive, display all images in a single visdom web panel with certain number of images per row.')
+        self.parser.add_argument('--display_ncols', type=int, default=4, help='if positive, display all images in a single visdom web panel with certain number of images per row.')
         self.parser.add_argument('--update_html_freq', type=int, default=1000, help='frequency of saving training results to html')
         self.parser.add_argument('--print_freq', type=int, default=100, help='frequency of showing training results on console')
         self.parser.add_argument('--save_latest_freq', type=int, default=5000, help='frequency of saving the latest results')

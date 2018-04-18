@@ -1,6 +1,5 @@
 from torch.autograd import Variable
 from collections import OrderedDict
-import util.util as util
 from .base_model import BaseModel
 from . import networks
 
@@ -41,6 +40,4 @@ class TestModel(BaseModel):
         return self.image_paths
 
     def get_current_visuals(self):
-        real_A = util.tensor2im(self.real_A.data)
-        fake_B = util.tensor2im(self.fake_B.data)
-        return OrderedDict([('real_A', real_A), ('fake_B', fake_B)])
+        return OrderedDict([('real_A', self.real_A), ('fake_B', self.fake_B)])

@@ -3,11 +3,30 @@ import torch
 import numpy as np
 from PIL import Image
 import os
+from torch import is_tensor
+from torch.autograd import Variable
 
 
-# Converts a Tensor into a Numpy array
+# Converts a Tensor into a float
+def tensor2float(input_error):
+    if is_tensor(input_error):
+        error = input_error[0]
+    elif isinstance(input_error, Variable):
+        error = input_error.data[0]
+    else:
+        error = input_error
+    return error
+
+
+# Converts a Tensor into an image array (numpy)
 # |imtype|: the desired type of the converted numpy array
-def tensor2im(image_tensor, imtype=np.uint8):
+def tensor2im(input_image, imtype=np.uint8):
+    if is_tensor(input_image):
+        image_tensor = input_image
+    elif isinstance(input_image, Variable):
+        image_tensor = input_image.data
+    else:
+        return input_image
     image_numpy = image_tensor[0].cpu().float().numpy()
     if image_numpy.shape[0] == 1:
         image_numpy = np.tile(image_numpy, (3, 1, 1))
