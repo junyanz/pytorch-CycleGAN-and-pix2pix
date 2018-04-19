@@ -14,10 +14,10 @@ class Visualizer():
         self.win_size = opt.display_winsize
         self.name = opt.name
         self.opt = opt
-        self.ncols = opt.display_ncols
         self.saved = False
         if self.display_id > 0:
             import visdom
+            self.ncols = opt.display_ncols
             self.vis = visdom.Visdom(server=opt.display_server, port=opt.display_port)
 
         if self.use_html:
