@@ -13,7 +13,7 @@ class CycleGANModel(BaseModel):
     def initialize(self, opt):
         BaseModel.initialize(self, opt)
 
-        # specify the training losses you want to print out. The program will call base_model.get_current_errors
+        # specify the training losses you want to print out. The program will call base_model.get_current_losses
         self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B']
         # specify the images you want to save/display. The program will call base_model.get_current_visuals
         visual_names_A = ['real_A', 'fake_B', 'rec_A']
@@ -23,7 +23,7 @@ class CycleGANModel(BaseModel):
             visual_names_B.append('idt_B')
 
         self.visual_names = visual_names_A + visual_names_B
-        # specify the models you want to save to the disk. The program will call base_model.save
+        # specify the models you want to save to the disk. The program will call base_model.save_networks and base_model.load_networks
         if self.isTrain:
             self.model_names = ['G_A', 'G_B', 'D_A', 'D_B']
         else:  # during test time, only load Gs
@@ -91,10 +91,6 @@ class CycleGANModel(BaseModel):
         real_B = Variable(self.input_B, volatile=True)
         self.fake_A = self.netG_B(real_B)
         self.rec_B = self.netG_A(self.fake_A)
-
-    # get image paths
-    def get_image_paths(self):
-        return self.image_paths
 
     def backward_D_basic(self, netD, real, fake):
         # Real

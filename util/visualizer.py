@@ -99,12 +99,12 @@ class Visualizer():
                 webpage.add_images(ims, txts, links, width=self.win_size)
             webpage.save()
 
-    # errors: dictionary of error labels and values
-    def plot_current_errors(self, epoch, counter_ratio, opt, errors):
+    # losses: dictionary of error labels and values
+    def plot_current_losses(self, epoch, counter_ratio, opt, losses):
         if not hasattr(self, 'plot_data'):
-            self.plot_data = {'X': [], 'Y': [], 'legend': list(errors.keys())}
+            self.plot_data = {'X': [], 'Y': [], 'legend': list(losses.keys())}
         self.plot_data['X'].append(epoch + counter_ratio)
-        self.plot_data['Y'].append([util.tensor2float(errors[k]) for k in self.plot_data['legend']])
+        self.plot_data['Y'].append([util.tensor2float(losses[k]) for k in self.plot_data['legend']])
         self.vis.line(
             X=np.stack([np.array(self.plot_data['X'])] * len(self.plot_data['legend']), 1),
             Y=np.array(self.plot_data['Y']),
@@ -115,10 +115,10 @@ class Visualizer():
                 'ylabel': 'loss'},
             win=self.display_id)
 
-    # errors: same format as |errors| of plotCurrentErrors
-    def print_current_errors(self, epoch, i, errors, t, t_data):
+    # losses: same format as |losses| of plot_current_losses
+    def print_current_losses(self, epoch, i, losses, t, t_data):
         message = '(epoch: %d, iters: %d, time: %.3f, data: %.3f) ' % (epoch, i, t, t_data)
-        for k, v in errors.items():
+        for k, v in losses.items():
             message += '%s: %.3f ' % (k, v)
 
         print(message)
