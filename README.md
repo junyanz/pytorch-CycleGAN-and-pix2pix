@@ -27,7 +27,7 @@ If you use this code for your research, please cite:
 
 Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks  
 [Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz/)\*,  [Taesung Park](https://taesung.me/)\*, [Phillip Isola](https://people.eecs.berkeley.edu/~isola/), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros)  
-In arxiv, 2017. (* equal contributions)  
+In ICCV 2017. (* equal contributions)  
 
 
 Image-to-Image Translation with Conditional Adversarial Networks  
