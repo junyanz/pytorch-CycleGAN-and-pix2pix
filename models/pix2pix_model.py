@@ -31,9 +31,6 @@ class Pix2PixModel(BaseModel):
                                           opt.which_model_netD,
                                           opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, self.gpu_ids)
 
-        if not self.isTrain or opt.continue_train:
-            self.load_networks(opt.which_epoch)
-
         if self.isTrain:
             self.fake_AB_pool = ImagePool(opt.pool_size)
             # define loss functions
@@ -51,6 +48,9 @@ class Pix2PixModel(BaseModel):
             self.optimizers.append(self.optimizer_D)
             for optimizer in self.optimizers:
                 self.schedulers.append(networks.get_scheduler(optimizer, opt))
+
+        if not self.isTrain or opt.continue_train:
+            self.load_networks(opt.which_epoch)
 
         self.print_networks(opt.verbose)
 

@@ -45,8 +45,6 @@ class CycleGANModel(BaseModel):
             self.netD_B = networks.define_D(opt.input_nc, opt.ndf,
                                             opt.which_model_netD,
                                             opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, self.gpu_ids)
-        if not self.isTrain or opt.continue_train:
-            self.load_networks(opt.which_epoch)
 
         if self.isTrain:
             self.fake_A_pool = ImagePool(opt.pool_size)
@@ -66,6 +64,8 @@ class CycleGANModel(BaseModel):
             for optimizer in self.optimizers:
                 self.schedulers.append(networks.get_scheduler(optimizer, opt))
 
+        if not self.isTrain or opt.continue_train:
+            self.load_networks(opt.which_epoch)
         self.print_networks(opt.verbose)
 
     def set_input(self, input):

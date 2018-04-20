@@ -67,7 +67,7 @@ class BaseModel():
                 save_filename = '%s_net_%s.pth' % (which_epoch, name)
                 save_path = os.path.join(self.save_dir, save_filename)
                 net = getattr(self, 'net' + name)
-                torch.save(net.cpu().state_dict(), save_path)
+                torch.module.save(net.cpu().state_dict(), save_path)
                 if len(self.gpu_ids) and torch.cuda.is_available():
                     net.cuda(self.gpu_ids[0])
 
@@ -78,7 +78,7 @@ class BaseModel():
                 save_filename = '%s_net_%s.pth' % (which_epoch, name)
                 save_path = os.path.join(self.save_dir, save_filename)
                 net = getattr(self, 'net' + name)
-                net.load_state_dict(torch.load(save_path))
+                net.module.load_state_dict(torch.load(save_path))
 
     # print network information
     def print_networks(self, verbose):

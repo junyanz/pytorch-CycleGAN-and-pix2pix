@@ -24,7 +24,7 @@ class TestModel(BaseModel):
                                       opt.norm, not opt.no_dropout,
                                       opt.init_type,
                                       self.gpu_ids)
-        self.load(opt.which_epoch)
+        self.load_networks(opt.which_epoch)
         self.print_networks(opt.verbose)
 
     def set_input(self, input):
