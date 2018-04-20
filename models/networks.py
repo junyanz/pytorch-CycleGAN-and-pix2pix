@@ -4,6 +4,7 @@ from torch.nn import init
 import functools
 from torch.autograd import Variable
 from torch.optim import lr_scheduler
+
 ###############################################################################
 # Helper Functions
 ###############################################################################
@@ -57,7 +58,6 @@ def init_weights(net, init_type='normal'):
 
 
 def init_net(net, init_type='normal', gpu_ids=[]):
-    print('initialization method [%s]' % init_type)
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
         net.cuda(gpu_ids[0])
@@ -99,15 +99,6 @@ def define_D(input_nc, ndf, which_model_netD,
         raise NotImplementedError('Discriminator model name [%s] is not recognized' %
                                   which_model_netD)
     return init_net(netD, init_type, gpu_ids)
-
-
-def print_network(net, verbose=False):
-    num_params = 0
-    for param in net.parameters():
-        num_params += param.numel()
-    if verbose:
-        print(net)
-    print('Total number of parameters: %.3f M' % (num_params / 1e6))
 
 
 ##############################################################################

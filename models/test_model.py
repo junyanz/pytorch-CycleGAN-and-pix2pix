@@ -11,17 +11,21 @@ class TestModel(BaseModel):
     def initialize(self, opt):
         assert(not opt.isTrain)
         BaseModel.initialize(self, opt)
+
+        # specify the training losses you want to print out. The program will call base_model.get_current_errors
+        self.loss_names = []
+        # specify the images you want to save/display. The program will call base_model.get_current_visuals
+        self.visual_names = ['real_A', 'fake_B']
+        # specify the models you want to save to the disk. The program will call base_model.save
+        self.model_names = ['G']
+
         self.netG = networks.define_G(opt.input_nc, opt.output_nc,
                                       opt.ngf, opt.which_model_netG,
                                       opt.norm, not opt.no_dropout,
                                       opt.init_type,
                                       self.gpu_ids)
-        which_epoch = opt.which_epoch
-        self.load_network(self.netG, 'G', which_epoch)
-
-        print('---------- Networks initialized -------------')
-        networks.print_network(self.netG)
-        print('-----------------------------------------------')
+        self.load(opt.which_epoch)
+        self.print_networks(opt.verbose)
 
     def set_input(self, input):
         # we need to use single_dataset mode
@@ -34,10 +38,6 @@ class TestModel(BaseModel):
     def test(self):
         self.real_A = Variable(self.input_A, volatile=True)
         self.fake_B = self.netG(self.real_A)
-
-    # get image paths
-    def get_image_paths(self):
-        return self.image_paths
 
     def get_current_visuals(self):
         return OrderedDict([('real_A', self.real_A), ('fake_B', self.fake_B)])

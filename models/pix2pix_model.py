@@ -1,5 +1,4 @@
 import torch
-from collections import OrderedDict
 from torch.autograd import Variable
 from util.image_pool import ImagePool
 from .base_model import BaseModel
@@ -13,7 +12,15 @@ class Pix2PixModel(BaseModel):
     def initialize(self, opt):
         BaseModel.initialize(self, opt)
         self.isTrain = opt.isTrain
-
+        # specify the training losses you want to print out. The program will call base_model.get_current_errors
+        self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
+        # specify the images you want to save/display. The program will call base_model.get_current_visuals
+        self.visual_names = ['real_A', 'fake_B', 'real_B']
+        # specify the models you want to save to the disk. The program will call base_model.save
+        if self.isTrain:
+            self.model_names = ['G', 'D']
+        else:  # during test time, only load Gs
+            self.model_names = ['G']
         # load/define networks
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf,
                                       opt.which_model_netG, opt.norm, not opt.no_dropout, opt.init_type, self.gpu_ids)
@@ -25,9 +32,7 @@ class Pix2PixModel(BaseModel):
                                           opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, self.gpu_ids)
 
         if not self.isTrain or opt.continue_train:
-            self.load_network(self.netG, 'G', opt.which_epoch)
-            if self.isTrain:
-                self.load_network(self.netD, 'D', opt.which_epoch)
+            self.load_networks(opt.which_epoch)
 
         if self.isTrain:
             self.fake_AB_pool = ImagePool(opt.pool_size)
@@ -47,11 +52,7 @@ class Pix2PixModel(BaseModel):
             for optimizer in self.optimizers:
                 self.schedulers.append(networks.get_scheduler(optimizer, opt))
 
-        print('---------- Networks initialized -------------')
-        networks.print_network(self.netG, opt.verbose)
-        if self.isTrain:
-            networks.print_network(self.netD, opt.verbose)
-        print('-----------------------------------------------')
+        self.print_networks(opt.verbose)
 
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
@@ -119,17 +120,3 @@ class Pix2PixModel(BaseModel):
         self.optimizer_G.zero_grad()
         self.backward_G()
         self.optimizer_G.step()
-
-    def get_current_errors(self):
-        return OrderedDict([('G_GAN', self.loss_G_GAN),
-                            ('G_L1', self.loss_G_L1),
-                            ('D_real', self.loss_D_real),
-                            ('D_fake', self.loss_D_fake)
-                            ])
-
-    def get_current_visuals(self):
-        return OrderedDict([('real_A', self.real_A), ('fake_B', self.fake_B), ('real_B', self.real_B)])
-
-    def save(self, label):
-        self.save_network(self.netG, 'G', label, self.gpu_ids)
-        self.save_network(self.netD, 'D', label, self.gpu_ids)
