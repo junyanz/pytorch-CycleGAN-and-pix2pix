@@ -85,12 +85,12 @@ class CycleGANModel(BaseModel):
         self.real_B = Variable(self.input_B)
 
     def test(self):
-        real_A = Variable(self.input_A, volatile=True)
-        self.fake_B = self.netG_A(real_A)
+        self.real_A = Variable(self.input_A, volatile=True)
+        self.fake_B = self.netG_A(self.real_A)
         self.rec_A = self.netG_B(self.fake_B)
 
-        real_B = Variable(self.input_B, volatile=True)
-        self.fake_A = self.netG_B(real_B)
+        self.real_B = Variable(self.input_B, volatile=True)
+        self.fake_A = self.netG_B(self.real_B)
         self.rec_B = self.netG_A(self.fake_A)
 
     def backward_D_basic(self, netD, real, fake):
