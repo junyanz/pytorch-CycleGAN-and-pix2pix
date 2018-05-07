@@ -38,6 +38,3 @@ class TestModel(BaseModel):
     def test(self):
         self.real_A = Variable(self.input_A, volatile=True)
         self.fake_B = self.netG(self.real_A)
-
-    def get_current_visuals(self):
-        return OrderedDict([('real_A', self.real_A), ('fake_B', self.fake_B)])
