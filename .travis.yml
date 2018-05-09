@@ -1,0 +1,55 @@
+language: python
+python: "3.6"
+install:
+  - sudo apt-get update -qqy
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda config --set always_yes yes --set changeps1 no
+  - conda config --add channels soumith
+  - conda config --add channels conda-forge
+  - conda update -q conda
+  - conda info -a
+  - conda create -q --name test-environment --file requirements.txt python=$TRAVIS_PYTHON_VERSION
+  - source activate test-environment
+  - conda list
+  - if [ ! -d "datasets/facades" ]; then
+      bash ./datasets/download_pix2pix_dataset.sh facades;
+      bash ./datasets/download_cyclegan_dataset.sh facades;
+    fi
+
+script:
+  - python -m visdom.server &
+  # pix2pix
+  - bash ./pretrained_models/download_pix2pix_model.sh facades_label2photo
+  - python test.py
+    --dataroot ./datasets/facades
+    --name facades_label2photo_pretrained
+    --model pix2pix
+    --which_direction BtoA
+    --dataset_mode aligned
+    --which_model_netG unet_256
+    --norm batch
+    --gpu_ids -1
+  # CycleGAN
+  # Do not train it since it is too cpu intensive without a gpu
+  # - python train.py
+  #   --dataroot ./datasets/facades
+  #   --name maps_cyclegan
+  #   --model cycle_gan
+  #   --no_dropout
+  #   --niter 0
+  #   --niter_decay 1
+  #   --pool_size 10
+  #   --gpu_ids -1
+  # - python test.py
+  #   --dataroot ./datasets/facades
+  #   --name maps_cyclegan
+  #   --model cycle_gan
+  #   --no_dropout
+  #   --phase test
+  #   --gpu_ids -1
+
+cache:
+  directories:
+    - datasets
