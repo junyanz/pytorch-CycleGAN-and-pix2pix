@@ -28,12 +28,11 @@ class TestModel(BaseModel):
 
     def set_input(self, input):
         # we need to use single_dataset mode
-        input_A = input['A']
+        real_A = input['A']
         if len(self.gpu_ids) > 0:
-            input_A = input_A.cuda(self.gpu_ids[0], async=True)
-        self.input_A = input_A
+            real_A = real_A.to(self.device)
+        self.real_A = real_A
         self.image_paths = input['A_paths']
 
-    def test(self):
-        self.real_A = Variable(self.input_A, volatile=True)
+    def forward(self):
         self.fake_B = self.netG(self.real_A)

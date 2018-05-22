@@ -1,5 +1,4 @@
 import torch
-from torch.autograd import Variable
 import itertools
 from util.image_pool import ImagePool
 from .base_model import BaseModel
@@ -50,7 +49,7 @@ class CycleGANModel(BaseModel):
             self.fake_A_pool = ImagePool(opt.pool_size)
             self.fake_B_pool = ImagePool(opt.pool_size)
             # define loss functions
-            self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)
+            self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan).to(self.device)
             self.criterionCycle = torch.nn.L1Loss()
             self.criterionIdt = torch.nn.L1Loss()
             # initialize optimizers
@@ -71,25 +70,19 @@ class CycleGANModel(BaseModel):
 
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
-        input_A = input['A' if AtoB else 'B']
-        input_B = input['B' if AtoB else 'A']
+        real_A = input['A' if AtoB else 'B']
+        real_B = input['B' if AtoB else 'A']
         if len(self.gpu_ids) > 0:
-            input_A = input_A.cuda(self.gpu_ids[0], async=True)
-            input_B = input_B.cuda(self.gpu_ids[0], async=True)
-        self.input_A = input_A
-        self.input_B = input_B
+            real_A = real_A.to(self.device)
+            real_B = real_B.to(self.device)
+        self.real_A = real_A
+        self.real_B = real_B
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
-        self.real_A = Variable(self.input_A)
-        self.real_B = Variable(self.input_B)
-
-    def test(self):
-        self.real_A = Variable(self.input_A, volatile=True)
         self.fake_B = self.netG_A(self.real_A)
         self.rec_A = self.netG_B(self.fake_B)
 
-        self.real_B = Variable(self.input_B, volatile=True)
         self.fake_A = self.netG_B(self.real_B)
         self.rec_B = self.netG_A(self.fake_A)
 
@@ -131,19 +124,15 @@ class CycleGANModel(BaseModel):
             self.loss_idt_B = 0
 
         # GAN loss D_A(G_A(A))
-        self.fake_B = self.netG_A(self.real_A)
         self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)
 
         # GAN loss D_B(G_B(B))
-        self.fake_A = self.netG_B(self.real_B)
         self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
 
         # Forward cycle loss
-        self.rec_A = self.netG_B(self.fake_B)
         self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
 
         # Backward cycle loss
-        self.rec_B = self.netG_A(self.fake_A)
         self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
         # combined loss
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B

@@ -11,7 +11,7 @@ class BaseModel():
         self.opt = opt
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
-        self.Tensor = torch.cuda.FloatTensor if self.gpu_ids else torch.Tensor
+        self.device = torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')
         self.save_dir = os.path.join(opt.checkpoints_dir, opt.name)
         if opt.resize_or_crop != 'scale_width':
             torch.backends.cudnn.benchmark = True
@@ -26,9 +26,11 @@ class BaseModel():
     def forward(self):
         pass
 
-    # used in test time, no backprop
+    # used in test time, wrapping `forward` in no_grad() so we don't save
+    # intermediate steps for backprop
     def test(self):
-        pass
+        with torch.no_grad():
+            self.forward()
 
     # get image paths
     def get_image_paths(self):
@@ -57,7 +59,7 @@ class BaseModel():
         errors_ret = OrderedDict()
         for name in self.loss_names:
             if isinstance(name, str):
-                errors_ret[name] = getattr(self, 'loss_' + name)
+                errors_ret[name] = getattr(self, 'loss_' + name).item()
         return errors_ret
 
     # save models to the disk
@@ -74,6 +76,17 @@ class BaseModel():
                 else:
                     torch.save(net.cpu().state_dict(), save_path)
 
+
+    def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
+        key = keys[i]
+        if i + 1 == len(keys):  # at the end, pointing to a parameter/buffer
+            if module.__class__.__name__.startswith('InstanceNorm') and \
+                    (key == 'running_mean' or key == 'running_var'):
+                if getattr(module, key) is None:
+                    state_dict.pop('.'.join(keys))
+        else:
+            self.__patch_instance_norm_state_dict(state_dict, getattr(module, key), keys, i + 1)
+
     # load models from the disk
     def load_networks(self, which_epoch):
         for name in self.model_names:
@@ -81,10 +94,15 @@ class BaseModel():
                 save_filename = '%s_net_%s.pth' % (which_epoch, name)
                 save_path = os.path.join(self.save_dir, save_filename)
                 net = getattr(self, 'net' + name)
-                if len(self.gpu_ids) > 0 and torch.cuda.is_available():
-                    net.module.load_state_dict(torch.load(save_path))
-                else:
-                    net.load_state_dict(torch.load(save_path))
+                if isinstance(net, torch.nn.DataParallel):
+                    net = net.module
+                # if you are using PyTorch newer than 0.4 (e.g., built from
+                # GitHub source), you can remove str() on self.device
+                state_dict = torch.load(save_path, map_location=str(self.device))
+                # patch InstanceNorm checkpoints prior to 0.4
+                for key in state_dict:
+                    self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
+                net.load_state_dict(state_dict)
 
     # print network information
     def print_networks(self, verbose):

@@ -104,7 +104,7 @@ class Visualizer():
         if not hasattr(self, 'plot_data'):
             self.plot_data = {'X': [], 'Y': [], 'legend': list(losses.keys())}
         self.plot_data['X'].append(epoch + counter_ratio)
-        self.plot_data['Y'].append([util.tensor2float(losses[k]) for k in self.plot_data['legend']])
+        self.plot_data['Y'].append([losses[k] for k in self.plot_data['legend']])
         self.vis.line(
             X=np.stack([np.array(self.plot_data['X'])] * len(self.plot_data['legend']), 1),
             Y=np.array(self.plot_data['Y']),
