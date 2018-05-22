@@ -28,10 +28,7 @@ class TestModel(BaseModel):
 
     def set_input(self, input):
         # we need to use single_dataset mode
-        real_A = input['A']
-        if len(self.gpu_ids) > 0:
-            real_A = real_A.to(self.device)
-        self.real_A = real_A
+        self.real_A = input['A'].to(self.device)
         self.image_paths = input['A_paths']
 
     def forward(self):

@@ -55,13 +55,8 @@ class Pix2PixModel(BaseModel):
 
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
-        real_A = input['A' if AtoB else 'B']
-        real_B = input['B' if AtoB else 'A']
-        if len(self.gpu_ids) > 0:
-            real_A = real_A.to(self.device)
-            real_B = real_B.to(self.device)
-        self.real_A = real_A
-        self.real_B = real_B
+        self.real_A = input['A' if AtoB else 'B'].to(self.device)
+        self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
