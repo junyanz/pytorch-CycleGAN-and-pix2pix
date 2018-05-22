@@ -59,7 +59,8 @@ class BaseModel():
         errors_ret = OrderedDict()
         for name in self.loss_names:
             if isinstance(name, str):
-                errors_ret[name] = getattr(self, 'loss_' + name).item()
+                # float(...) works for both scalar tensor and float number
+                errors_ret[name] = float(getattr(self, 'loss_' + name))
         return errors_ret
 
     # save models to the disk
@@ -100,7 +101,7 @@ class BaseModel():
                 # GitHub source), you can remove str() on self.device
                 state_dict = torch.load(save_path, map_location=str(self.device))
                 # patch InstanceNorm checkpoints prior to 0.4
-                for key in state_dict:
+                for key in list(state_dict.keys()): # need to copy keys here because we mutate in loop
                     self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
                 net.load_state_dict(state_dict)
 
