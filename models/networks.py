@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from torch.nn import init
 import functools
-from torch.autograd import Variable
 from torch.optim import lr_scheduler
 
 ###############################################################################
@@ -42,20 +41,20 @@ def init_weights(net, init_type='normal', gain=0.02):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
             if init_type == 'normal':
-                init.normal(m.weight.data, 0.0, gain)
+                init.normal_(m.weight.data, 0.0, gain)
             elif init_type == 'xavier':
-                init.xavier_normal(m.weight.data, gain=gain)
+                init.xavier_normal_(m.weight.data, gain=gain)
             elif init_type == 'kaiming':
-                init.kaiming_normal(m.weight.data, a=0, mode='fan_in')
+                init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
             elif init_type == 'orthogonal':
-                init.orthogonal(m.weight.data, gain=gain)
+                init.orthogonal_(m.weight.data, gain=gain)
             else:
                 raise NotImplementedError('initialization method [%s] is not implemented' % init_type)
             if hasattr(m, 'bias') and m.bias is not None:
-                init.constant(m.bias.data, 0.0)
+                init.constant_(m.bias.data, 0.0)
         elif classname.find('BatchNorm2d') != -1:
-            init.normal(m.weight.data, 1.0, gain)
-            init.constant(m.bias.data, 0.0)
+            init.normal_(m.weight.data, 1.0, gain)
+            init.constant_(m.bias.data, 0.0)
 
     print('initialize network with %s' % init_type)
     net.apply(init_func)
@@ -64,7 +63,7 @@ def init_weights(net, init_type='normal', gain=0.02):
 def init_net(net, init_type='normal', gpu_ids=[]):
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
-        net.cuda(gpu_ids[0])
+        net.to(gpu_ids[0])
         net = torch.nn.DataParallel(net, gpu_ids)
     init_weights(net, init_type)
     return net
@@ -114,36 +113,21 @@ def define_D(input_nc, ndf, which_model_netD,
 # but it abstracts away the need to create the target label tensor
 # that has the same size as the input
 class GANLoss(nn.Module):
-    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0,
-                 tensor=torch.FloatTensor):
+    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0):
         super(GANLoss, self).__init__()
-        self.real_label = target_real_label
-        self.fake_label = target_fake_label
-        self.real_label_var = None
-        self.fake_label_var = None
-        self.Tensor = tensor
+        self.register_buffer('real_label', torch.tensor(target_real_label))
+        self.register_buffer('fake_label', torch.tensor(target_fake_label))
         if use_lsgan:
             self.loss = nn.MSELoss()
         else:
             self.loss = nn.BCELoss()
 
     def get_target_tensor(self, input, target_is_real):
-        target_tensor = None
         if target_is_real:
-            create_label = ((self.real_label_var is None) or
-                            (self.real_label_var.numel() != input.numel()))
-            if create_label:
-                real_tensor = self.Tensor(input.size()).fill_(self.real_label)
-                self.real_label_var = Variable(real_tensor, requires_grad=False)
-            target_tensor = self.real_label_var
+            target_tensor = self.real_label
         else:
-            create_label = ((self.fake_label_var is None) or
-                            (self.fake_label_var.numel() != input.numel()))
-            if create_label:
-                fake_tensor = self.Tensor(input.size()).fill_(self.fake_label)
-                self.fake_label_var = Variable(fake_tensor, requires_grad=False)
-            target_tensor = self.fake_label_var
-        return target_tensor
+            target_tensor = self.fake_label
+        return target_tensor.expand_as(input)
 
     def __call__(self, input, target_is_real):
         target_tensor = self.get_target_tensor(input, target_is_real)

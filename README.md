@@ -19,20 +19,20 @@ This PyTorch implementation produces results comparable or better than our origi
 
 <img src="https://phillipi.github.io/pix2pix/images/teaser_v3.png" width="900px"/>
 
-#### [[EdgesCats Demo]](https://affinelayer.com/pixsrv/)  [[pix2pix-tensorflow]](https://github.com/affinelayer/pix2pix-tensorflow)   
-Written by [Christopher Hesse](https://twitter.com/christophrhesse)  
+#### [[EdgesCats Demo]](https://affinelayer.com/pixsrv/)  [[pix2pix-tensorflow]](https://github.com/affinelayer/pix2pix-tensorflow)
+Written by [Christopher Hesse](https://twitter.com/christophrhesse)
 
 <img src='imgs/edges2cats.jpg' width="600px"/>
 
 If you use this code for your research, please cite:
 
-Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks  
-[Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz/)\*,  [Taesung Park](https://taesung.me/)\*, [Phillip Isola](https://people.eecs.berkeley.edu/~isola/), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros)  
-In ICCV 2017. (* equal contributions)  
+Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks
+[Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz/)\*,  [Taesung Park](https://taesung.me/)\*, [Phillip Isola](https://people.eecs.berkeley.edu/~isola/), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros)
+In ICCV 2017. (* equal contributions)
 
 
-Image-to-Image Translation with Conditional Adversarial Networks  
-[Phillip Isola](https://people.eecs.berkeley.edu/~isola), [Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz), [Tinghui Zhou](https://people.eecs.berkeley.edu/~tinghuiz), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros)   
+Image-to-Image Translation with Conditional Adversarial Networks
+[Phillip Isola](https://people.eecs.berkeley.edu/~isola), [Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz), [Tinghui Zhou](https://people.eecs.berkeley.edu/~tinghuiz), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros)
 In CVPR 2017.
 
 ## Course
@@ -82,6 +82,10 @@ python setup.py install
 ```bash
 pip install visdom
 pip install dominate
+```
+- Alternatively, all dependencies can be installed by
+```bash
+pip install -r requirements.txt
 ```
 - Clone this repo:
 ```bash
@@ -175,7 +179,7 @@ Note that we specified `--which_direction BtoA` as Facades dataset's A to B dire
 
 ## Training/test Details
 - Flags: see `options/train_options.py` and `options/base_options.py` for all the training flags; see `options/test_options.py` and `options/base_options.py` for all the test flags.
-- CPU/GPU (default `--gpu_ids 0`): set`--gpu_ids -1` to use CPU mode; set `--gpu_ids 0,1,2` for multi-GPU mode. You need a large batch size (e.g. `--batchSize 32`) to benefit from multiple GPUs.  
+- CPU/GPU (default `--gpu_ids 0`): set`--gpu_ids -1` to use CPU mode; set `--gpu_ids 0,1,2` for multi-GPU mode. You need a large batch size (e.g. `--batchSize 32`) to benefit from multiple GPUs.
 - Visualization: during training, the current results can be viewed using two methods. First, if you set `--display_id` > 0, the results and loss plot will appear on a local graphics web server launched by [visdom](https://github.com/facebookresearch/visdom). To do this, you should have `visdom` installed and a server running by the command `python -m visdom.server`. The default server URL is `http://localhost:8097`. `display_id` corresponds to the window ID that is displayed on the `visdom` server. The `visdom` display functionality is turned on by default. To avoid the extra overhead of communicating with `visdom` set `--display_id 0`. Second, the intermediate results are saved to `[opt.checkpoints_dir]/[opt.name]/web/` as an HTML file. To avoid this, set `--no_html`.
 - Preprocessing: images can be resized and cropped in different ways using `--resize_or_crop` option. The default option `'resize_and_crop'` resizes the image to be of size `(opt.loadSize, opt.loadSize)` and does a random crop of size `(opt.fineSize, opt.fineSize)`. `'crop'` skips the resizing step and only performs random cropping. `'scale_width'` resizes the image to have width `opt.fineSize` while keeping the aspect ratio. `'scale_width_and_crop'` first resizes the image to have width `opt.loadSize` and then does random cropping of size `(opt.fineSize, opt.fineSize)`.
 - Fine-tuning/Resume training: to fine-tune a pre-trained model, or resume the previous training, use the `--continue_train` flag. The program will then load the model based on `which_epoch`. By default, the program will initialize the epoch count as 1. Set `--epoch_count <int>` to specify a different starting epoch count.
@@ -244,12 +248,12 @@ If you use this code for your research, please cite our papers.
 ```
 
 ## Related Projects
-[CycleGAN](https://github.com/junyanz/CycleGAN): Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks  
-[pix2pix](https://github.com/phillipi/pix2pix): Image-to-image translation with conditional adversarial nets  
+[CycleGAN](https://github.com/junyanz/CycleGAN): Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks
+[pix2pix](https://github.com/phillipi/pix2pix): Image-to-image translation with conditional adversarial nets
 [iGAN](https://github.com/junyanz/iGAN): Interactive Image Generation via Generative Adversarial Networks
 
 ## Cat Paper Collection
-If you love cats, and love reading cool graphics, vision, and learning papers, please check out the Cat Paper Collection:  
+If you love cats, and love reading cool graphics, vision, and learning papers, please check out the Cat Paper Collection:
 [[Github]](https://github.com/junyanz/CatPapers) [[Webpage]](https://people.eecs.berkeley.edu/~junyanz/cat/cat_papers.html)
 
 ## Acknowledgments

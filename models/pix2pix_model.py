@@ -1,5 +1,4 @@
 import torch
-from torch.autograd import Variable
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
@@ -34,7 +33,7 @@ class Pix2PixModel(BaseModel):
         if self.isTrain:
             self.fake_AB_pool = ImagePool(opt.pool_size)
             # define loss functions
-            self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)
+            self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan).to(self.device)
             self.criterionL1 = torch.nn.L1Loss()
 
             # initialize optimizers
@@ -56,25 +55,12 @@ class Pix2PixModel(BaseModel):
 
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
-        input_A = input['A' if AtoB else 'B']
-        input_B = input['B' if AtoB else 'A']
-        if len(self.gpu_ids) > 0:
-            input_A = input_A.cuda(self.gpu_ids[0], async=True)
-            input_B = input_B.cuda(self.gpu_ids[0], async=True)
-        self.input_A = input_A
-        self.input_B = input_B
+        self.real_A = input['A' if AtoB else 'B'].to(self.device)
+        self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
-        self.real_A = Variable(self.input_A)
         self.fake_B = self.netG(self.real_A)
-        self.real_B = Variable(self.input_B)
-
-    # no backprop gradients
-    def test(self):
-        self.real_A = Variable(self.input_A, volatile=True)
-        self.fake_B = self.netG(self.real_A)
-        self.real_B = Variable(self.input_B, volatile=True)
 
     def backward_D(self):
         # Fake
