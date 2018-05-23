@@ -8,9 +8,9 @@ This is our PyTorch implementation for both unpaired and paired image-to-image t
 
 The code was written by [Jun-Yan Zhu](https://github.com/junyanz) and [Taesung Park](https://github.com/taesung89), and supported by [Tongzhou Wang](https://ssnl.github.io/).
 
-This PyTorch implementation produces results comparable or better than our original Torch software. If you would like to reproduce the exact same results as in the papers, check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix) code
+This PyTorch implementation produces results comparable to or better than our original Torch software. If you would like to reproduce the exact same results as in the papers, check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix) code
 
-**Note**: The current software works well with PyTorch 0.1-0.3. PyTorch 0.4 support will be added by the end of May.
+**Note**: The current software works well with PyTorch 0.4. Check out the older [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1) that supports PyTorch 0.1-0.3.
 
 #### CycleGAN: [[Project]](https://junyanz.github.io/CycleGAN/) [[Paper]](https://arxiv.org/pdf/1703.10593.pdf) [[Torch]](https://github.com/junyanz/CycleGAN)
 <img src="https://junyanz.github.io/CycleGAN/images/teaser_high_res.jpg" width="900"/>
@@ -71,7 +71,7 @@ CycleGAN course assignment [code](http://www.cs.toronto.edu/~rgrosse/courses/csc
 
 ## Getting Started
 ### Installation
-- Install PyTorch and dependencies from http://pytorch.org
+- Install PyTorch 0.4 and dependencies from http://pytorch.org
 - Install Torch vision from the source.
 ```bash
 git clone https://github.com/pytorch/vision
