@@ -37,7 +37,6 @@ class Pix2PixModel(BaseModel):
             self.criterionL1 = torch.nn.L1Loss()
 
             # initialize optimizers
-            self.schedulers = []
             self.optimizers = []
             self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -45,13 +44,8 @@ class Pix2PixModel(BaseModel):
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
-            for optimizer in self.optimizers:
-                self.schedulers.append(networks.get_scheduler(optimizer, opt))
 
-        if not self.isTrain or opt.continue_train:
-            self.load_networks(opt.which_epoch)
-
-        self.print_networks(opt.verbose)
+        self.setup(opt)
 
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'

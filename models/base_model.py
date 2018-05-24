@@ -1,6 +1,7 @@
 import os
 import torch
 from collections import OrderedDict
+from . import networks
 
 
 class BaseModel():
@@ -25,6 +26,22 @@ class BaseModel():
 
     def forward(self):
         pass
+
+    # load and print networks; create shedulars
+    def setup(self, opt):
+        if self.isTrain:
+            self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
+
+        if not self.isTrain or opt.continue_train:
+            self.load_networks(opt.which_epoch)
+        self.print_networks(opt.verbose)
+
+    # make models eval mode during test time
+    def eval(self):
+        for name in self.model_names:
+            if isinstance(name, str):
+                net = getattr(self, 'net' + name)
+                net.eval()
 
     # used in test time, wrapping `forward` in no_grad() so we don't save
     # intermediate steps for backprop
@@ -77,7 +94,6 @@ class BaseModel():
                 else:
                     torch.save(net.cpu().state_dict(), save_path)
 
-
     def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
         key = keys[i]
         if i + 1 == len(keys):  # at the end, pointing to a parameter/buffer
@@ -101,7 +117,7 @@ class BaseModel():
                 # GitHub source), you can remove str() on self.device
                 state_dict = torch.load(save_path, map_location=str(self.device))
                 # patch InstanceNorm checkpoints prior to 0.4
-                for key in list(state_dict.keys()): # need to copy keys here because we mutate in loop
+                for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
                     self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
                 net.load_state_dict(state_dict)
 

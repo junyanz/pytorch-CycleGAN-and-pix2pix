@@ -58,15 +58,10 @@ class CycleGANModel(BaseModel):
             self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_A.parameters(), self.netD_B.parameters()),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers = []
-            self.schedulers = []
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
-            for optimizer in self.optimizers:
-                self.schedulers.append(networks.get_scheduler(optimizer, opt))
 
-        if not self.isTrain or opt.continue_train:
-            self.load_networks(opt.which_epoch)
-        self.print_networks(opt.verbose)
+        self.setup(opt)
 
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
