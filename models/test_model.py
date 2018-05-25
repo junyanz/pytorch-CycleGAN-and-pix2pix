@@ -22,7 +22,6 @@ class TestModel(BaseModel):
                                       opt.norm, not opt.no_dropout,
                                       opt.init_type,
                                       self.gpu_ids)
-        self.setup(opt)
 
     def set_input(self, input):
         # we need to use single_dataset mode
