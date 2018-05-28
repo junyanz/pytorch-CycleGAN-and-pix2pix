@@ -86,11 +86,14 @@ class Pix2PixModel(BaseModel):
 
     def optimize_parameters(self):
         self.forward()
-
+        # update D
+        self.set_requires_grad(self.netD, True)
         self.optimizer_D.zero_grad()
         self.backward_D()
         self.optimizer_D.step()
 
+        # update G
+        self.set_requires_grad(self.netD, False)
         self.optimizer_G.zero_grad()
         self.backward_G()
         self.optimizer_G.step()
