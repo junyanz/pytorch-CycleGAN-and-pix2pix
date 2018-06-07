@@ -5,6 +5,13 @@ from . import networks
 
 
 class BaseModel():
+
+    # modify parser to add command line options,
+    # and also change the default values if needed
+    @staticmethod
+    def option_setter(parser):
+        return parser
+    
     def name(self):
         return 'BaseModel'
 
@@ -28,7 +35,7 @@ class BaseModel():
         pass
 
     # load and print networks; create shedulars
-    def setup(self, opt):
+    def setup(self, opt, parser=None):
         if self.isTrain:
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
 

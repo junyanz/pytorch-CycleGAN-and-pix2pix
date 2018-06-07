@@ -2,6 +2,7 @@ import argparse
 import os
 from util import util
 import torch
+import models
 
 
 class BaseOptions():
@@ -45,10 +46,27 @@ class BaseOptions():
         self.parser.add_argument('--suffix', default='', type=str, help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{which_model_netG}_size{loadSize}')
         self.initialized = True
 
-    def parse(self):
+    def gather_options(self):
+
+        # initialize parser with basic options
         if not self.initialized:
             self.initialize()
-        opt = self.parser.parse_args()
+
+        # get the basic options
+        opt, unknown = self.parser.parse_known_args()
+
+        # modify model-related parser options
+        model_name = opt.model
+        model_option_setter = models.get_option_setter(model_name)
+        parser = model_option_setter(self.parser)
+
+        # modify dataset-related parser options
+
+        return parser.parse_args()
+
+    def parse(self):
+
+        opt = self.gather_options()
         opt.isTrain = self.isTrain   # train or test
 
         str_ids = opt.gpu_ids.split(',')
