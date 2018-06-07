@@ -27,7 +27,7 @@ def find_model_using_name(model_name):
 
 def get_option_setter(model_name):
     model_class = find_model_using_name(model_name)
-    return model_class.option_setter
+    return model_class.modify_commandline_options
 
 def create_model(opt):
     model = find_model_using_name(opt.model)

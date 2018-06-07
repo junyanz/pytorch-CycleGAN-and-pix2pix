@@ -6,6 +6,16 @@ class TestModel(BaseModel):
     def name(self):
         return 'TestModel'
 
+    @staticmethod
+    def modify_commandline_options(parser, is_train=True):
+        assert not is_train, 'TestModel cannot be used in train mode'
+        parser.set_defaults(dataset_mode='single')
+        parser.set_defaults(phase='test')
+
+        parser.add_argument('--model_suffix', type=str, default='')
+
+        return parser
+
     def initialize(self, opt):
         assert(not opt.isTrain)
         BaseModel.initialize(self, opt)

@@ -8,6 +8,15 @@ class Pix2PixModel(BaseModel):
     def name(self):
         return 'Pix2PixModel'
 
+    @staticmethod
+    def modify_commandline_options(parser, is_train=True):
+        parser.set_defaults(dataset_mode='aligned')
+        parser.set_defaults(which_model_netG='unet_256')
+        if is_train:
+            parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
+
+        return parser
+
     def initialize(self, opt):
         BaseModel.initialize(self, opt)
         self.isTrain = opt.isTrain
@@ -78,7 +87,7 @@ class Pix2PixModel(BaseModel):
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
 
         # Second, G(A) = B
-        self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_A
+        self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
 
         self.loss_G = self.loss_G_GAN + self.loss_G_L1
 

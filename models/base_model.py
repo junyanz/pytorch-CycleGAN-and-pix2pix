@@ -9,7 +9,7 @@ class BaseModel():
     # modify parser to add command line options,
     # and also change the default values if needed
     @staticmethod
-    def option_setter(parser):
+    def modify_commandline_options(parser, is_train):
         return parser
     
     def name(self):
@@ -34,7 +34,7 @@ class BaseModel():
     def forward(self):
         pass
 
-    # load and print networks; create shedulars
+    # load and print networks; create schedulers
     def setup(self, opt, parser=None):
         if self.isTrain:
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
