@@ -24,10 +24,10 @@ if __name__ == '__main__':
     run_bash_command('python test.py --model test --dataroot ./datasets/mini --name horse2zebra_pretrained --no_dropout --how_many 1')
 
     # test cyclegan
-    run_bash_command('python train.py --name temp --dataroot ./datasets/mini --niter 1 --niter_decay 0 --save_latest_freq 10  --display_freq 1')
+    run_bash_command('python train.py --name temp --dataroot ./datasets/mini --niter 1 --niter_decay 0 --save_latest_freq 10  --print_freq 1 --display_id -1')
     run_bash_command('python test.py --name temp --dataroot ./datasets/mini --how_many 1')
 
     # test pix2pix
-    run_bash_command('python train.py --model pix2pix --name temp --dataroot ./datasets/mini_pix2pix --niter 1 --niter_decay 0 --save_latest_freq 10')
+    run_bash_command('python train.py --model pix2pix --name temp --dataroot ./datasets/mini_pix2pix --niter 1 --niter_decay 0 --save_latest_freq 10 --display_id -1')
     run_bash_command('python test.py --model pix2pix --name temp --dataroot ./datasets/mini_pix2pix --how_many 1 --which_direction BtoA')
     

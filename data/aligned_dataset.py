@@ -8,6 +8,10 @@ from PIL import Image
 
 
 class AlignedDataset(BaseDataset):
+    @staticmethod
+    def modify_commandline_options(parser, is_train):
+        return parser
+
     def initialize(self, opt):
         self.opt = opt
         self.root = opt.dataroot
