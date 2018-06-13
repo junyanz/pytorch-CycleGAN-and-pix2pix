@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     # test cyclegan
     run_bash_command('python train.py --name temp --dataroot ./datasets/mini --niter 1 --niter_decay 0 --save_latest_freq 10  --print_freq 1 --display_id -1')
-    run_bash_command('python test.py --name temp --dataroot ./datasets/mini --how_many 1')
+    run_bash_command('python test.py --name temp --dataroot ./datasets/mini --how_many 1 --model_suffix "_A"')
 
     # test pix2pix
     run_bash_command('python train.py --model pix2pix --name temp --dataroot ./datasets/mini_pix2pix --niter 1 --niter_decay 0 --save_latest_freq 10 --display_id -1')
