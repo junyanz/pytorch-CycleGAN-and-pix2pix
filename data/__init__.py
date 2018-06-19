@@ -4,9 +4,9 @@ from data.base_data_loader import BaseDataLoader
 from data.base_dataset import BaseDataset
 
 def find_dataset_using_name(dataset_name):
-    # Given the option --dataset [datasetname],
-    # the file "datasets/datasetname_dataset.py"
-    # will be imported. 
+    # Given the option --dataset_mode [datasetname],
+    # the file "data/datasetname_dataset.py"
+    # will be imported.
     dataset_filename = "data." + dataset_name + "_dataset"
     datasetlib = importlib.import_module(dataset_filename)
 
