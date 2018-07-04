@@ -30,14 +30,11 @@ class TestModel(BaseModel):
         # specify the models you want to save to the disk. The program will call base_model.save_networks and base_model.load_networks
         self.model_names = ['G' + opt.model_suffix]
 
-        self.netG = networks.define_G(opt.input_nc, opt.output_nc,
-                                      opt.ngf, opt.which_model_netG,
-                                      opt.norm, not opt.no_dropout,
-                                      opt.init_type,
-                                      self.gpu_ids)
+        self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.which_model_netG,
+                                      opt.norm, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
-        ## assigns the model to self.netG_[suffix] so that it can be loaded
-        ## please see BaseModel.load_networks
+        # assigns the model to self.netG_[suffix] so that it can be loaded
+        # please see BaseModel.load_networks
         setattr(self, 'netG' + opt.model_suffix, self.netG)
 
     def set_input(self, input):

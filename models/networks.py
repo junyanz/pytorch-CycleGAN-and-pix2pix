@@ -60,16 +60,16 @@ def init_weights(net, init_type='normal', gain=0.02):
     net.apply(init_func)
 
 
-def init_net(net, init_type='normal', gpu_ids=[]):
+def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
         net.to(gpu_ids[0])
         net = torch.nn.DataParallel(net, gpu_ids)
-    init_weights(net, init_type)
+    init_weights(net, init_type, gain=init_gain)
     return net
 
 
-def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, init_type='normal', gpu_ids=[]):
+def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
     netG = None
     norm_layer = get_norm_layer(norm_type=norm)
 
@@ -83,11 +83,11 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
         netG = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % which_model_netG)
-    return init_net(netG, init_type, gpu_ids)
+    return init_net(netG, init_type, init_gain, gpu_ids)
 
 
 def define_D(input_nc, ndf, which_model_netD,
-             n_layers_D=3, norm='batch', use_sigmoid=False, init_type='normal', gpu_ids=[]):
+             n_layers_D=3, norm='batch', use_sigmoid=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
     netD = None
     norm_layer = get_norm_layer(norm_type=norm)
 
@@ -100,7 +100,7 @@ def define_D(input_nc, ndf, which_model_netD,
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' %
                                   which_model_netD)
-    return init_net(netD, init_type, gpu_ids)
+    return init_net(netD, init_type, init_gain, gpu_ids)
 
 
 ##############################################################################

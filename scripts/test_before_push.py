@@ -6,11 +6,11 @@ import os
 
 def run_bash_command(command):
     print(command)
-    exit_status = os.system(command)    
+    exit_status = os.system(command)
     if exit_status > 0:
         exit(1)
 
-        
+
 if __name__ == '__main__':
     if not os.path.exists('datasets/mini'):
         run_bash_command('bash datasets/download_cyclegan_dataset.sh mini')
@@ -30,4 +30,3 @@ if __name__ == '__main__':
     # test pix2pix
     run_bash_command('python train.py --model pix2pix --name temp --dataroot ./datasets/mini_pix2pix --niter 1 --niter_decay 0 --save_latest_freq 10 --display_id -1')
     run_bash_command('python test.py --model pix2pix --name temp --dataroot ./datasets/mini_pix2pix --how_many 1 --which_direction BtoA')
-    
