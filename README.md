@@ -147,7 +147,6 @@ bash ./datasets/download_cyclegan_dataset.sh horse2zebra
 python test.py --dataroot datasets/horse2zebra/testA --name horse2zebra_pretrained --model test
 ```
 The option `--model test` is used for generating results of CycleGAN only for one side. `python test.py --model cycle_gan` will require loading and generating results in both directions, which is sometimes unnecessary. The results will be saved at `./results/`. Use `--results_dir {directory_path_to_save_result}` to specify the results directory.
-- Note: The models trained using Torch and PyTorch produce slightly different results, although we were not able to decide which result is better. If you would like to reproduce the same results in our paper, we recommend using the pretrained models in the Torch codebase.
 
 - If you would like to apply a pre-trained model to a collection of input images (rather than image pairs), please use `--dataset_mode single` and `--model test` options. Here is a script to apply a model to Facade label maps (stored in the directory `facades/testB`).
 ``` bash
