@@ -1,48 +1,46 @@
-from torch.autograd import Variable
-from collections import OrderedDict
-import util.util as util
 from .base_model import BaseModel
 from . import networks
+from .cycle_gan_model import CycleGANModel
 
 
 class TestModel(BaseModel):
     def name(self):
         return 'TestModel'
 
+    @staticmethod
+    def modify_commandline_options(parser, is_train=True):
+        assert not is_train, 'TestModel cannot be used in train mode'
+        parser = CycleGANModel.modify_commandline_options(parser, is_train=False)
+        parser.set_defaults(dataset_mode='single')
+
+        parser.add_argument('--model_suffix', type=str, default='',
+                            help='In checkpoints_dir, [which_epoch]_net_G[model_suffix].pth will'
+                            ' be loaded as the generator of TestModel')
+
+        return parser
+
     def initialize(self, opt):
         assert(not opt.isTrain)
         BaseModel.initialize(self, opt)
-        self.input_A = self.Tensor(opt.batchSize, opt.input_nc, opt.fineSize, opt.fineSize)
 
-        self.netG = networks.define_G(opt.input_nc, opt.output_nc,
-                                      opt.ngf, opt.which_model_netG,
-                                      opt.norm, not opt.no_dropout,
-                                      self.gpu_ids)
-        which_epoch = opt.which_epoch
-        self.load_network(self.netG, 'G', which_epoch)
+        # specify the training losses you want to print out. The program will call base_model.get_current_losses
+        self.loss_names = []
+        # specify the images you want to save/display. The program will call base_model.get_current_visuals
+        self.visual_names = ['real_A', 'fake_B']
+        # specify the models you want to save to the disk. The program will call base_model.save_networks and base_model.load_networks
+        self.model_names = ['G' + opt.model_suffix]
 
-        print('---------- Networks initialized -------------')
-        networks.print_network(self.netG)
-        print('-----------------------------------------------')
+        self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.which_model_netG,
+                                      opt.norm, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
+
+        # assigns the model to self.netG_[suffix] so that it can be loaded
+        # please see BaseModel.load_networks
+        setattr(self, 'netG' + opt.model_suffix, self.netG)
 
     def set_input(self, input):
         # we need to use single_dataset mode
-        input_A = input['A']
-        self.input_A.resize_(input_A.size()).copy_(input_A)
+        self.real_A = input['A'].to(self.device)
         self.image_paths = input['A_paths']
 
-    def test(self):
-        self.real_A = Variable(self.input_A)
-        self.fake_B = self.netG.forward(self.real_A)
-
-    def set_test_mode(self):
-        self.netG.eval()
-
-    # get image paths
-    def get_image_paths(self):
-        return self.image_paths
-
-    def get_current_visuals(self):
-        real_A = util.tensor2im(self.real_A.data)
-        fake_B = util.tensor2im(self.fake_B.data)
-        return OrderedDict([('real_A', real_A), ('fake_B', fake_B)])
+    def forward(self):
+        self.fake_B = self.netG(self.real_A)

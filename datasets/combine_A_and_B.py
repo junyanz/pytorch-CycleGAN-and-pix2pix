@@ -1,4 +1,3 @@
-from pdb import set_trace as st
 import os
 import numpy as np
 import cv2
@@ -21,7 +20,7 @@ for sp in splits:
     img_fold_A = os.path.join(args.fold_A, sp)
     img_fold_B = os.path.join(args.fold_B, sp)
     img_list = os.listdir(img_fold_A)
-    if args.use_AB: 
+    if args.use_AB:
         img_list = [img_path for img_path in img_list if '_A.' in img_path]
 
     num_imgs = min(args.num_imgs, len(img_list))
