@@ -125,7 +125,7 @@ python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix
 - Test the model (`bash ./scripts/test_pix2pix.sh`):
 ```bash
 #!./scripts/test_pix2pix.sh
-python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_direction BtoA 
+python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --which_direction BtoA
 ```
 The test results will be saved to a html file here: `./results/facades_pix2pix/test_latest/index.html`.
 
@@ -134,9 +134,9 @@ More example scripts can be found at `scripts` directory.
 ### Apply a pre-trained model (CycleGAN)
 - You can download a pretrained model (e.g. horse2zebra) with the following script:
 ```bash
-bash pretrained_models/download_cyclegan_model.sh horse2zebra
+bash ./scripts/download_cyclegan_model.sh horse2zebra
 ```
-The pretrained model is saved at `./checkpoints/{name}_pretrained/latest_net_G.pth`. The available models are apple2orange, orange2apple, summer2winter_yosemite, winter2summer_yosemite, horse2zebra, zebra2horse, monet2photo, style_monet, style_cezanne, style_ukiyoe, style_vangogh, sat2map, map2sat, cityscapes_photo2label, cityscapes_label2photo, facades_photo2label, facades_label2photo, and iphone2dslr_flower. 
+The pretrained model is saved at `./checkpoints/{name}_pretrained/latest_net_G.pth`. The available models are apple2orange, orange2apple, summer2winter_yosemite, winter2summer_yosemite, horse2zebra, zebra2horse, monet2photo, style_monet, style_cezanne, style_ukiyoe, style_vangogh, sat2map, map2sat, cityscapes_photo2label, cityscapes_label2photo, facades_photo2label, facades_label2photo, and iphone2dslr_flower.
 - To test the model, you also need to download the  horse2zebra dataset:
 ```bash
 bash ./datasets/download_cyclegan_dataset.sh horse2zebra
@@ -151,17 +151,17 @@ The option `--model test` is used for generating results of CycleGAN only for on
 - If you would like to apply a pre-trained model to a collection of input images (rather than image pairs), please use `--dataset_mode single` and `--model test` options. Here is a script to apply a model to Facade label maps (stored in the directory `facades/testB`).
 ``` bash
 #!./scripts/test_single.sh
-python test.py --dataroot ./datasets/facades/testB/ --name {your_trained_model_name} --model test 
+python test.py --dataroot ./datasets/facades/testB/ --name {your_trained_model_name} --model test
 ```
 You might want to specify `--which_model_netG` to match the generator architecture of the trained model.
 
 ### Apply a pre-trained model (pix2pix)
 
-Download a pre-trained model with `./pretrained_models/download_pix2pix_model.sh`.
+Download a pre-trained model with `./scripts/download_pix2pix_model.sh`.
 
 - For example, if you would like to download label2photo model on the Facades dataset,
 ```bash
-bash pretrained_models/download_pix2pix_model.sh facades_label2photo
+bash ./scripts/download_pix2pix_model.sh facades_label2photo
 ```
 
 - Download the pix2pix facades datasets
@@ -174,10 +174,10 @@ python test.py --dataroot ./datasets/facades/ --which_direction BtoA --model pix
 ```
 Note that we specified `--which_direction BtoA` as Facades dataset's A to B direction is photos to labels.
 
-- See a list of currently available models at `bash pretrained_models/download_pix2pix_model.sh`
+- See a list of currently available models at `./scripts/download_pix2pix_model.sh`
 
 ## Training/test Details
-- Flags: see `options/train_options.py` and `options/base_options.py` for the training flags; see `options/test_options.py` and `options/base_options.py` for the test flags. There are some model-specific flags as well, which are added in the model files, such as `--lambda_A` option in `model/cycle_gan_model.py`. The default values of these options are also adjusted in the model files. 
+- Flags: see `options/train_options.py` and `options/base_options.py` for the training flags; see `options/test_options.py` and `options/base_options.py` for the test flags. There are some model-specific flags as well, which are added in the model files, such as `--lambda_A` option in `model/cycle_gan_model.py`. The default values of these options are also adjusted in the model files.
 - CPU/GPU (default `--gpu_ids 0`): set`--gpu_ids -1` to use CPU mode; set `--gpu_ids 0,1,2` for multi-GPU mode. You need a large batch size (e.g. `--batchSize 32`) to benefit from multiple GPUs.
 - Visualization: during training, the current results can be viewed using two methods. First, if you set `--display_id` > 0, the results and loss plot will appear on a local graphics web server launched by [visdom](https://github.com/facebookresearch/visdom). To do this, you should have `visdom` installed and a server running by the command `python -m visdom.server`. The default server URL is `http://localhost:8097`. `display_id` corresponds to the window ID that is displayed on the `visdom` server. The `visdom` display functionality is turned on by default. To avoid the extra overhead of communicating with `visdom` set `--display_id -1`. Second, the intermediate results are saved to `[opt.checkpoints_dir]/[opt.name]/web/` as an HTML file. To avoid this, set `--no_html`.
 - Preprocessing: images can be resized and cropped in different ways using `--resize_or_crop` option. The default option `'resize_and_crop'` resizes the image to be of size `(opt.loadSize, opt.loadSize)` and does a random crop of size `(opt.fineSize, opt.fineSize)`. `'crop'` skips the resizing step and only performs random cropping. `'scale_width'` resizes the image to have width `opt.fineSize` while keeping the aspect ratio. `'scale_width_and_crop'` first resizes the image to have width `opt.loadSize` and then does random cropping of size `(opt.fineSize, opt.fineSize)`.
