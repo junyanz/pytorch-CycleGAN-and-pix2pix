@@ -20,9 +20,10 @@ This PyTorch implementation produces results comparable to or better than our or
 
 <img src="https://phillipi.github.io/pix2pix/images/teaser_v3.png" width="800px"/>
 
-<img ailgn="left" src='imgs/edges2cats.jpg'  width="250px"/>
-**[EdgesCats Demo](https://affinelayer.com/pixsrv/) | [pix2pix-tensorflow](https://github.com/affinelayer/pix2pix-tensorflow) |
-by [Christopher Hesse](https://twitter.com/christophrhesse)**
+
+**[EdgesCats Demo](https://affinelayer.com/pixsrv/) | [pix2pix-tensorflow](https://github.com/affinelayer/pix2pix-tensorflow) | by [Christopher Hesse](https://twitter.com/christophrhesse)**
+
+<img src='imgs/edges2cats.jpg' width="400px"/>
 
 
 If you use this code for your research, please cite:
