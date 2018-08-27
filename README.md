@@ -177,6 +177,10 @@ Download pix2pix/CycleGAN datasets and create your own datasets.
 ## [Training/Test Tips](docs/tips.md)
 Best practice for training and testing your models.
 
+## [Frequently Asked Questions](docs/qa.md)
+Before you post a new question, please first search for your question in the following Q & A and existing GitHub issues. Many questions have been well addressed by us and other users with detailed answers. You may also want to read [Training/Test tips](docs/tips.md) for more suggestions.
+
+
 ## Citation
 If you use this code for your research, please cite our papers.
 ```
