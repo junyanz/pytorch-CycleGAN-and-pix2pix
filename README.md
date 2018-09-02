@@ -10,9 +10,9 @@ The code was written by [Jun-Yan Zhu](https://github.com/junyanz) and [Taesung P
 
 This PyTorch implementation produces results comparable to or better than our original Torch software. If you would like to reproduce the same results as in the papers, check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix) code
 
-**Note**: The current software works well with PyTorch 0.4. Check out the older [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1) that supports PyTorch 0.1-0.3.
+**Note**: The current software works well with PyTorch 0.4+. Check out the older [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1) that supports PyTorch 0.1-0.3.
 
-You may find useful information in [Training/test tips](docs/tips.md) and [Frequently asked questions](docs/qa.md).
+You may find useful information in [training/test tips](docs/tips.md) and [frequently asked questions](docs/qa.md).
 
 **CycleGAN: [Project](https://junyanz.github.io/CycleGAN/) |  [Paper](https://arxiv.org/pdf/1703.10593.pdf) |  [Torch](https://github.com/junyanz/CycleGAN)**
 <img src="https://junyanz.github.io/CycleGAN/images/teaser_high_res.jpg" width="800"/>
