@@ -9,5 +9,3 @@ MODEL_FILE=./checkpoints/${FILE}_pretrained/latest_net_G.pth
 URL=http://efrosgans.eecs.berkeley.edu/cyclegan/pretrained_models/$FILE.pth
 
 wget -N $URL -O $MODEL_FILE
-
-

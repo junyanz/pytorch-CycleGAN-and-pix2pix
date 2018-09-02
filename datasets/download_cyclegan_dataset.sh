@@ -5,6 +5,7 @@ if [[ $FILE != "ae_photos" && $FILE != "apple2orange" && $FILE != "summer2winter
     exit 1
 fi
 
+echo "Specified [$FILE]"
 URL=https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/$FILE.zip
 ZIP_FILE=./datasets/$FILE.zip
 TARGET_DIR=./datasets/$FILE/
