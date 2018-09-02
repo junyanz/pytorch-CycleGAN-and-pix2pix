@@ -13,6 +13,14 @@ pip install visdom
 ```
 You can also disable the visdom by setting `--display_id 0`.
 
+#### My PyTorch errors on CUDA related code.
+Try to run the following code snippet to make sure that CUDA is working (assuming using PyTorch >= 0.4):
+```py
+import torch
+torch.cuda.init()
+print(torch.randn(1, device='cuda')
+```
+If you met an error, it is likely that your PyTorch build doesn't work with CUDA, e.g., it is installl from the official MacOS binary, or you have a GPU that is too old and not supported anymore. You may run the the code with CPU using `--device_ids -1`.
 
 ####  “TypeError: Object of type 'Tensor' is not JSON serializable” ([#258](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/258))
 Similar errors: AttributeError: module 'torch' has no attribute 'device' ([#314](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/314))
@@ -40,7 +48,7 @@ We also recommend that you use the instance normalization for multi-GPU training
 
 
 #### Can I run the model on CPU? ([#310](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/310))
-Yes, you can set `--gpu_ids 0`. See [training/test tips](docs/tips.md) for more details.
+Yes, you can set `--gpu_ids -1`. See [training/test tips](docs/tips.md) for more details.
 
 
 #### Are pre-trained models available? ([#10](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/10))
