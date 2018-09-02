@@ -4,11 +4,11 @@
 
 # CycleGAN and pix2pix in PyTorch
 
-This is our PyTorch implementation for both unpaired and paired image-to-image translation. It is still under active development.
+We provide PyTorch implementations for both unpaired and paired image-to-image translation.
 
 The code was written by [Jun-Yan Zhu](https://github.com/junyanz) and [Taesung Park](https://github.com/taesung89), and supported by [Tongzhou Wang](https://ssnl.github.io/).
 
-This PyTorch implementation produces results comparable to or better than our original Torch software. If you would like to reproduce the exact same results as in the papers, check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix) code
+This PyTorch implementation produces results comparable to or better than our original Torch software. If you would like to reproduce the same results as in the papers, check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix) code
 
 **Note**: The current software works well with PyTorch 0.4. Check out the older [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1) that supports PyTorch 0.1-0.3.
 
@@ -74,12 +74,7 @@ CycleGAN course assignment [code](http://www.cs.toronto.edu/~rgrosse/courses/csc
 
 ## Getting Started
 ### Installation
-- Install PyTorch 0.4, torchvision, and other dependencies from http://pytorch.org
-- Install python libraries [visdom](https://github.com/facebookresearch/visdom) and [dominate](https://github.com/Knio/dominate).
-```bash
-pip install visdom dominate
-```
-- Alternatively, all dependencies can be installed by
+- Install PyTorch 0.4+ and torchvision from http://pytorch.org and other dependencies (e.g., [visdom](https://github.com/facebookresearch/visdom) and [dominate](https://github.com/Knio/dominate)). You can install all the dependencies by
 ```bash
 pip install -r requirements.txt
 ```
@@ -126,14 +121,14 @@ python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2
 ```
 The test results will be saved to a html file here: `./results/facades_pix2pix/test_latest/index.html`.
 
-More example scripts can be found at `scripts` directory.
+You can find more scripts at `scripts` directory.
 
 ### Apply a pre-trained model (CycleGAN)
 - You can download a pretrained model (e.g. horse2zebra) with the following script:
 ```bash
 bash ./scripts/download_cyclegan_model.sh horse2zebra
 ```
-The pretrained model is saved at `./checkpoints/{name}_pretrained/latest_net_G.pth`. The available models are apple2orange, orange2apple, summer2winter_yosemite, winter2summer_yosemite, horse2zebra, zebra2horse, monet2photo, style_monet, style_cezanne, style_ukiyoe, style_vangogh, sat2map, map2sat, cityscapes_photo2label, cityscapes_label2photo, facades_photo2label, facades_label2photo, and iphone2dslr_flower.
+The pretrained model is saved at `./checkpoints/{name}_pretrained/latest_net_G.pth`. Check [here](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/scripts/download_cyclegan_model.sh#L3) for all the available CycleGAN models.
 - To test the model, you also need to download the  horse2zebra dataset:
 ```bash
 bash ./datasets/download_cyclegan_dataset.sh horse2zebra
@@ -156,12 +151,11 @@ You might want to specify `--which_model_netG` to match the generator architectu
 
 Download a pre-trained model with `./scripts/download_pix2pix_model.sh`.
 
-- For example, if you would like to download label2photo model on the Facades dataset,
+- Check [here](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/scripts/download_pix2pix_model.sh#L3) for all the available pix2pix models. For example, if you would like to download label2photo model on the Facades dataset,
 ```bash
 bash ./scripts/download_pix2pix_model.sh facades_label2photo
 ```
-
-- Download the pix2pix facades datasets
+- Download the pix2pix facades datasets:
 ```bash
 bash ./datasets/download_pix2pix_dataset.sh facades
 ```
@@ -215,4 +209,4 @@ If you love cats, and love reading cool graphics, vision, and learning papers, p
 [Github](https://github.com/junyanz/CatPapers) |  [Webpage](https://people.eecs.berkeley.edu/~junyanz/cat/cat_papers.html)
 
 ## Acknowledgments
-Code is inspired by [pytorch-DCGAN](https://github.com/pytorch/examples/tree/master/dcgan).
+Our code is inspired by [pytorch-DCGAN](https://github.com/pytorch/examples/tree/master/dcgan).
