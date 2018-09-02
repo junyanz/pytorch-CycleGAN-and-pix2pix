@@ -1,7 +1,7 @@
 FILE=$1
 
-if [[ $FILE != "cityscapes" && $FILE != "day2night" && $FILE != "night2day" &&  $FILE != "edges2handbags" && $FILE != "edges2shoes" && $FILE != "facades" && $FILE != "maps" ]]; then
-  echo "Available datasets are cityscapes, day2night, night2day, edges2handbags, edges2shoes, facades, maps"
+if [[ $FILE != "cityscapes" && $FILE != "night2day" && $FILE != "edges2handbags" && $FILE != "edges2shoes" && $FILE != "facades" && $FILE != "maps" ]]; then
+  echo "Available datasets are cityscapes, night2day, edges2handbags, edges2shoes, facades, maps"
   exit 1
 fi
 
