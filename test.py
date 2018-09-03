@@ -8,8 +8,8 @@ from util import html
 
 if __name__ == '__main__':
     opt = TestOptions().parse()
-    opt.nThreads = 1   # test code only supports nThreads = 1
-    opt.batchSize = 1  # test code only supports batchSize = 1
+    opt.num_threads = 1   # test code only supports num_threads = 1
+    opt.batch_size = 1  # test code only supports batch_size = 1
     opt.serial_batches = True  # no shuffle
     opt.no_flip = True  # no flip
     opt.display_id = -1  # no visdom display

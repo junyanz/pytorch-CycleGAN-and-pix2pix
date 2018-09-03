@@ -14,6 +14,5 @@ class TestOptions(BaseOptions):
         parser.set_defaults(model='test')
         # To avoid cropping, the loadSize should be the same as fineSize
         parser.set_defaults(loadSize=parser.get_default('fineSize'))
-        
         self.isTrain = False
         return parser

@@ -69,38 +69,37 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     return net
 
 
-def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
-    netG = None
+def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+    net = None
     norm_layer = get_norm_layer(norm_type=norm)
 
-    if which_model_netG == 'resnet_9blocks':
-        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
-    elif which_model_netG == 'resnet_6blocks':
-        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
-    elif which_model_netG == 'unet_128':
-        netG = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
-    elif which_model_netG == 'unet_256':
-        netG = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+    if netG == 'resnet_9blocks':
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
+    elif netG == 'resnet_6blocks':
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
+    elif netG == 'unet_128':
+        net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+    elif netG == 'unet_256':
+        net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     else:
-        raise NotImplementedError('Generator model name [%s] is not recognized' % which_model_netG)
-    return init_net(netG, init_type, init_gain, gpu_ids)
+        raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
+    return init_net(net, init_type, init_gain, gpu_ids)
 
 
-def define_D(input_nc, ndf, which_model_netD,
+def define_D(input_nc, ndf, netD,
              n_layers_D=3, norm='batch', use_sigmoid=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
-    netD = None
+    net = None
     norm_layer = get_norm_layer(norm_type=norm)
 
-    if which_model_netD == 'basic':
-        netD = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, use_sigmoid=use_sigmoid)
-    elif which_model_netD == 'n_layers':
-        netD = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer, use_sigmoid=use_sigmoid)
-    elif which_model_netD == 'pixel':
-        netD = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer, use_sigmoid=use_sigmoid)
+    if netD == 'basic':
+        net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, use_sigmoid=use_sigmoid)
+    elif netD == 'n_layers':
+        net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer, use_sigmoid=use_sigmoid)
+    elif netD == 'pixel':
+        net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer, use_sigmoid=use_sigmoid)
     else:
-        raise NotImplementedError('Discriminator model name [%s] is not recognized' %
-                                  which_model_netD)
-    return init_net(netD, init_type, init_gain, gpu_ids)
+        raise NotImplementedError('Discriminator model name [%s] is not recognized' % net)
+    return init_net(net, init_type, init_gain, gpu_ids)
 
 
 ##############################################################################

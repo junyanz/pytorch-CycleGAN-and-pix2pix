@@ -26,8 +26,8 @@ if __name__ == '__main__':
             if total_steps % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
             visualizer.reset()
-            total_steps += opt.batchSize
-            epoch_iter += opt.batchSize
+            total_steps += opt.batch_size
+            epoch_iter += opt.batch_size
             model.set_input(data)
             model.optimize_parameters()
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
             if total_steps % opt.print_freq == 0:
                 losses = model.get_current_losses()
-                t = (time.time() - iter_start_time) / opt.batchSize
+                t = (time.time() - iter_start_time) / opt.batch_size
                 visualizer.print_current_losses(epoch, epoch_iter, losses, t, t_data)
                 if opt.display_id > 0:
                     visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses)

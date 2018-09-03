@@ -11,7 +11,7 @@ class BaseModel():
     @staticmethod
     def modify_commandline_options(parser, is_train):
         return parser
-    
+
     def name(self):
         return 'BaseModel'
 

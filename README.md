@@ -145,7 +145,7 @@ The option `--model test` is used for generating results of CycleGAN only for on
 #!./scripts/test_single.sh
 python test.py --dataroot ./datasets/facades/testB/ --name {your_trained_model_name} --model test
 ```
-You might want to specify `--which_model_netG` to match the generator architecture of the trained model.
+You might want to specify `--netG` to match the generator architecture of the trained model.
 
 ### Apply a pre-trained model (pix2pix)
 

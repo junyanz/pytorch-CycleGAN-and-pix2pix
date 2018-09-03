@@ -3,6 +3,7 @@ import torch.utils.data
 from data.base_data_loader import BaseDataLoader
 from data.base_dataset import BaseDataset
 
+
 def find_dataset_using_name(dataset_name):
     # Given the option --dataset_mode [datasetname],
     # the file "data/datasetname_dataset.py"
@@ -19,7 +20,7 @@ def find_dataset_using_name(dataset_name):
         if name.lower() == target_dataset_name.lower() \
            and issubclass(cls, BaseDataset):
             dataset = cls
-            
+
     if dataset is None:
         print("In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase." % (dataset_filename, target_dataset_name))
         exit(0)
@@ -27,7 +28,7 @@ def find_dataset_using_name(dataset_name):
     return dataset
 
 
-def get_option_setter(dataset_name):    
+def get_option_setter(dataset_name):
     dataset_class = find_dataset_using_name(dataset_name)
     return dataset_class.modify_commandline_options
 
@@ -46,8 +47,8 @@ def CreateDataLoader(opt):
     return data_loader
 
 
-## Wrapper class of Dataset class that performs
-## multi-threaded data loading
+# Wrapper class of Dataset class that performs
+# multi-threaded data loading
 class CustomDatasetDataLoader(BaseDataLoader):
     def name(self):
         return 'CustomDatasetDataLoader'
@@ -57,9 +58,9 @@ class CustomDatasetDataLoader(BaseDataLoader):
         self.dataset = create_dataset(opt)
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,
-            batch_size=opt.batchSize,
+            batch_size=opt.batch_size,
             shuffle=not opt.serial_batches,
-            num_workers=int(opt.nThreads))
+            num_workers=int(opt.num_threads))
 
     def load_data(self):
         return self
@@ -69,6 +70,6 @@ class CustomDatasetDataLoader(BaseDataLoader):
 
     def __iter__(self):
         for i, data in enumerate(self.dataloader):
-            if i * self.opt.batchSize >= self.opt.max_dataset_size:
+            if i * self.opt.batch_size >= self.opt.max_dataset_size:
                 break
             yield data
