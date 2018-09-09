@@ -40,7 +40,7 @@ class BaseModel():
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
 
         if not self.isTrain or opt.continue_train:
-            self.load_networks(opt.which_epoch)
+            self.load_networks(opt.epoch)
         self.print_networks(opt.verbose)
 
     # make models eval mode during test time
@@ -88,10 +88,10 @@ class BaseModel():
         return errors_ret
 
     # save models to the disk
-    def save_networks(self, which_epoch):
+    def save_networks(self, epoch):
         for name in self.model_names:
             if isinstance(name, str):
-                save_filename = '%s_net_%s.pth' % (which_epoch, name)
+                save_filename = '%s_net_%s.pth' % (epoch, name)
                 save_path = os.path.join(self.save_dir, save_filename)
                 net = getattr(self, 'net' + name)
 
@@ -115,10 +115,10 @@ class BaseModel():
             self.__patch_instance_norm_state_dict(state_dict, getattr(module, key), keys, i + 1)
 
     # load models from the disk
-    def load_networks(self, which_epoch):
+    def load_networks(self, epoch):
         for name in self.model_names:
             if isinstance(name, str):
-                load_filename = '%s_net_%s.pth' % (which_epoch, name)
+                load_filename = '%s_net_%s.pth' % (epoch, name)
                 load_path = os.path.join(self.save_dir, load_filename)
                 net = getattr(self, 'net' + name)
                 if isinstance(net, torch.nn.DataParallel):

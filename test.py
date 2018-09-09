@@ -18,11 +18,11 @@ if __name__ == '__main__':
     model = create_model(opt)
     model.setup(opt)
     # create website
-    web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
-    webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))
+    web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.epoch))
+    webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
     # test
     for i, data in enumerate(dataset):
-        if i >= opt.how_many:
+        if i >= opt.num_test:
             break
         model.set_input(data)
         model.test()

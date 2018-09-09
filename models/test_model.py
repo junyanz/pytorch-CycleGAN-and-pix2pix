@@ -14,7 +14,7 @@ class TestModel(BaseModel):
         parser.set_defaults(dataset_mode='single')
 
         parser.add_argument('--model_suffix', type=str, default='',
-                            help='In checkpoints_dir, [which_epoch]_net_G[model_suffix].pth will'
+                            help='In checkpoints_dir, [epoch]_net_G[model_suffix].pth will'
                             ' be loaded as the generator of TestModel')
 
         return parser

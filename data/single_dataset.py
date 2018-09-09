@@ -24,7 +24,7 @@ class SingleDataset(BaseDataset):
         A_path = self.A_paths[index]
         A_img = Image.open(A_path).convert('RGB')
         A = self.transform(A_img)
-        if self.opt.which_direction == 'BtoA':
+        if self.opt.direction == 'BtoA':
             input_nc = self.opt.output_nc
         else:
             input_nc = self.opt.input_nc

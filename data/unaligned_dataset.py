@@ -38,7 +38,7 @@ class UnalignedDataset(BaseDataset):
 
         A = self.transform(A_img)
         B = self.transform(B_img)
-        if self.opt.which_direction == 'BtoA':
+        if self.opt.direction == 'BtoA':
             input_nc = self.opt.output_nc
             output_nc = self.opt.input_nc
         else:
