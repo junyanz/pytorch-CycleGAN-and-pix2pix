@@ -4,7 +4,7 @@ channels:
 - defaults
 dependencies:
 - python=3.5.5
-- pytorch=0.4.1
+- pytorch=0.4
 - scipy
 - pip:
   - dominate==2.3.1
