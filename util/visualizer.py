@@ -1,10 +1,16 @@
 import numpy as np
 import os
+import sys
 import ntpath
 import time
 from . import util
 from . import html
 from scipy.misc import imresize
+
+if sys.version_info[0] == 2:
+    VisdomExceptionBase = Exception
+else:
+    VisdomExceptionBase = ConnectionError
 
 
 # save image to the disk
@@ -101,7 +107,7 @@ class Visualizer():
                     label_html = '<table>%s</table>' % label_html
                     self.vis.text(table_css + label_html, win=self.display_id + 2,
                                   opts=dict(title=title + ' labels'))
-                except ConnectionError:
+                except VisdomExceptionBase:
                     self.throw_visdom_connection_error()
 
             else:
@@ -149,7 +155,7 @@ class Visualizer():
                     'xlabel': 'epoch',
                     'ylabel': 'loss'},
                 win=self.display_id)
-        except ConnectionError:
+        except VisdomExceptionBase:
             self.throw_visdom_connection_error()
 
     # losses: same format as |losses| of plot_current_losses
