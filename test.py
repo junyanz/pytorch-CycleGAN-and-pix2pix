@@ -22,7 +22,7 @@ if __name__ == '__main__':
     webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
     # test
     # Set eval mode. 
-    # This only affects layers like batch norm and drop out. But we do use batch norm in pix2pix.
+    # This only affects layers like batch norm and dropout. But we do use batch norm in pix2pix.
     model.eval()  
     for i, data in enumerate(dataset):
         if i >= opt.num_test:
