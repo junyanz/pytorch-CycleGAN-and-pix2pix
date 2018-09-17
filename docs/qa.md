@@ -2,7 +2,7 @@
 Before you post a new question, please first look at the following Q & A and existing GitHub issues. You may also want to read [Training/Test tips](docs/tips.md) for more suggestions.
 
 #### Connection Error:HTTPConnectionPool ([#230](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/230), [#24](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/24), [#38](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/38))
-Similar error messages:  “Failed to establish a new connection/Connection refused”.  
+Similar error messages:  “Failed to establish a new connection/Connection refused”.
 Please start the visdom server before starting the training:
 ```bash
 python -m visdom.server
@@ -15,14 +15,15 @@ You can also disable the visdom by setting `--display_id 0`.
 
 #### My PyTorch errors on CUDA related code.
 Try to run the following code snippet to make sure that CUDA is working (assuming using PyTorch >= 0.4):
-```py
+```python
 import torch
 torch.cuda.init()
 print(torch.randn(1, device='cuda')
 ```
-If you met an error, it is likely that your PyTorch build doesn't work with CUDA, e.g., it is installl from the official MacOS binary, or you have a GPU that is too old and not supported anymore. You may run the the code with CPU using `--device_ids -1`.
 
-####  “TypeError: Object of type 'Tensor' is not JSON serializable” ([#258](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/258))
+If you met an error, it is likely that your PyTorch build does not work with CUDA, e.g., it is installl from the official MacOS binary, or you have a GPU that is too old and not supported anymore. You may run the the code with CPU using `--device_ids -1`.
+
+#### “TypeError: Object of type 'Tensor' is not JSON serializable” ([#258](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/258))
 Similar errors: AttributeError: module 'torch' has no attribute 'device' ([#314](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/314))
 
 The current code only works with PyTorch 0.4+. An earlier PyTorch version can often cause the above errors.
@@ -59,7 +60,7 @@ CycleGAN is more memory-intensive than pix2pix as it requires two generators and
 
 - During training, train CycleGAN on cropped images of the training set. Please be careful not to change the aspect ratio or the scale of the original image, as this can lead to the training/test gap. You can usually do this by using `--resize_or_crop crop` option, or `--resize_or_crop scale_width_and_crop`.
 
-- Then at test time, you can load only one generator to produce the results in a single direction. This greatly saves GPU memory as you are not loading the discriminators and the other generator in the opposite direction. You can probably take the whole image as input (we have done image generation of 1024x512 resolution). You can do this using `--model test --dataroot [path to the directory that contains your test images (e.g., ./datasets/horse2zebra/trainA)] --model_suffix _A`. For more explanation, please see https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/test_model.py#L16.
+- Then at test time, you can load only one generator to produce the results in a single direction. This greatly saves GPU memory as you are not loading the discriminators and the other generator in the opposite direction. You can probably take the whole image as input. You can do this using `--model test --dataroot [path to the directory that contains your test images (e.g., ./datasets/horse2zebra/trainA)] --model_suffix _A --resize_or_crop none`. You can use either `--resize_or_crop none` or `--resize_or_crop scale_width --fineSize [your_desired_image_width]. Please see [model_suffix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/test_model.py#L16) and [resize_or_crop](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/9fc9eef1b0a14b77f7fad7b59ff750f29509dee0/data/base_dataset.py#L26) for more details.
 
 
 #### The color gets inverted from the beginning of training ([#249](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/249))
