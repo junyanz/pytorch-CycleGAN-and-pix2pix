@@ -2,7 +2,8 @@
 Before you post a new question, please first look at the following Q & A and existing GitHub issues. You may also want to read [Training/Test tips](docs/tips.md) for more suggestions.
 
 #### Connection Error:HTTPConnectionPool ([#230](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/230), [#24](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/24), [#38](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/38))
-Similar error messages:  “Failed to establish a new connection/Connection refused”.
+Similar error messages include “Failed to establish a new connection/Connection refused”.
+
 Please start the visdom server before starting the training:
 ```bash
 python -m visdom.server
@@ -23,10 +24,16 @@ print(torch.randn(1, device='cuda')
 
 If you met an error, it is likely that your PyTorch build does not work with CUDA, e.g., it is installl from the official MacOS binary, or you have a GPU that is too old and not supported anymore. You may run the the code with CPU using `--device_ids -1`.
 
-#### “TypeError: Object of type 'Tensor' is not JSON serializable” ([#258](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/258))
+#### TypeError: Object of type 'Tensor' is not JSON serializable ([#258](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/258))
 Similar errors: AttributeError: module 'torch' has no attribute 'device' ([#314](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/314))
 
 The current code only works with PyTorch 0.4+. An earlier PyTorch version can often cause the above errors.
+
+#### ValueError: empty range for randrange() ([#390](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/390), [#376](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/376), [#194](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/194))
+Similar error messages include "ConnectionRefusedError: [Errno 111] Connection refused"
+
+It is related to data augmentation step. It often happens when you use `--resize_or_crop crop` and `fineSize your_crop_size`. The program will crop random `fineSize x fineSize` patches out of the input training images. But if some of your image sizes  are smaller than the fineSize, you will get this error. A simple fix will be to use other data augmentation methods such as `--resize_and_crop` or `--scale_width`, or `scale_width_and_crop`.  The program will resize the images according to `loadSize` before apply cropping.
+
 
 #### Can I continue/resume my training? ([#350](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/350), [#275](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/275), [#234](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/234), [#87](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/87))
 You can use the option `--continue_train`. Also set `--epoch_count` to specify a different starting epoch count. See more discussion in [training/test tips](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md#trainingtest-tips.

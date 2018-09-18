@@ -23,6 +23,7 @@ class AlignedDataset(BaseDataset):
         AB_path = self.AB_paths[index]
         AB = Image.open(AB_path).convert('RGB')
         w, h = AB.size
+        assert(self.opt.loadSize >= self.opt.fineSize)
         w2 = int(w / 2)
         A = AB.crop((0, 0, w2, h)).resize((self.opt.loadSize, self.opt.loadSize), Image.BICUBIC)
         B = AB.crop((w2, 0, w, h)).resize((self.opt.loadSize, self.opt.loadSize), Image.BICUBIC)
