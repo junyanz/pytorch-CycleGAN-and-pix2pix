@@ -24,7 +24,7 @@ def get_norm_layer(norm_type='instance'):
 def get_scheduler(optimizer, opt):
     if opt.lr_policy == 'lambda':
         def lambda_rule(epoch):
-            lr_l = 1.0 - max(0, epoch + 1 + opt.epoch_count - opt.niter) / float(opt.niter_decay + 1)
+            lr_l = 1.0 - max(0, epoch + opt.epoch_count - opt.niter) / float(opt.niter_decay + 1)
             return lr_l
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda_rule)
     elif opt.lr_policy == 'step':
