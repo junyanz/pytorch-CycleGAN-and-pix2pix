@@ -98,13 +98,14 @@ bash ./datasets/download_cyclegan_dataset.sh maps
 #!./scripts/train_cyclegan.sh
 python train.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
 ```
-- To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097. To see more intermediate results, check out `./checkpoints/maps_cyclegan/web/index.html`
+- To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097. To see more intermediate results, check out `./checkpoints/maps_cyclegan/web/index.html`.
+
 - Test the model:
 ```bash
 #!./scripts/test_cyclegan.sh
 python test.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
 ```
-The test results will be saved to a html file here: `./results/maps_cyclegan/latest_test/index.html`.
+- The test results will be saved to a html file here: `./results/maps_cyclegan/latest_test/index.html`.
 
 ### pix2pix train/test
 - Download a pix2pix dataset (e.g.facades):
@@ -116,22 +117,21 @@ bash ./datasets/download_pix2pix_dataset.sh facades
 #!./scripts/train_pix2pix.sh
 python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --direction BtoA
 ```
-- To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097. To see more intermediate results, check out  `./checkpoints/facades_pix2pix/web/index.html`
+- To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097. To see more intermediate results, check out  `./checkpoints/facades_pix2pix/web/index.html`.
+
 - Test the model (`bash ./scripts/test_pix2pix.sh`):
 ```bash
 #!./scripts/test_pix2pix.sh
 python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --direction BtoA
 ```
-The test results will be saved to a html file here: `./results/facades_pix2pix/test_latest/index.html`.
-
-You can find more scripts at `scripts` directory.
+- The test results will be saved to a html file here: `./results/facades_pix2pix/test_latest/index.html`. You can find more scripts at `scripts` directory.
 
 ### Apply a pre-trained model (CycleGAN)
 - You can download a pretrained model (e.g. horse2zebra) with the following script:
 ```bash
 bash ./scripts/download_cyclegan_model.sh horse2zebra
 ```
-The pretrained model is saved at `./checkpoints/{name}_pretrained/latest_net_G.pth`. Check [here](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/scripts/download_cyclegan_model.sh#L3) for all the available CycleGAN models.
+- The pretrained model is saved at `./checkpoints/{name}_pretrained/latest_net_G.pth`. Check [here](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/scripts/download_cyclegan_model.sh#L3) for all the available CycleGAN models.
 - To test the model, you also need to download the  horse2zebra dataset:
 ```bash
 bash ./datasets/download_cyclegan_dataset.sh horse2zebra
@@ -141,7 +141,7 @@ bash ./datasets/download_cyclegan_dataset.sh horse2zebra
 ```bash
 python test.py --dataroot datasets/horse2zebra/testA --name horse2zebra_pretrained --model test --no_dropout
 ```
-The option `--model test` is used for generating results of CycleGAN only for one side. This option will automatically set `--dataset_mode single`, which only loads the images from one set. On the contrary, using `--model cycle_gan` requires loading and generating results in both directions, which is sometimes unnecessary. The results will be saved at `./results/`. Use `--results_dir {directory_path_to_save_result}` to specify the results directory.
+- The option `--model test` is used for generating results of CycleGAN only for one side. This option will automatically set `--dataset_mode single`, which only loads the images from one set. On the contrary, using `--model cycle_gan` requires loading and generating results in both directions, which is sometimes unnecessary. The results will be saved at `./results/`. Use `--results_dir {directory_path_to_save_result}` to specify the results directory.
 
 - For your own experiments, you might want to specify `--netG`, `--norm`, `--no_dropout` to match the generator architecture of the trained model.
 
@@ -161,7 +161,7 @@ bash ./datasets/download_pix2pix_dataset.sh facades
 ```bash
 python test.py --dataroot ./datasets/facades/ --direction BtoA --model pix2pix --name facades_label2photo_pretrained
 ```
-Note that we specified `--direction BtoA` as Facades dataset's A to B direction is photos to labels.
+- Note that we specified `--direction BtoA` as Facades dataset's A to B direction is photos to labels.
 
 - If you would like to apply a pre-trained model to a collection of input images (rather than image pairs), please use `--model test` option. See `./scripts/test_single.sh` for how to apply a model to Facade label maps (stored in the directory `facades/testB`).
 
