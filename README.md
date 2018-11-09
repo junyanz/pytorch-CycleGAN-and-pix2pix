@@ -139,17 +139,11 @@ bash ./datasets/download_cyclegan_dataset.sh horse2zebra
 
 - Then generate the results using
 ```bash
-python test.py --dataroot datasets/horse2zebra/testA --name horse2zebra_pretrained --model test
+python test.py --dataroot datasets/horse2zebra/testA --name horse2zebra_pretrained --model test --no_dropout
 ```
-The option `--model test` is used for generating results of CycleGAN only for one side. `python test.py --model cycle_gan` will require loading and generating results in both directions, which is sometimes unnecessary. The results will be saved at `./results/`. Use `--results_dir {directory_path_to_save_result}` to specify the results directory.
+The option `--model test` is used for generating results of CycleGAN only for one side. This option will automatically set `--dataset_mode single`, which only loads the images from one set. On the contrary, using `--model cycle_gan` requires loading and generating results in both directions, which is sometimes unnecessary. The results will be saved at `./results/`. Use `--results_dir {directory_path_to_save_result}` to specify the results directory.
 
-- If you would like to apply a pre-trained model to a collection of input images (rather than image pairs), please use `--dataset_mode single` and `--model test` options. Here is a script to apply a model to Facade label maps (stored in the directory `facades/testB`).
-``` bash
-#!./scripts/test_single.sh
-#This script only works for CycleGAN; For pix2pix, you should use `--model pix2pix`.  
-python test.py --dataroot ./datasets/facades/testB/ --name {your_trained_model_name} --model test
-```
-You might want to specify `--netG` to match the generator architecture of the trained model.
+- For your own experiments, you might want to specify `--netG`, `--norm`, `--no_dropout` to match the generator architecture of the trained model.
 
 ### Apply a pre-trained model (pix2pix)
 
@@ -169,7 +163,10 @@ python test.py --dataroot ./datasets/facades/ --direction BtoA --model pix2pix -
 ```
 Note that we specified `--direction BtoA` as Facades dataset's A to B direction is photos to labels.
 
+- If you would like to apply a pre-trained model to a collection of input images (rather than image pairs), please use `--model test` option. See `./scripts/test_single.sh` for how to apply a model to Facade label maps (stored in the directory `facades/testB`).
+
 - See a list of currently available models at `./scripts/download_pix2pix_model.sh`
+
 
 ## [Datasets](docs/datasets.md)
 Download pix2pix/CycleGAN datasets and create your own datasets.
