@@ -146,6 +146,7 @@ The option `--model test` is used for generating results of CycleGAN only for on
 - If you would like to apply a pre-trained model to a collection of input images (rather than image pairs), please use `--dataset_mode single` and `--model test` options. Here is a script to apply a model to Facade label maps (stored in the directory `facades/testB`).
 ``` bash
 #!./scripts/test_single.sh
+#This script only works for CycleGAN; For pix2pix, you should use `--model pix2pix`.  
 python test.py --dataroot ./datasets/facades/testB/ --name {your_trained_model_name} --model test
 ```
 You might want to specify `--netG` to match the generator architecture of the trained model.
