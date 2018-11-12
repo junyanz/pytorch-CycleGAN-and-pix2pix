@@ -43,9 +43,14 @@ if __name__ == '__main__':
                     visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses)
 
             if total_steps % opt.save_latest_freq == 0:
-                print('saving the latest model (epoch %d, total_steps %d)' %
-                      (epoch, total_steps))
-                model.save_networks('latest')
+                if opt.save_by_iter:
+                    print('saving model at: (epoch %d, iters %d)' %
+                          (epoch, total_steps))
+                    model.save('iter_'+str(total_steps))
+                else:
+                    print('saving the latest model (epoch %d, total_steps %d)' %
+                          (epoch, total_steps))
+                    model.save_networks('latest')
 
             iter_data_time = time.time()
         if epoch % opt.save_epoch_freq == 0:
