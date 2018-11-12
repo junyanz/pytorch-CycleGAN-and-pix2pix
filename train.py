@@ -41,7 +41,7 @@ if __name__ == '__main__':
                 visualizer.print_current_losses(epoch, epoch_iter, losses, t, t_data)
                 if opt.display_id > 0:
                     visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses)
-            
+
             if total_steps % opt.save_latest_freq == 0:
                 if opt.save_by_iter:
                     print('saving model at: (epoch %d, iters %d)' %
