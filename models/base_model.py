@@ -38,15 +38,9 @@ class BaseModel():
     def setup(self, opt, parser=None):
         if self.isTrain:
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
-
-        if not self.isTrain:
-            if opt.load_by_iter: # load network by iteration.
-                self.load_network('iter_' + opt.iter)
-            else:
-                self.load_networks(opt.epoch)
-        else: # When continue training, only supported by loading from some epoch, not some iteration
-            if opt.continue_train:
-                self.load_networks(opt.epoch)
+        if not self.isTrain or opt.continue_train:
+            load_suffix = 'iter_%d' % opt.load_iter if opt.load_iter > 0 else opt.epoch
+            self.load_networks(load_suffix)
         self.print_networks(opt.verbose)
 
     # make models eval mode during test time
