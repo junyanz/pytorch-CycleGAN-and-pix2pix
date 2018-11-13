@@ -177,8 +177,8 @@ Best practice for training and testing your models.
 ## [Frequently Asked Questions](docs/qa.md)
 Before you post a new question, please first look at the above Q & A and existing GitHub issues.
 
-## [Pull Request]
-You are always welcome to pull request your contribution to this repository.
+## Pull Request
+You are always welcome to contribute to this repository. 
 Please run `flake8 --ignore E501` and `python ./scripts/test_before_push.py` to check the syntax and functionality of your code.
 
 ## Citation
