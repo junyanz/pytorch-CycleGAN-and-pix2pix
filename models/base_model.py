@@ -29,7 +29,7 @@ class BaseModel():
         self.image_paths = []
 
     def set_input(self, input):
-        self.input = input
+        pass
 
     def forward(self):
         pass
