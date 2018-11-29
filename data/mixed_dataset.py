@@ -43,16 +43,6 @@ class MixedDataset(BaseDataset):
             ret['data_aligned'] = False
             self.unaligned_idx += 1
             return ret
-        '''if index < self.aligned_len:
-            ret = self.aligned_dataset.__getitem__(self.aligned_idx)
-            ret['data_aligned'] = True
-            self.aligned_idx += 1
-            return ret
-        else:
-            ret = self.unaligned_dataset.__getitem__(self.unaligned_idx)
-            ret['data_aligned'] = False
-            self.unaligned_idx += 1
-            return ret'''
 
     def __len__(self):
         return self.total_len

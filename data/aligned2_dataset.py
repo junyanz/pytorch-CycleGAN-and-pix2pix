@@ -5,7 +5,6 @@ import torch
 from data.base_dataset import BaseDataset
 from data.image_folder import make_dataset
 from PIL import Image
-from random import shuffle
 
 
 class Aligned2Dataset(BaseDataset):
@@ -76,7 +75,7 @@ class Aligned2Dataset(BaseDataset):
 
     def shuffle(self):
         tmp = list(zip(self.A_paths, self.B_paths))
-        shuffle(tmp)
+        random.shuffle(tmp)
         A_paths, B_paths = zip(*tmp)
         self.A_paths = list(A_paths)
         self.B_paths = list(B_paths)
