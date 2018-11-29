@@ -5,9 +5,10 @@ import torch
 from data.base_dataset import BaseDataset
 from data.image_folder import make_dataset
 from PIL import Image
+from random import shuffle
 
 
-class AlignedDataset(BaseDataset):
+class Aligned2Dataset(BaseDataset):
     @staticmethod
     def modify_commandline_options(parser, is_train):
         return parser
@@ -15,18 +16,23 @@ class AlignedDataset(BaseDataset):
     def initialize(self, opt):
         self.opt = opt
         self.root = opt.dataroot
-        self.dir_AB = os.path.join(opt.dataroot, opt.phase)
-        self.AB_paths = sorted(make_dataset(self.dir_AB))
+        self.dir_A = os.path.join(opt.dataroot, 'aligned', opt.phase + 'A')
+        self.dir_B = os.path.join(opt.dataroot, 'aligned', opt.phase + 'B')
+        self.A_paths = sorted(make_dataset(self.dir_A))
+        self.B_paths = sorted(make_dataset(self.dir_B))
+        assert(len(self.A_paths) == len(self.B_paths))
+        self.size = len(self.A_paths)
         assert(opt.resize_or_crop == 'resize_and_crop')
 
     def __getitem__(self, index):
-        AB_path = self.AB_paths[index]
-        AB = Image.open(AB_path).convert('RGB')
-        w, h = AB.size
+        A_path = self.A_paths[index]
+        A = Image.open(A_path).convert('RGB')
+        B_path = self.B_paths[index]
+        B = Image.open(B_path).convert('RGB')
         assert(self.opt.loadSize >= self.opt.fineSize)
-        w2 = int(w / 2)
-        A = AB.crop((0, 0, w2, h)).resize((self.opt.loadSize, self.opt.loadSize), Image.BICUBIC)
-        B = AB.crop((w2, 0, w, h)).resize((self.opt.loadSize, self.opt.loadSize), Image.BICUBIC)
+
+        A = A.resize((self.opt.loadSize, self.opt.loadSize), Image.BICUBIC)
+        B = B.resize((self.opt.loadSize, self.opt.loadSize), Image.BICUBIC)
         A = transforms.ToTensor()(A)
         B = transforms.ToTensor()(B)
         w_offset = random.randint(0, max(0, self.opt.loadSize - self.opt.fineSize - 1))
@@ -60,13 +66,17 @@ class AlignedDataset(BaseDataset):
             B = tmp.unsqueeze(0)
 
         return {'A': A, 'B': B,
-                'A_paths': AB_path, 'B_paths': AB_path}
+                'A_paths': A_path, 'B_paths': B_path}
 
     def __len__(self):
-        return len(self.AB_paths)
+        return self.size
 
     def name(self):
-        return 'AlignedDataset'
+        return 'AlignedDataset2'
 
     def shuffle(self):
-        random.shuffle(self.AB_paths)
+        tmp = list(zip(self.A_paths, self.B_paths))
+        shuffle(tmp)
+        A_paths, B_paths = zip(*tmp)
+        self.A_paths = list(A_paths)
+        self.B_paths = list(B_paths)

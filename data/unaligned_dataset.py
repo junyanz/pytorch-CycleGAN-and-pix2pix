@@ -59,3 +59,7 @@ class UnalignedDataset(BaseDataset):
 
     def name(self):
         return 'UnalignedDataset'
+
+    def shuffle(self):
+        random.shuffle(self.A_paths)
+        random.shuffle(self.B_paths)
