@@ -9,7 +9,6 @@ from data.unaligned_dataset import UnalignedDataset
 class Mixed2Dataset(BaseDataset):
     @staticmethod
     def modify_commandline_options(parser, is_train):
-        parser.set_defaults(serial_batches=True)
         return parser
 
     def initialize(self, opt):
@@ -28,7 +27,7 @@ class Mixed2Dataset(BaseDataset):
         print("Mixed2Dataset: %d aligned, %d unaligned" % (self.aligned_len, self.unaligned_len))
 
     def __getitem__(self, index):
-        if index == 0:
+        if index == 0 and not self.opt.serial_batches:
             self.aligned_dataset.shuffle()
             self.unaligned_dataset.shuffle()
 
