@@ -5,9 +5,9 @@ from .base_model import BaseModel
 from . import networks
 
 
-class PartiallyAlignedCycleGANModel(BaseModel):
+class MixedModel(BaseModel):
     def name(self):
-        return 'PartiallyAlignedCycleGANModel'
+        return 'MixedModel'
 
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
