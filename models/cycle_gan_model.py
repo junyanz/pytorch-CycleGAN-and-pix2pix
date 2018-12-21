@@ -32,7 +32,8 @@ class CycleGANModel(BaseModel):
         if self.isTrain and self.opt.lambda_identity > 0.0:
             visual_names_A.append('idt_A')
             visual_names_B.append('idt_B')
-
+        if opt.lambda_identity > 0.0:
+            assert(opt.input_nc == opt.output_nc)
         self.visual_names = visual_names_A + visual_names_B
         # specify the models you want to save to the disk. The program will call base_model.save_networks and base_model.load_networks
         if self.isTrain:
