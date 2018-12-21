@@ -167,6 +167,9 @@ python test.py --dataroot ./datasets/facades/ --direction BtoA --model pix2pix -
 
 - See a list of currently available models at `./scripts/download_pix2pix_model.sh`
 
+## [Docker](docker/README.md)
+
+We provide the pre-built Docker image and Dockerfile that can run this code repo. See [docker](docker/README.md).
 
 ## [Datasets](docs/datasets.md)
 Download pix2pix/CycleGAN datasets and create your own datasets.
