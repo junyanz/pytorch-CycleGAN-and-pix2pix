@@ -10,7 +10,6 @@ class Pix2PixModel(BaseModel):
 
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
-
         # changing the default values to match the pix2pix paper
         # (https://phillipi.github.io/pix2pix/)
         parser.set_defaults(norm='batch', netG='unet_256')

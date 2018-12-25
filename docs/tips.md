@@ -44,7 +44,11 @@ Unfortunately, the loss curve does not reveal much information in training GANs,
 #### About batch size
 For all experiments in the paper, we set the batch size to be 1. If there is room for memory, you can use higher batch size with batch norm or instance norm. (Note that the default batchnorm does not work well with multi-GPU training. You may consider using [synchronized batchnorm](https://github.com/vacancy/Synchronized-BatchNorm-PyTorch) instead). But please be aware that it can impact the training. In particular, even with Instance Normalization, different batch sizes can lead to different results. Moreover, increasing `--fineSize` may be a good alternative to increasing the batch size.
 
-#### Extracting Edges
+
+#### Notes on Colorization
+No need to run `combine_A_and_B.py` for colorization. Instead, you need to prepare natural images and set `--dataset_mode colorization` and `--model pix2pix_colorization` in the script. The program will automatically convert each RGB image into Lab color space, and create  `L -> ab` image pair during the training. Also set `--input_nc 1` and `--output_nc 2`. The training and test directory should be organized as `/your/data/train` and `your/data/test`. See an example script `scripts/train_pix2pix2pix_colorization.sh` for more details. 
+
+#### Notes on Extracting Edges
 We provide python and Matlab scripts to extract coarse edges from photos. Run `scripts/edges/batch_hed.py` to compute [HED](https://github.com/s9xie/hed) edges. Run `scripts/edges/PostprocessHED.m` to simplify edges with additional post-processing steps. Check the code documentation for more details.
 
 #### Evaluating Labels2Photos on Cityscapes

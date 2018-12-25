@@ -56,6 +56,10 @@ class BaseModel():
         with torch.no_grad():
             self.forward()
 
+    # compute additional output images for visualization
+    def compute_visuals(self):
+        pass
+
     # get image paths
     def get_image_paths(self):
         return self.image_paths

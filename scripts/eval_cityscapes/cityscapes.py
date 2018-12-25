@@ -5,13 +5,14 @@ import glob
 import numpy as np
 from PIL import Image
 
+
 class cityscapes:
     def __init__(self, data_path):
         # data_path something like /data2/cityscapes
         self.dir = data_path
-        self.classes = ['road', 'sidewalk', 'building', 'wall', 'fence', 
-                        'pole', 'traffic light', 'traffic sign', 'vegetation', 'terrain', 
-                        'sky', 'person', 'rider', 'car', 'truck', 
+        self.classes = ['road', 'sidewalk', 'building', 'wall', 'fence',
+                        'pole', 'traffic light', 'traffic sign', 'vegetation', 'terrain',
+                        'sky', 'person', 'rider', 'car', 'truck',
                         'bus', 'train', 'motorcycle', 'bicycle']
         self.mean = np.array((72.78044, 83.21195, 73.45286), dtype=np.float32)
         # import cityscapes label helper and set up label mappings
@@ -81,7 +82,7 @@ class cityscapes:
         Map trainIds to colors as specified in labels.py
         '''
         if label.ndim == 3:
-            label= label[0]
+            label = label[0]
         color = np.empty((label.shape[0], label.shape[1], 3))
         if sys.version_info[0] < 3:
             for k, v in self.trainId2color.iteritems():

@@ -1,11 +1,10 @@
 import os
-import sys
 import caffe
 import argparse
 import numpy as np
 import scipy.misc
 from PIL import Image
-from util import *
+from util import segrun, fast_hist, get_scores
 from cityscapes import cityscapes
 
 parser = argparse.ArgumentParser()
@@ -17,6 +16,7 @@ parser.add_argument("--gpu_id", type=int, default=0, help="Which gpu id to use")
 parser.add_argument("--split", type=str, default='val', help="Data split to be evaluated")
 parser.add_argument("--save_output_images", type=int, default=0, help="Whether to save the FCN output images")
 args = parser.parse_args()
+
 
 def main():
     if not os.path.isdir(args.output_dir):
@@ -41,7 +41,7 @@ def main():
         city = idx.split('_')[0]
         # idx is city_shot_frame
         label = CS.load_label(args.split, city, idx)
-        im_file = args.result_dir + '/' + idx + '_leftImg8bit.png' 
+        im_file = args.result_dir + '/' + idx + '_leftImg8bit.png'
         im = np.array(Image.open(im_file))
         # im = scipy.misc.imresize(im, (256, 256))
         im = scipy.misc.imresize(im, (label.shape[1], label.shape[2]))
@@ -64,4 +64,6 @@ def main():
             while len(cl) < 15:
                 cl = cl + ' '
             f.write('%s: acc = %f, iou = %f\n' % (cl, per_class_acc[i], per_class_iou[i]))
+
+
 main()

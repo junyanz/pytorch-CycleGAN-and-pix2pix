@@ -21,7 +21,7 @@ class BaseDataset(data.Dataset):
         return 0
 
 
-def get_transform(opt, grayscale=False):
+def get_transform(opt, grayscale=False, convert=True):
     transform_list = []
     if grayscale:
         transform_list.append(transforms.Grayscale(1))
@@ -43,10 +43,10 @@ def get_transform(opt, grayscale=False):
 
     if not opt.no_flip:
         transform_list.append(transforms.RandomHorizontalFlip())
-
-    transform_list += [transforms.ToTensor(),
-                       transforms.Normalize((0.5, 0.5, 0.5),
-                                            (0.5, 0.5, 0.5))]
+    if convert:
+        transform_list += [transforms.ToTensor(),
+                           transforms.Normalize((0.5, 0.5, 0.5),
+                                                (0.5, 0.5, 0.5))]
     return transforms.Compose(transform_list)
 
 
