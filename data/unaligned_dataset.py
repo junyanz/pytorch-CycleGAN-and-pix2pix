@@ -23,7 +23,11 @@ class UnalignedDataset(BaseDataset):
         self.B_paths = sorted(self.B_paths)
         self.A_size = len(self.A_paths)
         self.B_size = len(self.B_paths)
-        self.transform = get_transform(opt)
+        btoA = self.opt.direction == 'BtoA'
+        input_nc = self.opt.output_nc if btoA else self.opt.input_nc
+        output_nc = self.opt.input_nc if btoA else self.opt.output_nc
+        self.transform_A = get_transform(opt, input_nc == 1)
+        self.transform_B = get_transform(opt, output_nc == 1)
 
     def __getitem__(self, index):
         A_path = self.A_paths[index % self.A_size]
@@ -35,24 +39,9 @@ class UnalignedDataset(BaseDataset):
         A_img = Image.open(A_path).convert('RGB')
         B_img = Image.open(B_path).convert('RGB')
 
-        A = self.transform(A_img)
-        B = self.transform(B_img)
-        if self.opt.direction == 'BtoA':
-            input_nc = self.opt.output_nc
-            output_nc = self.opt.input_nc
-        else:
-            input_nc = self.opt.input_nc
-            output_nc = self.opt.output_nc
-
-        if input_nc == 1:  # RGB to gray
-            tmp = A[0, ...] * 0.299 + A[1, ...] * 0.587 + A[2, ...] * 0.114
-            A = tmp.unsqueeze(0)
-
-        if output_nc == 1:  # RGB to gray
-            tmp = B[0, ...] * 0.299 + B[1, ...] * 0.587 + B[2, ...] * 0.114
-            B = tmp.unsqueeze(0)
-        return {'A': A, 'B': B,
-                'A_paths': A_path, 'B_paths': B_path}
+        A = self.transform_A(A_img)
+        B = self.transform_B(B_img)
+        return {'A': A, 'B': B, 'A_paths': A_path, 'B_paths': B_path}
 
     def __len__(self):
         return max(self.A_size, self.B_size)

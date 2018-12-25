@@ -182,7 +182,7 @@ Before you post a new question, please first look at the above Q & A and existin
 
 ## Pull Request
 You are always welcome to contribute to this repository by sending a [pull request](https://help.github.com/articles/about-pull-requests/).
-Please run `python ./scripts/test_before_push.py` before you commit the code.
+Please run `flake8 --ignore E501 .` and `python ./scripts/test_before_push.py` before you commit the code.
 
 ## Citation
 If you use this code for your research, please cite our papers.

@@ -12,7 +12,6 @@ def run(command):
 
 
 if __name__ == '__main__':
-    run('flake8 --ignore E501 .')
     if not os.path.exists('./datasets/mini'):
         run('bash ./datasets/download_cyclegan_dataset.sh mini')
 

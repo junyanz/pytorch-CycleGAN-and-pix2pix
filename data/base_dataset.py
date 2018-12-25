@@ -21,8 +21,10 @@ class BaseDataset(data.Dataset):
         return 0
 
 
-def get_transform(opt):
+def get_transform(opt, grayscale=False):
     transform_list = []
+    if grayscale:
+        transform_list.append(transforms.Grayscale(1))
     if opt.resize_or_crop == 'resize_and_crop':
         osize = [opt.loadSize, opt.loadSize]
         transform_list.append(transforms.Resize(osize, Image.BICUBIC))
@@ -30,21 +32,28 @@ def get_transform(opt):
     elif opt.resize_or_crop == 'crop':
         transform_list.append(transforms.RandomCrop(opt.fineSize))
     elif opt.resize_or_crop == 'scale_width':
-        transform_list.append(transforms.Lambda(
-            lambda img: __scale_width(img, opt.fineSize)))
+        transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.fineSize)))
     elif opt.resize_or_crop == 'scale_width_and_crop':
-        transform_list.append(transforms.Lambda(
-            lambda img: __scale_width(img, opt.loadSize)))
+        transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.loadSize)))
         transform_list.append(transforms.RandomCrop(opt.fineSize))
     elif opt.resize_or_crop == 'none':
-        transform_list.append(transforms.Lambda(
-            lambda img: __adjust(img)))
+        transform_list.append(transforms.Lambda(lambda img: __adjust(img)))
     else:
         raise ValueError('--resize_or_crop %s is not a valid option.' % opt.resize_or_crop)
 
-    if opt.isTrain and not opt.no_flip:
+    if not opt.no_flip:
         transform_list.append(transforms.RandomHorizontalFlip())
 
+    transform_list += [transforms.ToTensor(),
+                       transforms.Normalize((0.5, 0.5, 0.5),
+                                            (0.5, 0.5, 0.5))]
+    return transforms.Compose(transform_list)
+
+
+def get_simple_transform(grayscale=False):
+    transform_list = []
+    if grayscale:
+        transform_list.append(transforms.Grayscale(1))
     transform_list += [transforms.ToTensor(),
                        transforms.Normalize((0.5, 0.5, 0.5),
                                             (0.5, 0.5, 0.5))]
@@ -54,7 +63,6 @@ def get_transform(opt):
 # just modify the width and height to be multiple of 4
 def __adjust(img):
     ow, oh = img.size
-
     # the size needs to be a multiple of this number,
     # because going through generator network may change img size
     # and eventually cause size mismatch error
