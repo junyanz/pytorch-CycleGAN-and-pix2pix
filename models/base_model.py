@@ -55,6 +55,7 @@ class BaseModel():
     def test(self):
         with torch.no_grad():
             self.forward()
+            self.compute_visuals()
 
     # compute additional output images for visualization
     def compute_visuals(self):
