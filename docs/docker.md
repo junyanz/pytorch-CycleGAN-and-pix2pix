@@ -1,6 +1,6 @@
 # Docker image with pytorch-CycleGAN-and-pix2pix
 
-We provide both Dockerfile and pre-built Docker container that runs this code repo.
+We provide both Dockerfile and pre-built Docker container that can run this code repo.
 
 ## Prerequisite
 
@@ -31,7 +31,7 @@ bash scripts/train_pix2pix.sh
 
 ## Running with Dockerfile
 
-We also posted the [Dockerfile](docs/Dockerfile). To generate the pre-built file, download the Dockerfile in this directory and run
+We also posted the [Dockerfile](Dockerfile). To generate the pre-built file, download the Dockerfile in this directory and run
 ```bash
 docker build -t [target_tag] .
 ```
