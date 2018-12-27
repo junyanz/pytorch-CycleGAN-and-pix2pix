@@ -125,6 +125,7 @@ python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix
 python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --direction BtoA
 ```
 - The test results will be saved to a html file here: `./results/facades_pix2pix/test_latest/index.html`. You can find more scripts at `scripts` directory.
+- To train and test pix2pix-based colorization models, please add `--model pix2pix_colorization` and `--dataset_mode colorization`. See our training [tips](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md#notes-on-colorization) for more details.
 
 ### Apply a pre-trained model (CycleGAN)
 - You can download a pretrained model (e.g. horse2zebra) with the following script:
