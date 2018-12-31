@@ -34,7 +34,7 @@ Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks.
 In ICCV 2017. (* equal contributions) [[Bibtex]](https://junyanz.github.io/CycleGAN/CycleGAN.txt)
 
 
-Image-to-Image Translation with Conditional Adversarial Networks. 
+Image-to-Image Translation with Conditional Adversarial Networks.
 [Phillip Isola](https://people.eecs.berkeley.edu/~isola), [Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz), [Tinghui Zhou](https://people.eecs.berkeley.edu/~tinghuiz), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros)
 In CVPR 2017. [[Bibtex]](http://people.csail.mit.edu/junyanz/projects/pix2pix/pix2pix.bib)
 
@@ -181,8 +181,8 @@ Best practice for training and testing your models.
 ## [Frequently Asked Questions](docs/qa.md)
 Before you post a new question, please first look at the above Q & A and existing GitHub issues.
 
-## Implement Your Own Model and Dataset
-We provide a dataset [template](data/template_dataset.py) and a model [template](models/template_model.py) as your starting point.
+## Custom Model and Dataset
+If you plan to implement your own models and dataset for your applications, we provide a dataset [template](data/template_dataset.py) and a model [template](models/template_model.py) as a starting point.
 
 ## Pull Request
 You are always welcome to contribute to this repository by sending a [pull request](https://help.github.com/articles/about-pull-requests/).
