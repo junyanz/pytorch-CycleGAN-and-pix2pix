@@ -4,9 +4,9 @@ from skimage import color  # used for lab2rgb
 import numpy as np
 
 
-class Pix2PixColorizationModel(Pix2PixModel):
+class ColorizationModel(Pix2PixModel):
     def name(self):
-        return 'Pix2PixColorizationModel'
+        return 'ColorizationModel'
 
     def __init__(self, opt):
         # reuse the pix2pix model

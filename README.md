@@ -125,7 +125,7 @@ python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix
 python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --direction BtoA
 ```
 - The test results will be saved to a html file here: `./results/facades_pix2pix/test_latest/index.html`. You can find more scripts at `scripts` directory.
-- To train and test pix2pix-based colorization models, please add `--model pix2pix_colorization` and `--dataset_mode colorization`. See our training [tips](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md#notes-on-colorization) for more details.
+- To train and test pix2pix-based colorization models, please add `--model colorization` and `--dataset_mode colorization`. See our training [tips](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md#notes-on-colorization) for more details.
 
 ### Apply a pre-trained model (CycleGAN)
 - You can download a pretrained model (e.g. horse2zebra) with the following script:
@@ -169,7 +169,6 @@ python test.py --dataroot ./datasets/facades/ --direction BtoA --model pix2pix -
 - See a list of currently available models at `./scripts/download_pix2pix_model.sh`
 
 ## [Docker](docs/docker.md)
-
 We provide the pre-built Docker image and Dockerfile that can run this code repo. See [docker](docs/docker.md).
 
 ## [Datasets](docs/datasets.md)
@@ -182,11 +181,11 @@ Best practice for training and testing your models.
 Before you post a new question, please first look at the above Q & A and existing GitHub issues.
 
 ## Custom Model and Dataset
-If you plan to implement your own models and dataset for your applications, we provide a dataset [template](data/template_dataset.py) and a model [template](models/template_model.py) as a starting point.
+If you plan to implement custom models and dataset for your mew applications, we provide a dataset [template](data/template_dataset.py) and a model [template](models/template_model.py) as a starting point.
 
 ## Pull Request
 You are always welcome to contribute to this repository by sending a [pull request](https://help.github.com/articles/about-pull-requests/).
-Please run `flake8 --ignore E501 .` and `python ./scripts/test_before_push.py` before you commit the code.
+Please run `flake8 --ignore E501 .` and `python ./scripts/test_before_push.py` before you commit the code. Please also update the code structure [overview](docs/overview.md) accordingly if you add or remove files.
 
 ## Citation
 If you use this code for your research, please cite our papers.
