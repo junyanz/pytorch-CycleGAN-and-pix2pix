@@ -57,19 +57,20 @@ class BaseModel():
             self.forward()
             self.compute_visuals()
 
-    # compute additional output images for visualization
     def compute_visuals(self):
+        """Calculate additional output images for visdom and HTML visualization"""
         pass
 
-    # get image paths
     def get_image_paths(self):
+        """ get image paths that are used to load current data"""
         return self.image_paths
 
     def optimize_parameters(self):
+        """update network weights; called in every training iteration"""
         pass
 
-    # update learning rate (called once every epoch)
     def update_learning_rate(self):
+        """update learning rate (called once every epoch)"""
         for scheduler in self.schedulers:
             scheduler.step()
         lr = self.optimizers[0].param_groups[0]['lr']

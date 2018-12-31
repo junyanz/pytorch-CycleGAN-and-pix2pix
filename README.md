@@ -12,7 +12,7 @@ This PyTorch implementation produces results comparable to or better than our or
 
 **Note**: The current software works well with PyTorch 0.4+. Check out the older [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1) that supports PyTorch 0.1-0.3.
 
-You may find useful information in [training/test tips](docs/tips.md) and [frequently asked questions](docs/qa.md).
+You may find useful information in [training/test tips](docs/tips.md) and [frequently asked questions](docs/qa.md). To implement your own model and dataset, check out our [templates](#implement-your-own-model-and-dataset). 
 
 **CycleGAN: [Project](https://junyanz.github.io/CycleGAN/) |  [Paper](https://arxiv.org/pdf/1703.10593.pdf) |  [Torch](https://github.com/junyanz/CycleGAN)**
 <img src="https://junyanz.github.io/CycleGAN/images/teaser_high_res.jpg" width="800"/>
@@ -180,6 +180,9 @@ Best practice for training and testing your models.
 
 ## [Frequently Asked Questions](docs/qa.md)
 Before you post a new question, please first look at the above Q & A and existing GitHub issues.
+
+## Implement Your Own Model and Dataset
+We provide a dataset [template](data/template_dataset.py) and a model [template](models/template_model.py) as your starting point.
 
 ## Pull Request
 You are always welcome to contribute to this repository by sending a [pull request](https://help.github.com/articles/about-pull-requests/).
