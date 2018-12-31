@@ -1,6 +1,12 @@
 """Dataset class template
 
 This module provides a templete for users to implement custom datasets.
+You need to implement the following functions:
+    <modify_commandline_options>:　Add dataset-specific options and rewrite default values for existing options.
+    <__init__>: Initialize this dataset class.
+    <__getitem__>: Return a data point and its metadata information.
+    <__len__>: Return the number of images.
+    <name>: Return the name of this dataset.
 """
 from data.base_dataset import BaseDataset, get_transform
 # from data.image_folder import make_dataset
@@ -30,19 +36,18 @@ class TemplateDataset(BaseDataset):
         parser.set_defaults(max_dataset_size=10, new_dataset_option=2.0)  # specify dataset-specific default values
         return parser
 
-    def initialize(self, opt):
-        """Initialize this dataset class
+    def __init__(self, opt):
+        """Initialize this dataset class.
 
         Parameters:
             opt -- training/test options
         A few things can be done here.
-        - save the options.
+        - save the options (have been done in BaseDataset)
         - get image paths and meta information of the dataset.
         - define the image transformation.
         """
         # save the option and dataset root
-        self.opt = opt
-        self.root = opt.dataroot
+        BaseDataset.__init__(self, opt)
         # get the image paths of your dataset;
         self.image_paths = []  # You can call <sorted(make_dataset(self.root))> to get all the image paths under the directory self.root
         # define the default transform function. You can use <base_dataset.get_transform>; You can also define your custom transform function
@@ -68,9 +73,9 @@ class TemplateDataset(BaseDataset):
         return {'data_A': data_A, 'data_B': data_B, 'path': path}
 
     def __len__(self):
-        """Return the number of images"""
+        """Return the total number of images."""
         return len(self.image_paths)
 
     def name(self):
-        """Return the name of this dataset"""
+        """Return the name of this dataset."""
         return 'TemplateDataset'

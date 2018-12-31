@@ -4,8 +4,9 @@ import torchvision.transforms as transforms
 
 
 class BaseDataset(data.Dataset):
-    def __init__(self):
-        super(BaseDataset, self).__init__()
+    def __init__(self, opt):
+        self.opt = opt
+        self.root = opt.dataroot
 
     def name(self):
         return 'BaseDataset'
@@ -13,9 +14,6 @@ class BaseDataset(data.Dataset):
     @staticmethod
     def modify_commandline_options(parser, is_train):
         return parser
-
-    def initialize(self, opt):
-        pass
 
     def __len__(self):
         return 0

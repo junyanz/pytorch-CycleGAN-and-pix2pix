@@ -20,8 +20,8 @@ class CycleGANModel(BaseModel):
 
         return parser
 
-    def initialize(self, opt):
-        BaseModel.initialize(self, opt)
+    def __init__(self, opt):
+        BaseModel.__init__(self, opt)
         # specify the training losses you want to print out. The program will call base_model.get_current_losses
         self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B']
         # specify the images you want to save/display. The program will call base_model.get_current_visuals

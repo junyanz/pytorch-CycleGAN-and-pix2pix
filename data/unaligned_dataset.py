@@ -10,9 +10,8 @@ class UnalignedDataset(BaseDataset):
     def modify_commandline_options(parser, is_train):
         return parser
 
-    def initialize(self, opt):
-        self.opt = opt
-        self.root = opt.dataroot
+    def __init__(self, opt):
+        BaseDataset.__init__(self, opt)
         self.dir_A = os.path.join(opt.dataroot, opt.phase + 'A')
         self.dir_B = os.path.join(opt.dataroot, opt.phase + 'B')
 

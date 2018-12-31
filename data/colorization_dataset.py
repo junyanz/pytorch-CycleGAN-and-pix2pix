@@ -13,9 +13,8 @@ class ColorizationDataset(BaseDataset):
         parser.set_defaults(input_nc=1, output_nc=2, direction='AtoB')
         return parser
 
-    def initialize(self, opt):
-        self.opt = opt
-        self.root = opt.dataroot
+    def __init__(self, opt):
+        BaseDataset.__init__(self, opt)
         self.dir_A = os.path.join(opt.dataroot)
         self.A_paths = sorted(make_dataset(self.dir_A))
         assert(opt.input_nc == 1 and opt.output_nc == 2 and opt.direction == 'AtoB')

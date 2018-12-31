@@ -6,11 +6,11 @@ Given input-output pairs (data_A, data_B), it learns a network netG that can min
     min_<netG> ||netG(data_A) - data_B||_1
 You need to implement the following functions:
     <modify_commandline_options>:　Add dataset-specific options and rewrite default values for existing options.
-    <initialize>: Initialize this model class
-    <set_input>: Unpack input data and perform data pre-processing
-    <forward>: Run forward pass. This will be called by both <optimize_parameters> and <test>
-    <backward>: Calculate gradients for network G
-    <optimize_parameters>: Update network weights; it will be called in every training iteration
+    <__init__>: Initialize this model class.
+    <set_input>: Unpack input data and perform data pre-processing.
+    <forward>: Run forward pass. This will be called by both <optimize_parameters> and <test>.
+    <backward>: Calculate gradients for network weights.
+    <optimize_parameters>: Update network weights; it will be called in every training iteration.
 """
 import torch
 from .base_model import BaseModel
@@ -39,8 +39,8 @@ class TemplateModel(BaseModel):
 
         return parser
 
-    def initialize(self, opt):
-        """Initialize this model class
+    def __init__(self, opt):
+        """Initialize this model class.
 
         Parameters:
             opt -- training/test options
@@ -49,7 +49,7 @@ class TemplateModel(BaseModel):
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
         """
-        BaseModel.initialize(self, opt)  # call the initialization method of BaseModel
+        BaseModel.__init__(self, opt)  # call the initialization method of BaseModel
         # specify the training losses you want to print out. The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
         self.loss_names = ['loss_G']
         # specify the images you want to save and display. The program will call base_model.get_current_visuals to save and display these images.
@@ -83,20 +83,19 @@ class TemplateModel(BaseModel):
         self.path = input['path']  # get image path
 
     def forward(self):
-        """Run forward pass. This will be called by both functions <optimize_parameters> and <test>"""
+        """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         self.output = self.netG(self.data_A)  # generate output image given the input data_A
 
     def backward(self):
-        """calculate gradients for network G"""
+        """calculate gradients for network weights."""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
         self.loss_G = self.criterionLoss(self.output, self.data_B) * self.opt.lambda_regression
         self.loss_G.backward()       # calculate gradients of network G w.r.t. loss_G
 
     def optimize_parameters(self):
-        """Update network weights; it will be called in every training iteration"""
+        """Update network weights; it will be called in every training iteration."""
         self.forward()               # first call forward to calculate intermediate results
-        # update network G
         self.optimizer.zero_grad()   # clear network G's existing gradients
         self.backward()              # calculate gradients for network G
         self.optimizer.step()        # update gradients for network G

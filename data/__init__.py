@@ -35,15 +35,13 @@ def get_option_setter(dataset_name):
 
 def create_dataset(opt):
     dataset = find_dataset_using_name(opt.dataset_mode)
-    instance = dataset()
-    instance.initialize(opt)
+    instance = dataset(opt)
     print("dataset [%s] was created" % (instance.name()))
     return instance
 
 
 def CreateDataLoader(opt):
-    data_loader = CustomDatasetDataLoader()
-    data_loader.initialize(opt)
+    data_loader = CustomDatasetDataLoader(opt)
     return data_loader
 
 
@@ -53,8 +51,8 @@ class CustomDatasetDataLoader(BaseDataLoader):
     def name(self):
         return 'CustomDatasetDataLoader'
 
-    def initialize(self, opt):
-        BaseDataLoader.initialize(self, opt)
+    def __init__(self, opt):
+        BaseDataLoader.__init__(self, opt)
         self.dataset = create_dataset(opt)
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,

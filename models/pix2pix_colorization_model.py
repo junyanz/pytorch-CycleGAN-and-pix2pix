@@ -8,9 +8,9 @@ class Pix2PixColorizationModel(Pix2PixModel):
     def name(self):
         return 'Pix2PixColorizationModel'
 
-    def initialize(self, opt):
+    def __init__(self, opt):
         # reuse the pix2pix model
-        Pix2PixModel.initialize(self, opt)
+        Pix2PixModel.__init__(self, opt)
         # specify the images to be visualized.
         self.visual_names = ['real_A', 'real_B_rgb', 'fake_B_rgb']
 

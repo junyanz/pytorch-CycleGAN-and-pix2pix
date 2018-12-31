@@ -8,9 +8,8 @@ class SingleDataset(BaseDataset):
     def modify_commandline_options(parser, is_train):
         return parser
 
-    def initialize(self, opt):
-        self.opt = opt
-        self.root = opt.dataroot
+    def __init__(self, opt):
+        BaseDataset.__init__(self, opt)
         self.A_paths = sorted(make_dataset(self.root))
         input_nc = self.opt.output_nc if self.opt.direction == 'BtoA' else self.opt.input_nc
         self.transform = get_transform(opt, input_nc == 1)

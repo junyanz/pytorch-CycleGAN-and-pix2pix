@@ -1,8 +1,5 @@
 class BaseDataLoader():
-    def __init__(self):
-        pass
-
-    def initialize(self, opt):
+    def __init__(self, opt):
         self.opt = opt
         pass
 

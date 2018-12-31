@@ -12,9 +12,8 @@ class AlignedDataset(BaseDataset):
     def modify_commandline_options(parser, is_train):
         return parser
 
-    def initialize(self, opt):
-        self.opt = opt
-        self.root = opt.dataroot
+    def __init__(self, opt):
+        BaseDataset.__init__(self, opt)
         self.dir_AB = os.path.join(opt.dataroot, opt.phase)
         self.AB_paths = sorted(make_dataset(self.dir_AB))
         assert(opt.resize_or_crop == 'resize_and_crop')  # only support this mode
