@@ -19,7 +19,7 @@ Try to run the following code snippet to make sure that CUDA is working (assumin
 ```python
 import torch
 torch.cuda.init()
-print(torch.randn(1, device='cuda')
+print(torch.randn(1, device='cuda'))
 ```
 
 If you met an error, it is likely that your PyTorch build does not work with CUDA, e.g., it is installl from the official MacOS binary, or you have a GPU that is too old and not supported anymore. You may run the the code with CPU using `--device_ids -1`.
