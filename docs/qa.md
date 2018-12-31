@@ -56,7 +56,7 @@ We also recommend that you use the instance normalization for multi-GPU training
 
 
 #### Can I run the model on CPU? ([#310](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/310))
-Yes, you can set `--gpu_ids -1`. See [training/test tips](docs/tips.md) for more details.
+Yes, you can set `--gpu_ids -1`. See [training/test tips](tips.md) for more details.
 
 
 #### Are pre-trained models available? ([#10](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/10))
