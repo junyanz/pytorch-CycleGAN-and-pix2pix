@@ -12,7 +12,7 @@ This PyTorch implementation produces results comparable to or better than our or
 
 **Note**: The current software works well with PyTorch 0.4+. Check out the older [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1) that supports PyTorch 0.1-0.3.
 
-You may find useful information in [training/test tips](docs/tips.md) and [frequently asked questions](docs/qa.md). To implement your own model and dataset, check out our [templates](#implement-your-own-model-and-dataset).
+You may find useful information in [training/test tips](docs/tips.md) and [frequently asked questions](docs/qa.md). To implement custom model and dataset, check out our [templates](#custom-model-and-dataset).
 
 **CycleGAN: [Project](https://junyanz.github.io/CycleGAN/) |  [Paper](https://arxiv.org/pdf/1703.10593.pdf) |  [Torch](https://github.com/junyanz/CycleGAN)**
 <img src="https://junyanz.github.io/CycleGAN/images/teaser_high_res.jpg" width="800"/>
@@ -29,14 +29,12 @@ You may find useful information in [training/test tips](docs/tips.md) and [frequ
 
 If you use this code for your research, please cite:
 
-Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks.
-[Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz/)\*,  [Taesung Park](https://taesung.me/)\*, [Phillip Isola](https://people.eecs.berkeley.edu/~isola/), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros)
-In ICCV 2017. (* equal contributions) [[Bibtex]](https://junyanz.github.io/CycleGAN/CycleGAN.txt)
+Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks.<br>
+[Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz/)\*,  [Taesung Park](https://taesung.me/)\*, [Phillip Isola](https://people.eecs.berkeley.edu/~isola/), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros). In ICCV 2017. (* equal contributions) [[Bibtex]](https://junyanz.github.io/CycleGAN/CycleGAN.txt)
 
 
-Image-to-Image Translation with Conditional Adversarial Networks.
-[Phillip Isola](https://people.eecs.berkeley.edu/~isola), [Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz), [Tinghui Zhou](https://people.eecs.berkeley.edu/~tinghuiz), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros)
-In CVPR 2017. [[Bibtex]](http://people.csail.mit.edu/junyanz/projects/pix2pix/pix2pix.bib)
+Image-to-Image Translation with Conditional Adversarial Networks.<br>
+[Phillip Isola](https://people.eecs.berkeley.edu/~isola), [Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz), [Tinghui Zhou](https://people.eecs.berkeley.edu/~tinghuiz), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros). In CVPR 2017. [[Bibtex]](http://people.csail.mit.edu/junyanz/projects/pix2pix/pix2pix.bib)
 
 ## Course
 CycleGAN course assignment [code](http://www.cs.toronto.edu/~rgrosse/courses/csc321_2018/assignments/a4-code.zip) and [handout](http://www.cs.toronto.edu/~rgrosse/courses/csc321_2018/assignments/a4-handout.pdf) designed by Prof. [Roger Grosse](http://www.cs.toronto.edu/~rgrosse/) for [CSC321](http://www.cs.toronto.edu/~rgrosse/courses/csc321_2018/) "Intro to Neural Networks and Machine Learning" at University of Toronto. Please contact the instructor if you would like to adopt it in your course.
@@ -69,7 +67,7 @@ CycleGAN course assignment [code](http://www.cs.toronto.edu/~rgrosse/courses/csc
 
 ## Prerequisites
 - Linux or macOS
-- Python 2 or 3
+- Python 3
 - CPU or NVIDIA GPU + CUDA CuDNN
 
 ## Getting Started
@@ -81,12 +79,10 @@ git clone https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix
 cd pytorch-CycleGAN-and-pix2pix
 ```
 
-- Install PyTorch 0.4+ and torchvision from http://pytorch.org and other dependencies (e.g., [visdom](https://github.com/facebookresearch/visdom) and [dominate](https://github.com/Knio/dominate)). You can install all the dependencies by
-```bash
-pip install -r requirements.txt
-```
-
-- For Conda users, we include a script `./scripts/conda_deps.sh` to install PyTorch and other libraries.
+- Install [PyTorch](http://pytorch.org and) 0.4+ and other dependencies (e.g., torchvision, [visdom](https://github.com/facebookresearch/visdom) and [dominate](https://github.com/Knio/dominate)).
+  - For pip users, please type the command `pip install -r requirements.txt`.
+  - For Conda users, we provide a installation script `./scripts/conda_deps.sh`. Alternatively, you can create a new Conda environment using `conda env create -f environment.yml`.
+  - For Docker users, we provide the pre-built Docker image and Dockerfile. Please refer to our [Docker](docs/docker.md) page.
 
 ### CycleGAN train/test
 - Download a CycleGAN dataset (e.g. maps):
@@ -147,7 +143,6 @@ python test.py --dataroot datasets/horse2zebra/testA --name horse2zebra_pretrain
 - For your own experiments, you might want to specify `--netG`, `--norm`, `--no_dropout` to match the generator architecture of the trained model.
 
 ### Apply a pre-trained model (pix2pix)
-
 Download a pre-trained model with `./scripts/download_pix2pix_model.sh`.
 
 - Check [here](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/scripts/download_pix2pix_model.sh#L3) for all the available pix2pix models. For example, if you would like to download label2photo model on the Facades dataset,
@@ -181,7 +176,7 @@ Best practice for training and testing your models.
 Before you post a new question, please first look at the above Q & A and existing GitHub issues.
 
 ## Custom Model and Dataset
-If you plan to implement custom models and dataset for your mew applications, we provide a dataset [template](data/template_dataset.py) and a model [template](models/template_model.py) as a starting point.
+If you plan to implement custom models and dataset for your new applications, we provide a dataset [template](data/template_dataset.py) and a model [template](models/template_model.py) as a starting point.
 
 ## Pull Request
 You are always welcome to contribute to this repository by sending a [pull request](https://help.github.com/articles/about-pull-requests/).
