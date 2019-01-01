@@ -1,19 +1,18 @@
 import importlib
 import torch.utils.data
-from data.base_data_loader import BaseDataLoader
 from data.base_dataset import BaseDataset
 
 
 def find_dataset_using_name(dataset_name):
-    # Given the option --dataset_mode [datasetname],
-    # the file "data/datasetname_dataset.py"
-    # will be imported.
+    """Import the module "data/datasetname_dataset.py" given the option --dataset_mode [datasetname].
+
+    In the file, the class called DatasetNameDataset() will
+    be instantiated. It has to be a subclass of BaseDataset,
+    and it is case-insensitive.
+    """
     dataset_filename = "data." + dataset_name + "_dataset"
     datasetlib = importlib.import_module(dataset_filename)
 
-    # In the file, the class called DatasetNameDataset() will
-    # be instantiated. It has to be a subclass of BaseDataset,
-    # and it is case-insensitive.
     dataset = None
     target_dataset_name = dataset_name.replace('_', '') + 'dataset'
     for name, cls in datasetlib.__dict__.items():
@@ -34,6 +33,7 @@ def get_option_setter(dataset_name):
 
 
 def create_dataset(opt):
+    """Create dataset given the option."""
     dataset = find_dataset_using_name(opt.dataset_mode)
     instance = dataset(opt)
     print("dataset [%s] was created" % (instance.name()))
@@ -41,18 +41,23 @@ def create_dataset(opt):
 
 
 def CreateDataLoader(opt):
+    """Create dataloader given the option.
+
+    This function warps the function create_dataset.
+    This is the main interface called by train.py and test.py.
+    """
     data_loader = CustomDatasetDataLoader(opt)
     return data_loader
 
 
-# Wrapper class of Dataset class that performs
-# multi-threaded data loading
-class CustomDatasetDataLoader(BaseDataLoader):
+class CustomDatasetDataLoader():
+    """Wrapper class of Dataset class that performs multi-threaded data loading"""
+
     def name(self):
         return 'CustomDatasetDataLoader'
 
     def __init__(self, opt):
-        BaseDataLoader.__init__(self, opt)
+        self.opt = opt
         self.dataset = create_dataset(opt)
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,
