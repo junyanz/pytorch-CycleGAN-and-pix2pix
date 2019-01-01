@@ -1,22 +1,29 @@
 import torch.utils.data as data
 from PIL import Image
 import torchvision.transforms as transforms
+from abc import ABC, abstractmethod
 
 
-class BaseDataset(data.Dataset):
+class BaseDataset(data.Dataset, ABC):
     def __init__(self, opt):
         self.opt = opt
         self.root = opt.dataroot
-
-    def name(self):
-        return 'BaseDataset'
 
     @staticmethod
     def modify_commandline_options(parser, is_train):
         return parser
 
+    @abstractmethod
+    def name(self):
+        return 'BaseDataset'
+
+    @abstractmethod
     def __len__(self):
         return 0
+
+    @abstractmethod
+    def __getitem__(self, index):
+        pass
 
 
 def get_transform(opt, grayscale=False, convert=True):
@@ -58,8 +65,8 @@ def get_simple_transform(grayscale=False):
     return transforms.Compose(transform_list)
 
 
-# just modify the width and height to be multiple of 4
 def __adjust(img):
+    """Modify the width and height to be multiple of 4"""
     ow, oh = img.size
     # the size needs to be a multiple of this number,
     # because going through generator network may change img size

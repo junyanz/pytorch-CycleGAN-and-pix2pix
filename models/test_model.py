@@ -40,3 +40,6 @@ class TestModel(BaseModel):
 
     def forward(self):
         self.fake_B = self.netG(self.real_A)
+
+    def optimize_parameters(self):
+        pass  # no optimization for test model

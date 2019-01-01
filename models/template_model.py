@@ -13,7 +13,6 @@ You need to implement the following functions:
     <__init__>: Initialize this model class.
     <set_input>: Unpack input data and perform data pre-processing.
     <forward>: Run forward pass. This will be called by both <optimize_parameters> and <test>.
-    <backward>: Calculate gradients for network weights.
     <optimize_parameters>: Update network weights; it will be called in every training iteration.
 """
 import torch
