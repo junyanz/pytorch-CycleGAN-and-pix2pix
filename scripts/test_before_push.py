@@ -12,6 +12,7 @@ def run(command):
 
 
 if __name__ == '__main__':
+    # download mini datasets
     if not os.path.exists('./datasets/mini'):
         run('bash ./datasets/download_cyclegan_dataset.sh mini')
 
@@ -31,9 +32,20 @@ if __name__ == '__main__':
     run('python test.py --dataroot ./datasets/facades/ --direction BtoA --model pix2pix --name facades_label2photo_pretrained --num_test 1')
 
     # cyclegan train/test
-    run('python train.py --model cycle_gan --name temp --dataroot ./datasets/mini --niter 1 --niter_decay 0 --save_latest_freq 10  --print_freq 1 --display_id -1')
-    run('python test.py --model test --name temp --dataroot ./datasets/mini --num_test 1 --model_suffix "_A" --no_dropout')
+    run('python train.py --model cycle_gan --name temp_cyclegan --dataroot ./datasets/mini --niter 1 --niter_decay 0 --save_latest_freq 10  --print_freq 1 --display_id -1')
+    run('python test.py --model test --name temp_cyclegan --dataroot ./datasets/mini --num_test 1 --model_suffix "_A" --no_dropout')
 
     # pix2pix train/test
-    run('python train.py --model pix2pix --name temp --dataroot ./datasets/mini_pix2pix --niter 1 --niter_decay 0 --save_latest_freq 10 --display_id -1')
-    run('python test.py --model pix2pix --name temp --dataroot ./datasets/mini_pix2pix --num_test 1 --direction BtoA')
+    run('python train.py --model pix2pix --name temp_pix2pix --dataroot ./datasets/mini_pix2pix --niter 1 --niter_decay 0 --save_latest_freq 10 --display_id -1')
+    run('python test.py --model pix2pix --name temp_pix2pix --dataroot ./datasets/mini_pix2pix --num_test 1')
+
+    # template train/test
+    run('python train.py --model template --name temp2 --dataroot ./datasets/mini_pix2pix --niter 1 --niter_decay 0 --save_latest_freq 10 --display_id -1')
+    run('python test.py --model template --name temp2 --dataroot ./datasets/mini_pix2pix --num_test 1')
+
+    # colorization train/test (optional)
+    if not os.path.exists('./datasets/mini_colorization'):
+        run('bash ./datasets/download_cyclegan_dataset.sh mini_colorization')
+
+    run('python train.py --model colorization --name temp_color --dataroot ./datasets/mini_colorization --niter 1 --niter_decay 0 --save_latest_freq 5 --display_id -1')
+    run('python test.py --model colorization --name temp_color --dataroot ./datasets/mini_colorization --num_test 1')

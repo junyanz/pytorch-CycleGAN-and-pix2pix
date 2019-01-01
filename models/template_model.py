@@ -81,10 +81,10 @@ class TemplateModel(BaseModel):
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        # You can also use <direction> to swap data_A and data_B
-        self.data_A = input['data_A']  # get image data A
-        self.data_B = input['data_B']  # get image data B
-        self.path = input['path']  # get image path
+        AtoB = self.opt.direction == 'AtoB'  # use <direction> to swap data_A and data_B
+        self.data_A = input['A' if AtoB else 'B'].to(self.device)  # get image data A
+        self.data_B = input['B' if AtoB else 'A'].to(self.device)  # get image data B
+        self.image_paths = input['A_paths' if AtoB else 'B_paths']  # get image paths
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""

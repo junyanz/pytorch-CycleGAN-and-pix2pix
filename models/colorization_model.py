@@ -8,6 +8,12 @@ class ColorizationModel(Pix2PixModel):
     def name(self):
         return 'ColorizationModel'
 
+    @staticmethod
+    def modify_commandline_options(parser, is_train=True):
+        Pix2PixModel.modify_commandline_options(parser, is_train)
+        parser.set_defaults(dataset_mode='colorization')
+        return parser
+
     def __init__(self, opt):
         # reuse the pix2pix model
         Pix2PixModel.__init__(self, opt)
