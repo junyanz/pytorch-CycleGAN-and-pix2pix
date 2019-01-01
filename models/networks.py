@@ -88,16 +88,16 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     return init_net(net, init_type, init_gain, gpu_ids)
 
 
-def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', use_sigmoid=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
     net = None
     norm_layer = get_norm_layer(norm_type=norm)
 
     if netD == 'basic':  # default PatchGAN classifier
-        net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, use_sigmoid=use_sigmoid)
+        net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer)
     elif netD == 'n_layers':  # more options
-        net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer, use_sigmoid=use_sigmoid)
+        net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
     elif netD == 'pixel':     # classify if each pixel is real or fake
-        net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer, use_sigmoid=use_sigmoid)
+        net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % net)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -106,39 +106,116 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', use_sigmoid=False,
 ##############################################################################
 # Classes
 ##############################################################################
-
-
-# Defines the GAN loss which uses either LSGAN or the regular GAN.
-# When LSGAN is used, it is basically same as MSELoss,
-# but it abstracts away the need to create the target label tensor
-# that has the same size as the input
 class GANLoss(nn.Module):
-    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0):
+    """Define different GAN objectives.
+
+    The GANLoss class abstracts away the need to create the target label tensor
+    that has the same size as the input.
+    """
+
+    def __init__(self, gan_mode, target_real_label=1.0, target_fake_label=0.0):
+        """ Initialize the GANLoss class.
+
+        Parameters:
+            gan_mode (string)-- the type of GAN objective. It currently supports vanilla, lsgan, and wgangp.
+            target_real_label (bool) -- label for a real image
+            target_fake_label (bool)-- label of a fake image
+        Note: Do not use sigmoid as the last layer of Discriminator.
+        LSGAN needs no sigmoid. vanilla GANs will handle it with BCEWithLogitsLoss.
+        """
         super(GANLoss, self).__init__()
         self.register_buffer('real_label', torch.tensor(target_real_label))
         self.register_buffer('fake_label', torch.tensor(target_fake_label))
-        if use_lsgan:
+        self.gan_mode = gan_mode
+        if gan_mode == 'lsgan':
             self.loss = nn.MSELoss()
+        elif gan_mode == 'vanilla':
+            self.loss = nn.BCEWithLogitsLoss()
+        elif gan_mode in ['wgangp']:
+            self.loss = None
         else:
-            self.loss = nn.BCELoss()
+            raise NotImplementedError('gan mode %s not implemented' % gan_mode)
 
-    def get_target_tensor(self, input, target_is_real):
+    def get_target_tensor(self, prediction, target_is_real):
+        """Create label tensors with the same size as the input.
+
+        Parameters:
+            prediction (tensor) -- tpyically the prediction from a discriminator
+            target_is_real (bool) -- if the ground truth label is for real images or fake images
+        Returns:
+            A label tensor filled with ground truth label, and with the size of the input
+        """
+
         if target_is_real:
             target_tensor = self.real_label
         else:
             target_tensor = self.fake_label
-        return target_tensor.expand_as(input)
+        return target_tensor.expand_as(prediction)
 
-    def __call__(self, input, target_is_real):
-        target_tensor = self.get_target_tensor(input, target_is_real)
-        return self.loss(input, target_tensor)
+    def __call__(self, prediction, target_is_real):
+        """Calculate loss given Discriminator's output and grount truth labels.
+
+        Parameters:
+            prediction (tensor) -- tpyically the prediction from a discriminator
+            target_is_real (bool) -- if the ground truth label is for real images or fake images
+        Returns:
+            the calculated loss.
+        """
+        if self.gan_mode in ['lsgan', 'vanilla']:
+            target_tensor = self.get_target_tensor(prediction, target_is_real)
+            loss = self.loss(prediction, target_tensor)
+        elif self.gan_mode == 'wgangp':
+            if target_is_real:
+                loss = -prediction.mean()
+            else:
+                loss = prediction.mean()
+        return loss
 
 
-# Defines the generator that consists of Resnet blocks between a few
-# downsampling/upsampling operations.
-# Code and idea originally from Justin Johnson's architecture.
-# https://github.com/jcjohnson/fast-neural-style/
+def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', constant=1.0, lambda_gp=10.0):
+    """calculate the gradient penalty loss, used in WGAN-GP paper https://arxiv.org/abs/1704.00028
+
+    Arguments:
+        netD -- discrimiantor network
+        real_data -- real images
+        fake_data -- generated images from the generator
+        device    -- GPU/CPU: from torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')
+        type      -- if we mix real and fake data [real | fake | mixed].
+        constant  -- the constant used in formula (||gradient||_2 - constant)^2
+        lambda_gp -- weight for this loss
+    Returns:
+        the gradient penalty loss
+    """
+    if lambda_gp > 0.0:
+        if type == 'real':
+            interpolatesv = real_data
+        elif type == 'fake':
+            interpolatesv = fake_data
+        elif type == 'mixed':
+            alpha = torch.rand(real_data.shape[0], 1)
+            alpha = alpha.expand(real_data.shape[0], real_data.nelement() // real_data.shape[0]).contiguous().view(*real_data.shape)
+            alpha = alpha.to(device)
+            interpolatesv = alpha * real_data + ((1 - alpha) * fake_data)
+        else:
+            raise NotImplementedError('{} not implemented'.format(type))
+        interpolatesv.requires_grad_(True)
+        disc_interpolates = netD(interpolatesv)
+        gradients = torch.autograd.grad(outputs=disc_interpolates, inputs=interpolatesv,
+                                        grad_outputs=torch.ones(disc_interpolates.size()).to(device),
+                                        create_graph=True, retain_graph=True, only_inputs=True)
+        gradients = gradients[0].view(real_data.size(0), -1)
+        gradient_penalty = (((gradients + 1e-16).norm(2, dim=1) - constant) ** 2).mean() * lambda_gp        # added eps
+        return gradient_penalty, gradients
+    else:
+        return 0.0, None
+
+
 class ResnetGenerator(nn.Module):
+    """Resnet - baed generator that consists of Resnet blocks between a few downsampling / upsampling operations.
+
+    We adapt Torch code and idea from Justin Johnson's neural style transer project (https://github.com/jcjohnson/fast-neural-style)
+    """
+
     def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
         assert(n_blocks >= 0)
         super(ResnetGenerator, self).__init__()
@@ -186,8 +263,9 @@ class ResnetGenerator(nn.Module):
         return self.model(input)
 
 
-# Define a resnet block
 class ResnetBlock(nn.Module):
+    """Define a resnet block"""
+
     def __init__(self, dim, padding_type, norm_layer, use_dropout, use_bias):
         super(ResnetBlock, self).__init__()
         self.conv_block = self.build_conv_block(dim, padding_type, norm_layer, use_dropout, use_bias)
@@ -311,7 +389,7 @@ class UnetSkipConnectionBlock(nn.Module):
 
 # Defines the PatchGAN discriminator with the specified arguments.
 class NLayerDiscriminator(nn.Module):
-    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d, use_sigmoid=False):
+    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d):
         super(NLayerDiscriminator, self).__init__()
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
@@ -347,10 +425,6 @@ class NLayerDiscriminator(nn.Module):
         ]
 
         sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]
-
-        if use_sigmoid:
-            sequence += [nn.Sigmoid()]
-
         self.model = nn.Sequential(*sequence)
 
     def forward(self, input):
@@ -358,7 +432,7 @@ class NLayerDiscriminator(nn.Module):
 
 
 class PixelDiscriminator(nn.Module):
-    def __init__(self, input_nc, ndf=64, norm_layer=nn.BatchNorm2d, use_sigmoid=False):
+    def __init__(self, input_nc, ndf=64, norm_layer=nn.BatchNorm2d):
         super(PixelDiscriminator, self).__init__()
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
@@ -372,9 +446,6 @@ class PixelDiscriminator(nn.Module):
             norm_layer(ndf * 2),
             nn.LeakyReLU(0.2, True),
             nn.Conv2d(ndf * 2, 1, kernel_size=1, stride=1, padding=0, bias=use_bias)]
-
-        if use_sigmoid:
-            self.net.append(nn.Sigmoid())
 
         self.net = nn.Sequential(*self.net)
 

@@ -1,6 +1,10 @@
 """Dataset class template
 
 This module provides a templete for users to implement custom datasets.
+You can specify '--dataset_mode template' to use this dataset.
+The class name should be consistent with both the filename and its dataset_mode option.
+The filename should be <dataset_mode>_dataset.py
+The class name should be <Dataset_mode>Dataset.py
 You need to implement the following functions:
     <modify_commandline_options>:　Add dataset-specific options and rewrite default values for existing options.
     <__init__>: Initialize this dataset class.
@@ -14,13 +18,7 @@ from data.base_dataset import BaseDataset, get_transform
 
 
 class TemplateDataset(BaseDataset):
-    """A template dataset class for you to implement custom datasets.
-
-       You can use '--dataset_mode template' to use this dataset.
-       The class name should be consistent with both the filename and its dataset_mode option.
-       The filename should be <dataset_mode>_dataset.py
-       The class name should be <DATASET_MODE>Dataset.py
-    """
+    """A template dataset class for you to implement custom datasets."""
     @staticmethod
     def modify_commandline_options(parser, is_train):
         """Add new dataset-specific options, and rewrite default values for existing options.
