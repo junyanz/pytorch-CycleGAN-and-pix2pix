@@ -29,11 +29,6 @@ class BaseModel(ABC):
         return parser
 
     @abstractmethod
-    def name(self):
-        """Return the name of this class"""
-        pass
-
-    @abstractmethod
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps."""
         pass

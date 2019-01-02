@@ -14,10 +14,6 @@ class BaseDataset(data.Dataset, ABC):
         return parser
 
     @abstractmethod
-    def name(self):
-        return 'BaseDataset'
-
-    @abstractmethod
     def __len__(self):
         return 0
 

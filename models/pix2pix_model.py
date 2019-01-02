@@ -5,9 +5,6 @@ from . import networks
 
 
 class Pix2PixModel(BaseModel):
-    def name(self):
-        return 'Pix2PixModel'
-
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
         # changing the default values to match the pix2pix paper (https://phillipi.github.io/pix2pix/)

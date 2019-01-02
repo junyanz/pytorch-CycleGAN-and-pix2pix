@@ -33,6 +33,3 @@ class ColorizationDataset(BaseDataset):
 
     def __len__(self):
         return len(self.A_paths)
-
-    def name(self):
-        return 'ColorizationDataset'

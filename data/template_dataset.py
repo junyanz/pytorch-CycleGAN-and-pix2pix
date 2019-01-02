@@ -10,7 +10,6 @@ You need to implement the following functions:
     <__init__>: Initialize this dataset class.
     <__getitem__>: Return a data point and its metadata information.
     <__len__>: Return the number of images.
-    <name>: Return the name of this dataset.
 """
 from data.base_dataset import BaseDataset, get_transform
 # from data.image_folder import make_dataset
@@ -73,7 +72,3 @@ class TemplateDataset(BaseDataset):
     def __len__(self):
         """Return the total number of images."""
         return len(self.image_paths)
-
-    def name(self):
-        """Return the name of this dataset."""
-        return 'TemplateDataset'

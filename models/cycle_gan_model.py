@@ -6,9 +6,6 @@ from . import networks
 
 
 class CycleGANModel(BaseModel):
-    def name(self):
-        return 'CycleGANModel'
-
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
         parser.set_defaults(no_dropout=True)  # default CycleGAN did not use dropout

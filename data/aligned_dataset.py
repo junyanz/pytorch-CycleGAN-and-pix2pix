@@ -43,6 +43,3 @@ class AlignedDataset(BaseDataset):
 
     def __len__(self):
         return len(self.AB_paths)
-
-    def name(self):
-        return 'AlignedDataset'

@@ -21,10 +21,6 @@ from . import networks
 
 
 class TemplateModel(BaseModel):
-    def name(self):
-        """Return the name of this model"""
-        return 'TemplateModel'
-
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
         """Add new dataset-specific options and rewrite default values for existing options.
