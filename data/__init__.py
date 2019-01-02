@@ -28,26 +28,20 @@ def find_dataset_using_name(dataset_name):
 
 
 def get_option_setter(dataset_name):
+    """Return the modify_commandline_options of the dataset class."""
     dataset_class = find_dataset_using_name(dataset_name)
     return dataset_class.modify_commandline_options
 
 
 def create_dataset(opt):
-    """Create dataset given the option."""
-    dataset = find_dataset_using_name(opt.dataset_mode)
-    instance = dataset(opt)
-    print("dataset [%s] was created" % type(instance).__name__)
-    return instance
-
-
-def create_dataloader(opt):
     """Create dataloader given the option.
 
-    This function warps the function create_dataset.
+    This function warps the class CustomDatasetDataLoader.
     This is the main interface called by train.py and test.py.
     """
     data_loader = CustomDatasetDataLoader(opt)
-    return data_loader
+    dataset = data_loader.load_data()
+    return dataset
 
 
 class CustomDatasetDataLoader():
@@ -58,7 +52,9 @@ class CustomDatasetDataLoader():
 
     def __init__(self, opt):
         self.opt = opt
-        self.dataset = create_dataset(opt)
+        dataset_class = find_dataset_using_name(opt.dataset_mode)
+        self.dataset = dataset_class(opt)
+        print("dataset [%s] was created" % type(self.dataset).__name__)
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,
             batch_size=opt.batch_size,
