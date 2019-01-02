@@ -40,7 +40,7 @@ def create_dataset(opt):
     return instance
 
 
-def CreateDataLoader(opt):
+def create_dataloader(opt):
     """Create dataloader given the option.
 
     This function warps the function create_dataset.
