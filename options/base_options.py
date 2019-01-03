@@ -13,8 +13,8 @@ class BaseOptions():
     def initialize(self, parser):
         parser.add_argument('--dataroot', required=True, help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
         parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
-        parser.add_argument('--loadSize', type=int, default=286, help='scale images to this size')
-        parser.add_argument('--fineSize', type=int, default=256, help='then crop to this size')
+        parser.add_argument('--load_size', type=int, default=286, help='scale images to this size')
+        parser.add_argument('--crop_size', type=int, default=256, help='then crop to this size')
         parser.add_argument('--display_winsize', type=int, default=256, help='display window size for both visdom and HTML')
         parser.add_argument('--input_nc', type=int, default=3, help='# of input image channels: 3 for RGB and 1 for grayscale')
         parser.add_argument('--output_nc', type=int, default=3, help='# of output image channels: 3 for RGB and 1 for grayscale')
@@ -41,7 +41,7 @@ class BaseOptions():
         parser.add_argument('--init_type', type=str, default='normal', help='network initialization [normal | xavier | kaiming | orthogonal]')
         parser.add_argument('--init_gain', type=float, default=0.02, help='scaling factor for normal, xavier and orthogonal.')
         parser.add_argument('--verbose', action='store_true', help='if specified, print more debugging information')
-        parser.add_argument('--suffix', default='', type=str, help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{loadSize}')
+        parser.add_argument('--suffix', default='', type=str, help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{load_size}')
         self.initialized = True
         return parser
 
