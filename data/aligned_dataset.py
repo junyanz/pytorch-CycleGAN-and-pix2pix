@@ -47,7 +47,7 @@ class AlignedDataset(BaseDataset):
         A = AB.crop((0, 0, w2, h)).resize((self.opt.load_size, self.opt.load_size), Image.BICUBIC)
         B = AB.crop((w2, 0, w, h)).resize((self.opt.load_size, self.opt.load_size), Image.BICUBIC)
         # apply the same cropping to both A and B
-        if 'crop' in self.opt.resize_or_crop:
+        if 'crop' in self.opt.preprocess:
             x, y, h, w = transforms.RandomCrop.get_params(A, output_size=[self.opt.crop_size, self.opt.crop_size])
             A = A.crop((x, y, w, h))
             B = B.crop((x, y, w, h))
@@ -62,5 +62,5 @@ class AlignedDataset(BaseDataset):
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
     def __len__(self):
-        """Return the total number of images."""
+        """Return the total number of images in the dataset."""
         return len(self.AB_paths)

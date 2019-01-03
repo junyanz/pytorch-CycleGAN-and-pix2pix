@@ -15,6 +15,7 @@ class BaseDataset(data.Dataset, ABC):
 
     @abstractmethod
     def __len__(self):
+        """Return the total number of images in the dataset."""
         return 0
 
     @abstractmethod
@@ -23,25 +24,30 @@ class BaseDataset(data.Dataset, ABC):
 
 
 def get_transform(opt, grayscale=False, convert=True, crop=True, flip=True):
+    """Create a torchvision transformation function
+
+    The type of transformation is defined by option (e.g., [preprocess], [load_size], [crop_size])
+    and can be overwritten by arguments such as [convert], [crop], and [flip]
+    """
     transform_list = []
     if grayscale:
         transform_list.append(transforms.Grayscale(1))
-    if opt.resize_or_crop == 'resize_and_crop':
+    if opt.preprocess == 'resize_and_crop':
         osize = [opt.load_size, opt.load_size]
         transform_list.append(transforms.Resize(osize, Image.BICUBIC))
         transform_list.append(transforms.RandomCrop(opt.crop_size))
-    elif opt.resize_or_crop == 'crop' and crop:
+    elif opt.preprocess == 'crop' and crop:
         transform_list.append(transforms.RandomCrop(opt.crop_size))
-    elif opt.resize_or_crop == 'scale_width':
+    elif opt.preprocess == 'scale_width':
         transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.crop_size)))
-    elif opt.resize_or_crop == 'scale_width_and_crop':
+    elif opt.preprocess == 'scale_width_and_crop':
         transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.load_size)))
         if crop:
             transform_list.append(transforms.RandomCrop(opt.crop_size))
-    elif opt.resize_or_crop == 'none':
+    elif opt.preprocess == 'none':
         transform_list.append(transforms.Lambda(lambda img: __adjust(img)))
     else:
-        raise ValueError('--resize_or_crop %s is not a valid option.' % opt.resize_or_crop)
+        raise ValueError('--preprocess %s is not a valid option.' % opt.preprocess)
 
     if not opt.no_flip and flip:
         transform_list.append(transforms.RandomHorizontalFlip())
@@ -75,7 +81,7 @@ def __adjust(img):
 
 
 def __scale_width(img, target_width):
-    """Resize images so that the output image width is the same as target width
+    """Resize images so that the width of the output image is the same as a target width
 
     the size needs to be a multiple of 4,
     because going through generator network may change img size

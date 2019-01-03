@@ -1,4 +1,4 @@
-"""This package includes all the modules related to data loading and Preprocessing
+"""This package includes all the modules related to data loading and preprocessing
 
  To add a custom dataset class called dummy, you need to add a file called 'dummy_dataset.py' and define a subclass 'DummyDataset' inherited from BaseDataset.
  You need to implement four functions:
@@ -15,7 +15,7 @@ from data.base_dataset import BaseDataset
 
 
 def find_dataset_using_name(dataset_name):
-    """Import the module "data/datasetname_dataset.py" given the option --dataset_mode [datasetname].
+    """Import the module "data/[datasetname]_dataset.py" given the option --dataset_mode [datasetname].
 
     In the file, the class called DatasetNameDataset() will
     be instantiated. It has to be a subclass of BaseDataset,
@@ -32,23 +32,26 @@ def find_dataset_using_name(dataset_name):
             dataset = cls
 
     if dataset is None:
-        print("In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase." % (dataset_filename, target_dataset_name))
-        exit(0)
+        raise NotImplementedError("In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase." % (dataset_filename, target_dataset_name))
 
     return dataset
 
 
 def get_option_setter(dataset_name):
-    """Return the modify_commandline_options of the dataset class."""
+    """Return the static method <modify_commandline_options> of the dataset class."""
     dataset_class = find_dataset_using_name(dataset_name)
     return dataset_class.modify_commandline_options
 
 
 def create_dataset(opt):
-    """Create dataloader given the option.
+    """Create dataset given the option.
 
     This function warps the class CustomDatasetDataLoader.
     This is the main interface called by train.py and test.py.
+
+    Example:
+    from data import create_dataset
+    dataset = create_dataset(opt)
     """
     data_loader = CustomDatasetDataLoader(opt)
     dataset = data_loader.load_data()
@@ -58,10 +61,12 @@ def create_dataset(opt):
 class CustomDatasetDataLoader():
     """Wrapper class of Dataset class that performs multi-threaded data loading"""
 
-    def name(self):
-        return 'CustomDatasetDataLoader'
-
     def __init__(self, opt):
+        """Initialize this class
+
+        It first create a dataset instance given the name [dataset_mode]
+        It then create a multi-threaded data loader.
+        """
         self.opt = opt
         dataset_class = find_dataset_using_name(opt.dataset_mode)
         self.dataset = dataset_class(opt)
@@ -76,9 +81,11 @@ class CustomDatasetDataLoader():
         return self
 
     def __len__(self):
+        """Return the number of data in the dataset"""
         return min(len(self.dataset), self.opt.max_dataset_size)
 
     def __iter__(self):
+        """Return a batch of data"""
         for i, data in enumerate(self.dataloader):
             if i * self.opt.batch_size >= self.opt.max_dataset_size:
                 break
