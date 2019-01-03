@@ -10,7 +10,7 @@ class AlignedDataset(BaseDataset):
     """A dataset class for paired image dataset.
 
     It assumes that the directory '/path/to/data/train' contains image pairs in the form of {A,B}.
-    During test time, you need to prepare a directory /path/to/data/test.
+    During test time, you need to prepare a directory '/path/to/data/test'.
     """
 
     def __init__(self, opt):
@@ -18,7 +18,6 @@ class AlignedDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         self.dir_AB = os.path.join(opt.dataroot, opt.phase)  # get the image directory
         self.AB_paths = sorted(make_dataset(self.dir_AB, opt.max_dataset_size))  # get image paths
-        assert(opt.resize_or_crop == 'resize_and_crop')    # only support this mode
         assert(self.opt.load_size >= self.opt.crop_size)   # crop_size should be smaller than the size of loaded image
         input_nc = self.opt.output_nc if self.opt.direction == 'BtoA' else self.opt.input_nc
         output_nc = self.opt.input_nc if self.opt.direction == 'BtoA' else self.opt.output_nc

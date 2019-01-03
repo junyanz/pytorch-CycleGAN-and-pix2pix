@@ -6,10 +6,10 @@ The class name should be consistent with both the filename and its dataset_mode 
 The filename should be <dataset_mode>_dataset.py
 The class name should be <Dataset_mode>Dataset.py
 You need to implement the following functions:
-    <modify_commandline_options>:　Add dataset-specific options and rewrite default values for existing options.
-    <__init__>: Initialize this dataset class.
-    <__getitem__>: Return a data point and its metadata information.
-    <__len__>: Return the number of images.
+    -- <modify_commandline_options>:　Add dataset-specific options and rewrite default values for existing options.
+    -- <__init__>: Initialize this dataset class.
+    -- <__getitem__>: Return a data point and its metadata information.
+    -- <__len__>: Return the number of images.
 """
 from data.base_dataset import BaseDataset, get_transform
 # from data.image_folder import make_dataset
