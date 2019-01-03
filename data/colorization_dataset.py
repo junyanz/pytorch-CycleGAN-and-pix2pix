@@ -8,6 +8,10 @@ import torchvision.transforms as transforms
 
 
 class ColorizationDataset(BaseDataset):
+    """This dataset class can load a set of nature images in RGB, and convert RGB format into (L, ab) pairs in Lab color space.
+
+    This dataset is required by pix2pix-based colorization model ('--model colorization')
+    """
     @staticmethod
     def modify_commandline_options(parser, is_train):
         parser.set_defaults(input_nc=1, output_nc=2, direction='AtoB')

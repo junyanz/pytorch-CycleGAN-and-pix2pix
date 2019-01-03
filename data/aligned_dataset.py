@@ -14,7 +14,11 @@ class AlignedDataset(BaseDataset):
     """
 
     def __init__(self, opt):
-        """Initialize this dataset class."""
+        """Initialize this dataset class.
+
+        Parameters:
+            opt -- options (needs to be a subclass of BaseOptions)
+        """
         BaseDataset.__init__(self, opt)
         self.dir_AB = os.path.join(opt.dataroot, opt.phase)  # get the image directory
         self.AB_paths = sorted(make_dataset(self.dir_AB, opt.max_dataset_size))  # get image paths
@@ -32,7 +36,7 @@ class AlignedDataset(BaseDataset):
         Parameters:
             index - - a random integer for data indexing
 
-        Returns a dictionary of A, B, A_paths and B_paths
+        Returns a dictionary that contains A, B, A_paths and B_paths
             A(tensor) - - an image in the input domain
             B(tensor) - - its corresponding image in the target domain
             A_paths(str) - - image paths

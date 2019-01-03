@@ -1,7 +1,7 @@
-"""Modified Image folder class
-Code from https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py
-Modified the original code so that it also loads images from the current
-directory as well as the subdirectories
+"""A modified image folder class
+
+We modify the official PyTorch image folder (https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py)
+so that this class can load images from both current directory and its subdirectories.
 """
 
 import torch.utils.data as data
