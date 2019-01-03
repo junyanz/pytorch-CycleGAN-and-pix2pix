@@ -22,7 +22,7 @@ class BaseDataset(data.Dataset, ABC):
         """Initialize the class; save the options in the class
 
         Parameters:
-            opt -- options (needs to be a subclass of BaseOptions)
+            opt -- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         self.opt = opt
         self.root = opt.dataroot

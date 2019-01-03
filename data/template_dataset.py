@@ -37,7 +37,8 @@ class TemplateDataset(BaseDataset):
         """Initialize this dataset class.
 
         Parameters:
-            opt -- training/test options
+            opt -- stores all the experiment flags; needs to be a subclass of BaseOptions
+
         A few things can be done here.
         - save the options (have been done in BaseDataset)
         - get image paths and meta information of the dataset.

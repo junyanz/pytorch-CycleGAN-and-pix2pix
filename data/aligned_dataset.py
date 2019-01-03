@@ -17,7 +17,7 @@ class AlignedDataset(BaseDataset):
         """Initialize this dataset class.
 
         Parameters:
-            opt -- options (needs to be a subclass of BaseOptions)
+            opt -- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseDataset.__init__(self, opt)
         self.dir_AB = os.path.join(opt.dataroot, opt.phase)  # get the image directory
