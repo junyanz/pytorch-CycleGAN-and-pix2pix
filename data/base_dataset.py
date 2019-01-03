@@ -22,7 +22,7 @@ class BaseDataset(data.Dataset, ABC):
         pass
 
 
-def get_transform(opt, grayscale=False, convert=True):
+def get_transform(opt, grayscale=False, convert=True, crop=True, flip=True):
     transform_list = []
     if grayscale:
         transform_list.append(transforms.Grayscale(1))
@@ -30,19 +30,20 @@ def get_transform(opt, grayscale=False, convert=True):
         osize = [opt.load_size, opt.load_size]
         transform_list.append(transforms.Resize(osize, Image.BICUBIC))
         transform_list.append(transforms.RandomCrop(opt.crop_size))
-    elif opt.resize_or_crop == 'crop':
+    elif opt.resize_or_crop == 'crop' and crop:
         transform_list.append(transforms.RandomCrop(opt.crop_size))
     elif opt.resize_or_crop == 'scale_width':
         transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.crop_size)))
     elif opt.resize_or_crop == 'scale_width_and_crop':
         transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.load_size)))
-        transform_list.append(transforms.RandomCrop(opt.crop_size))
+        if crop:
+            transform_list.append(transforms.RandomCrop(opt.crop_size))
     elif opt.resize_or_crop == 'none':
         transform_list.append(transforms.Lambda(lambda img: __adjust(img)))
     else:
         raise ValueError('--resize_or_crop %s is not a valid option.' % opt.resize_or_crop)
 
-    if not opt.no_flip:
+    if not opt.no_flip and flip:
         transform_list.append(transforms.RandomHorizontalFlip())
     if convert:
         transform_list += [transforms.ToTensor(),
@@ -51,22 +52,14 @@ def get_transform(opt, grayscale=False, convert=True):
     return transforms.Compose(transform_list)
 
 
-def get_simple_transform(grayscale=False):
-    transform_list = []
-    if grayscale:
-        transform_list.append(transforms.Grayscale(1))
-    transform_list += [transforms.ToTensor(),
-                       transforms.Normalize((0.5, 0.5, 0.5),
-                                            (0.5, 0.5, 0.5))]
-    return transforms.Compose(transform_list)
-
-
 def __adjust(img):
-    """Modify the width and height to be multiple of 4"""
+    """Modify the width and height to be multiple of 4
+
+    the size needs to be a multiple of 4,
+    because going through generator network may change img size
+    and eventually cause size mismatch error
+    """
     ow, oh = img.size
-    # the size needs to be a multiple of this number,
-    # because going through generator network may change img size
-    # and eventually cause size mismatch error
     mult = 4
     if ow % mult == 0 and oh % mult == 0:
         return img
@@ -82,11 +75,14 @@ def __adjust(img):
 
 
 def __scale_width(img, target_width):
+    """Resize images so that the output image width is the same as target width
+
+    the size needs to be a multiple of 4,
+    because going through generator network may change img size
+    and eventually cause size mismatch error
+    """
     ow, oh = img.size
 
-    # the size needs to be a multiple of this number,
-    # because going through generator network may change img size
-    # and eventually cause size mismatch error
     mult = 4
     assert target_width % mult == 0, "the target width needs to be multiple of %d." % mult
     if (ow == target_width and oh % mult == 0):
@@ -103,6 +99,7 @@ def __scale_width(img, target_width):
 
 
 def __print_size_warning(ow, oh, w, h):
+    """Print warning information about image size (only print once)"""
     if not hasattr(__print_size_warning, 'has_printed'):
         print("The image size needs to be a multiple of 4. "
               "The loaded image size was (%d, %d), so it was adjusted to "

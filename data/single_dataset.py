@@ -10,7 +10,7 @@ class SingleDataset(BaseDataset):
 
     def __init__(self, opt):
         BaseDataset.__init__(self, opt)
-        self.A_paths = sorted(make_dataset(opt.dataroot))
+        self.A_paths = sorted(make_dataset(opt.dataroot, opt.max_dataset_size))
         input_nc = self.opt.output_nc if self.opt.direction == 'BtoA' else self.opt.input_nc
         self.transform = get_transform(opt, input_nc == 1)
 

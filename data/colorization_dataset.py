@@ -16,7 +16,7 @@ class ColorizationDataset(BaseDataset):
     def __init__(self, opt):
         BaseDataset.__init__(self, opt)
         self.dir_A = os.path.join(opt.dataroot)
-        self.A_paths = sorted(make_dataset(self.dir_A))
+        self.A_paths = sorted(make_dataset(self.dir_A, opt.max_dataset_size))
         assert(opt.input_nc == 1 and opt.output_nc == 2 and opt.direction == 'AtoB')
         self.transform = get_transform(opt, convert=False)
 

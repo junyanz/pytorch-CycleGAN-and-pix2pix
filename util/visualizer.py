@@ -3,8 +3,8 @@ import os
 import sys
 import ntpath
 import time
-from . import util
-from . import html
+from . import util, html
+from subprocess import Popen, PIPE
 from scipy.misc import imresize
 
 if sys.version_info[0] == 2:
@@ -41,11 +41,12 @@ def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256):
 
 class Visualizer():
     def __init__(self, opt):
+        self.opt = opt
         self.display_id = opt.display_id
         self.use_html = opt.isTrain and not opt.no_html
         self.win_size = opt.display_winsize
         self.name = opt.name
-        self.opt = opt
+        self.port = opt.display_port
         self.saved = False
         if self.display_id > 0:
             import visdom
@@ -66,8 +67,10 @@ class Visualizer():
         self.saved = False
 
     def throw_visdom_connection_error(self):
-        print('\n\nCould not connect to Visdom server (https://github.com/facebookresearch/visdom) for displaying training progress.\nYou can suppress connection to Visdom using the option --display_id -1. To install visdom, run \n$ pip install visdom\n, and start the server by \n$ python -m visdom.server.\n\n')
-        exit(1)
+        cmd = sys.executable + ' -m visdom.server -p %d &>/dev/null &' % self.port
+        print('\n\nCould not connect to Visdom server. \n Trying to start a server....')
+        print('Command: %s' % cmd)
+        Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
 
     # |visuals|: dictionary of images to display or save
     def display_current_results(self, visuals, epoch, save_result):
