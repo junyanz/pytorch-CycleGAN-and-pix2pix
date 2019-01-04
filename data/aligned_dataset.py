@@ -62,7 +62,6 @@ class AlignedDataset(BaseDataset):
         # call standard transformation function
         A = self.transform_A(A)
         B = self.transform_B(B)
-        print(AB_path, index)
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
     def __len__(self):
