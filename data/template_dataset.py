@@ -23,8 +23,8 @@ class TemplateDataset(BaseDataset):
         """Add new dataset-specific options, and rewrite default values for existing options.
 
         Parameters:
-            parser -- original option parser
-            is_train -- whether training phase or test phase. You can use this flag to add training-specific or test-specific options.
+            parser          -- original option parser
+            is_train (bool) -- whether training phase or test phase. You can use this flag to add training-specific or test-specific options.
 
         Returns:
             the modified parser.
@@ -37,7 +37,7 @@ class TemplateDataset(BaseDataset):
         """Initialize this dataset class.
 
         Parameters:
-            opt -- stores all the experiment flags; needs to be a subclass of BaseOptions
+            opt (Option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions
 
         A few things can be done here.
         - save the options (have been done in BaseDataset)

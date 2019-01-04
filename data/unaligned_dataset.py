@@ -20,7 +20,7 @@ class UnalignedDataset(BaseDataset):
         """Initialize this dataset class.
 
         Parameters:
-            opt -- stores all the experiment flags; needs to be a subclass of BaseOptions
+            opt (Option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseDataset.__init__(self, opt)
         self.dir_A = os.path.join(opt.dataroot, opt.phase + 'A')  # create a path '/path/to/data/trainA'
@@ -40,13 +40,13 @@ class UnalignedDataset(BaseDataset):
         """Return a data point and its metadata information.
 
         Parameters:
-            index - - a random integer for data indexing
+            index (int)      -- a random integer for data indexing
 
         Returns a dictionary that contains A, B, A_paths and B_paths
-            A(tensor) - - an image in the input domain
-            B(tensor) - - its corresponding image in the target domain
-            A_paths(str) - - image paths
-            B_paths(str) - - image paths
+            A (tensor)       -- an image in the input domain
+            B (tensor)       -- its corresponding image in the target domain
+            A_paths (str)    -- image paths
+            B_paths (str)    -- image paths
         """
         A_path = self.A_paths[index % self.A_size]  # make sure index is within then range
         if self.opt.serial_batches:   # make sure index is within then range

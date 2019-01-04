@@ -10,6 +10,11 @@ from torch.optim import lr_scheduler
 
 
 def get_norm_layer(norm_type='instance'):
+    """Return normalization layer
+
+    Parameters:
+        norm_type (str) -- the name of the normalization layer: batch | instance | none
+    """
     if norm_type == 'batch':
         norm_layer = functools.partial(nn.BatchNorm2d, affine=True)
     elif norm_type == 'instance':
@@ -22,6 +27,13 @@ def get_norm_layer(norm_type='instance'):
 
 
 def get_scheduler(optimizer, opt):
+    """Return learning rate scheduler
+
+    Parameters:
+        optimizer          -- the optimizer for the network
+        opt (Option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions．　
+                              opt.lr_policy is the name of learning rate policy: lambda | step | plateau | cosine
+    """
     if opt.lr_policy == 'lambda':
         def lambda_rule(epoch):
             lr_l = 1.0 - max(0, epoch + opt.epoch_count - opt.niter) / float(opt.niter_decay + 1)
@@ -39,6 +51,13 @@ def get_scheduler(optimizer, opt):
 
 
 def init_weights(net, init_type='normal', gain=0.02):
+    """Initialize the network weights.
+
+    Parameters:
+        net (network)   -- network
+        init_type (str) -- the name of initialization method: normal | xavier | kaiming | orthogonal
+        gain (float)    -- scaling factor for normal, xavier and orthogonal.
+    """
     def init_func(m):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
@@ -63,6 +82,13 @@ def init_weights(net, init_type='normal', gain=0.02):
 
 
 def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
+    """Initialize the network: support multi-GPU and initialize the weights
+    Parameters:
+        net (network)   -- network
+        init_type (str) -- the name of initialization method: normal | xavier | kaiming | orthogonal
+        gain (float)    -- scaling factor for normal, xavier and orthogonal.
+        gpu_ids (int array) -- which GPUs the network will use: e.g., 0,1,2
+    """
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
         net.to(gpu_ids[0])
@@ -72,6 +98,14 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
 
 
 def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+    """Define the generator
+
+    Parameters:
+        input_nc (int) -- the number of channels for input images
+        output_nc (int) -- the number of channels for output images
+        ngf (int) -- the number of filters in the first conv layer in the generator
+        netG (str) -- specify generator architecture: resnet_9blocks | resnet_6blocks | unet_256 | unet_128
+    """
     net = None
     norm_layer = get_norm_layer(norm_type=norm)
 
@@ -117,9 +151,9 @@ class GANLoss(nn.Module):
         """ Initialize the GANLoss class.
 
         Parameters:
-            gan_mode (string)-- the type of GAN objective. It currently supports vanilla, lsgan, and wgangp.
-            target_real_label (bool) -- label for a real image
-            target_fake_label (bool)-- label of a fake image
+            gan_mode(string) - - the type of GAN objective. It currently supports vanilla, lsgan, and wgangp.
+            target_real_label(bool) - - label for a real image
+            target_fake_label(bool) - - label of a fake image
         Note: Do not use sigmoid as the last layer of Discriminator.
         LSGAN needs no sigmoid. vanilla GANs will handle it with BCEWithLogitsLoss.
         """
@@ -140,8 +174,8 @@ class GANLoss(nn.Module):
         """Create label tensors with the same size as the input.
 
         Parameters:
-            prediction (tensor) -- tpyically the prediction from a discriminator
-            target_is_real (bool) -- if the ground truth label is for real images or fake images
+            prediction(tensor) - - tpyically the prediction from a discriminator
+            target_is_real(bool) - - if the ground truth label is for real images or fake images
         Returns:
             A label tensor filled with ground truth label, and with the size of the input
         """
@@ -156,8 +190,8 @@ class GANLoss(nn.Module):
         """Calculate loss given Discriminator's output and grount truth labels.
 
         Parameters:
-            prediction (tensor) -- tpyically the prediction from a discriminator
-            target_is_real (bool) -- if the ground truth label is for real images or fake images
+            prediction(tensor) - - tpyically the prediction from a discriminator
+            target_is_real(bool) - - if the ground truth label is for real images or fake images
         Returns:
             the calculated loss.
         """
@@ -173,16 +207,16 @@ class GANLoss(nn.Module):
 
 
 def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', constant=1.0, lambda_gp=10.0):
-    """calculate the gradient penalty loss, used in WGAN-GP paper https://arxiv.org/abs/1704.00028
+    """calculate the gradient penalty loss, used in WGAN - GP paper https: // arxiv.org / abs / 1704.00028
 
     Arguments:
-        netD -- discrimiantor network
-        real_data -- real images
-        fake_data -- generated images from the generator
-        device    -- GPU/CPU: from torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')
-        type      -- if we mix real and fake data [real | fake | mixed].
-        constant  -- the constant used in formula (||gradient||_2 - constant)^2
-        lambda_gp -- weight for this loss
+        netD - - discrimiantor network
+        real_data - - real images
+        fake_data - - generated images from the generator
+        device - - GPU / CPU: from torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')
+        type - - if we mix real and fake data[real | fake | mixed].
+        constant  - - the constant used in formula ( | |gradient||_2 - constant)^2
+        lambda_gp - - weight for this loss
     Returns:
         the gradient penalty loss
     """
@@ -213,7 +247,7 @@ def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', const
 class ResnetGenerator(nn.Module):
     """Resnet - baed generator that consists of Resnet blocks between a few downsampling / upsampling operations.
 
-    We adapt Torch code and idea from Justin Johnson's neural style transer project (https://github.com/jcjohnson/fast-neural-style)
+    We adapt Torch code and idea from Justin Johnson's neural style transer project(https: // github.com / jcjohnson / fast - neural - style)
     """
 
     def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):

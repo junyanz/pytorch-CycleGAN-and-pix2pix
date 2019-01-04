@@ -56,7 +56,7 @@ class TemplateModel(BaseModel):
         # specify the models you want to save to the disk. The program will call base_model.save_networks and base_model.load_networks to save and load networks.
         # you can use opt.isTrain to specify different behaviors for training and test. For example, some networks will not be used during test, and you don't need to load them.
         self.model_names = ['G']
-        # define networks; again, you can use opt.isTrain to specify different behaviors for training and test.
+        # define networks; you can use opt.isTrain to specify different behaviors for training and test.
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, gpu_ids=self.gpu_ids)
         if self.isTrain:  # only defined during training time
             # define your loss functions. You can use losses provided by torch.nn such as torch.nn.L1Loss.
@@ -64,7 +64,6 @@ class TemplateModel(BaseModel):
             self.criterionLoss = torch.nn.L1Loss()
             # define and initialize optimizers. You can define one optimizer for each network.
             # If two networks are updated at the same time, you can use itertools.chain to group them. See cycle_gan_model.py for an example.
-            self.optimizers = []
             self.optimizer = torch.optim.Adam(self.netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers = [self.optimizer]
 
@@ -86,7 +85,7 @@ class TemplateModel(BaseModel):
         self.output = self.netG(self.data_A)  # generate output image given the input data_A
 
     def backward(self):
-        """calculate gradients for network weights."""
+        """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
         self.loss_G = self.criterionLoss(self.output, self.data_B) * self.opt.lambda_regression

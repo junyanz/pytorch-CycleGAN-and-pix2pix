@@ -6,45 +6,80 @@ from . import networks
 
 
 class BaseModel(ABC):
+    """This class is an abstract base class (ABC) for models.
+    To create a subclass, you need to implement the following five functions:
+        -- <__init__>:                      initialize the class; first call BaseModel.__init__(self, opt).
+        -- <set_input>:                     unpack data from dataset and apply preprocessing.
+        -- <forward>:                       produce intermediate results.
+        -- <optimize_parameters>:           calculate losses, gradients, and update network weights.
+        -- <modify_commandline_options>:    (optionally) add model-specific options and set default options.
+    """
+
     def __init__(self, opt):
-        """Initailize the class.
+        """Initailize the BaseModel class.
+
+        Parameters:
+            opt (Option class)-- stores all the experiment flags; needs to be a subclass of BaseOptions
+
         When creating your custom class, you need to implement your own initialization.
-        Your __init__ should call this function `BaseModel.__init__(self, opt)`
+        In this fucntion, you should first call  `BaseModel.__init__(self, opt)`
+        Then, you need to define four lists:
+            -- self.loss_names (str list):          specify the training losses that you want to plot and save.
+            -- self.model_names (str list):         specify the images that you want to display and save.
+            -- self.visual_names (str list):        define networks used in our training.
+            -- self.optimizers (optimizer list):    define and initialize optimizers. You can define one optimizer for each network. If two networks are updated at the same time, you can use itertools.chain to group them. See cycle_gan_model.py for an example.
         """
         self.opt = opt
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
-        self.device = torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')
-        self.save_dir = os.path.join(opt.checkpoints_dir, opt.name)
-        if opt.preprocess != 'scale_width':  # with preprocessing option [scale_width], the input image might have different sizes, which will hurt the performance of cudnn.benchmark.
+        self.device = torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')  # get device name: CPU or GPU
+        self.save_dir = os.path.join(opt.checkpoints_dir, opt.name)  # save all the checkpoints to save_dir
+        if opt.preprocess != 'scale_width':  # with [scale_width], input images might have different sizes, which hurts the performance of cudnn.benchmark.
             torch.backends.cudnn.benchmark = True
         self.loss_names = []
         self.model_names = []
         self.visual_names = []
+        self.optimizers = []
         self.image_paths = []
 
     @staticmethod
     def modify_commandline_options(parser, is_train):
-        """Modify parser to add command line options;  change the default values if needed"""
+        """Add new model-specific options, and rewrite default values for existing options.
+
+        Parameters:
+            parser          -- original option parser
+            is_train (bool) -- whether training phase or test phase. You can use this flag to add training-specific or test-specific options.
+
+        Returns:
+            the modified parser.
+        """
         return parser
 
     @abstractmethod
     def set_input(self, input):
-        """Unpack input data from the dataloader and perform necessary pre-processing steps."""
+        """Unpack input data from the dataloader and perform necessary pre-processing steps.
+
+        Parameters:
+            input (dict): includes the data itself and its metadata information.
+        """
         pass
 
     @abstractmethod
     def forward(self):
-        """Run forward pass. This will be called by both functions self.optimize_parameters and self.test."""
+        """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         pass
 
     @abstractmethod
     def optimize_parameters(self):
-        """update network weights; called in every training iteration"""
+        """Calculate losses, gradients, and update network weights; called in every training iteration"""
         pass
 
-    def setup(self, opt, parser=None):
-        """Load and print networks; create schedulers"""
+    def setup(self, opt):
+        """Load and print networks; create schedulers
+
+        Parameters:
+            opt (Option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions
+        """
         if self.isTrain:
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
         if not self.isTrain or opt.continue_train:
@@ -62,8 +97,8 @@ class BaseModel(ABC):
     def test(self):
         """Forward function used in test time.
 
-        This function wrapps `forward` in no_grad() so we don't save intermediate steps for backprop
-        It also calls compute_visuals() to generate additional visualization results
+        This function wraps <forward> function in no_grad() so we don't save intermediate steps for backprop
+        It also calls <compute_visuals> to produce additional visualization results
         """
         with torch.no_grad():
             self.forward()
@@ -74,11 +109,11 @@ class BaseModel(ABC):
         pass
 
     def get_image_paths(self):
-        """ get image paths that are used to load current data"""
+        """ Return image paths that are used to load current data"""
         return self.image_paths
 
     def update_learning_rate(self):
-        """update learning rate(called once every epoch)"""
+        """Update learning rates for all the networks; called at the end of every epoch"""
         for scheduler in self.schedulers:
             scheduler.step()
         lr = self.optimizers[0].param_groups[0]['lr']
@@ -93,7 +128,7 @@ class BaseModel(ABC):
         return visual_ret
 
     def get_current_losses(self):
-        """return traning losses / errors. train.py will print out these errors on console, and save them to a file"""
+        """Return traning losses / errors. train.py will print out these errors on console, and save them to a file"""
         errors_ret = OrderedDict()
         for name in self.loss_names:
             if isinstance(name, str):
@@ -101,7 +136,11 @@ class BaseModel(ABC):
         return errors_ret
 
     def save_networks(self, epoch):
-        """Save models to the disk"""
+        """Save all the networks to the disk.
+
+        Parameters:
+            epoch (int) -- current epoch; used in the file name '%s_net_%s.pth' % (epoch, name)
+        """
         for name in self.model_names:
             if isinstance(name, str):
                 save_filename = '%s_net_%s.pth' % (epoch, name)
@@ -115,7 +154,7 @@ class BaseModel(ABC):
                     torch.save(net.cpu().state_dict(), save_path)
 
     def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
-        """Patch InstanceNorm checkpoints prior to 0.4"""
+        """Fix InstanceNorm checkpoints incompatibility (prior to 0.4)"""
         key = keys[i]
         if i + 1 == len(keys):  # at the end, pointing to a parameter/buffer
             if module.__class__.__name__.startswith('InstanceNorm') and \
@@ -129,7 +168,11 @@ class BaseModel(ABC):
             self.__patch_instance_norm_state_dict(state_dict, getattr(module, key), keys, i + 1)
 
     def load_networks(self, epoch):
-        """Load models from the disk"""
+        """Load all the networks from the disk.
+
+        Parameters:
+            epoch (int) -- current epoch; used in the file name '%s_net_%s.pth' % (epoch, name)
+        """
         for name in self.model_names:
             if isinstance(name, str):
                 load_filename = '%s_net_%s.pth' % (epoch, name)
@@ -150,7 +193,11 @@ class BaseModel(ABC):
                 net.load_state_dict(state_dict)
 
     def print_networks(self, verbose):
-        """Print network information"""
+        """Print the total number of parameters in the network and (if verbose) network architecture
+
+        Parameters:
+            verbose (bool) -- if verbose: print the network architecture
+        """
         print('---------- Networks initialized -------------')
         for name in self.model_names:
             if isinstance(name, str):
@@ -164,7 +211,11 @@ class BaseModel(ABC):
         print('-----------------------------------------------')
 
     def set_requires_grad(self, nets, requires_grad=False):
-        """Set requies_grad=Fasle for all the networks to avoid computation"""
+        """Set requies_grad=Fasle for all the networks to avoid unnecessary computations
+        Parameters:
+            nets (network list)   -- a list of networks
+            requires_grad (bool)  -- whether the networks require gradients or not
+        """
         if not isinstance(nets, list):
             nets = [nets]
         for net in nets:

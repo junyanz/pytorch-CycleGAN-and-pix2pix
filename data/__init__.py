@@ -1,11 +1,12 @@
 """This package includes all the modules related to data loading and preprocessing
 
- To add a custom dataset class called dummy, you need to add a file called 'dummy_dataset.py' and define a subclass 'DummyDataset' inherited from BaseDataset.
+ To add a custom dataset class called 'dummy', you need to add a file called 'dummy_dataset.py' and define a subclass 'DummyDataset' inherited from BaseDataset.
  You need to implement four functions:
-    -- <__init__> (initialize the class, first call BaseDataset.__init__(self, opt))
-    -- <__len__> (return the size of dataset)
-    -- <__getitem__>　(get a data point)
-    -- (optionally) <modify_commandline_options> (add dataset-specific options and set default options).
+    -- <__init__>:                      initialize the class, first call BaseDataset.__init__(self, opt).
+    -- <__len__>:                       return the size of dataset.
+    -- <__getitem__>:                   get a data point from data loader.
+    -- <modify_commandline_options>:    (optionally) add dataset-specific options and set default options.
+
 Now you can use the dataset class by specifying flag '--dataset_mode dummy'.
 See our template dataset class 'template_dataset.py' for more details.
 """
@@ -15,7 +16,7 @@ from data.base_dataset import BaseDataset
 
 
 def find_dataset_using_name(dataset_name):
-    """Import the module "data/[datasetname]_dataset.py" given the option '--dataset_mode [datasetname].
+    """Import the module "data/[dataset_name]_dataset.py".
 
     In the file, the class called DatasetNameDataset() will
     be instantiated. It has to be a subclass of BaseDataset,
@@ -44,14 +45,14 @@ def get_option_setter(dataset_name):
 
 
 def create_dataset(opt):
-    """Create dataset given the option.
+    """Create a dataset given the option.
 
-    This function warps the class CustomDatasetDataLoader.
-    This is the main interface called by train.py and test.py.
+    This function wraps the class CustomDatasetDataLoader.
+        This is the main interface between this package and 'train.py'/'test.py'
 
     Example:
-    from data import create_dataset
-    dataset = create_dataset(opt)
+        >>> from data import create_dataset
+        >>> dataset = create_dataset(opt)
     """
     data_loader = CustomDatasetDataLoader(opt)
     dataset = data_loader.load_data()
