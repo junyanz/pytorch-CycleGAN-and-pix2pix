@@ -28,7 +28,7 @@ class ImagePool():
 
         Returns images from the buffer.
 
-        By 50/100, the buffer will just return the input images.
+        By 50/100, the buffer will return input images.
         By 50/100, the buffer will return images previously stored in the buffer,
         and insert the current images to the buffer.
         """

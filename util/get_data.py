@@ -81,18 +81,15 @@ class GetData(object):
 
         Download a dataset.
 
-        Args:
-            save_path : str
-                A directory to save the data to.
-            dataset : str, optional
-                A specific dataset to download.
-                Note: this must include the file extension.
-                If None, options will be presented for you
-                to choose from.
+        Parameters:
+            save_path (str) -- A directory to save the data to.
+            dataset (str)   -- (optional). A specific dataset to download.
+                            Note: this must include the file extension.
+                            If None, options will be presented for you
+                            to choose from.
 
         Returns:
-            save_path_full : str
-                The absolute path to the downloaded data.
+            save_path_full (str) -- the absolute path to the downloaded data.
 
         """
         if dataset is None:

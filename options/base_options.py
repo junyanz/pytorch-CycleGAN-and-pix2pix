@@ -7,7 +7,7 @@ import data
 
 
 class BaseOptions():
-    """This class defines options that are used during both training and test time.
+    """This class defines options used during both training and test time.
 
     It also implements several helper functions such as parsing, printing, and saving the options.
     It also gathers additional options defined in <modify_commandline_options> functions in both dataset class and model class.
@@ -59,11 +59,11 @@ class BaseOptions():
 
     def gather_options(self):
         """Initialize our parser with basic options(only once).
-        Add additional model - specific and dataset - specific options.
-        These options are difined in the < modify_commandline_options > function
+        Add additional model-specific and dataset-specific options.
+        These options are difined in the <modify_commandline_options> function
         in model and dataset classes.
         """
-        if not self.initialized:  # check if it has been initalized
+        if not self.initialized:  # check if it has been initialized
             parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
             parser = self.initialize(parser)
 

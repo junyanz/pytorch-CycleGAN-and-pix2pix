@@ -7,7 +7,7 @@
     -- <__getitem__>　(get a data point)
     -- (optionally) <modify_commandline_options> (add dataset-specific options and set default options).
 Now you can use the dataset class by specifying flag '--dataset_mode dummy'.
-See our template dataset class 'template_dataset.py' for an example.
+See our template dataset class 'template_dataset.py' for more details.
 """
 import importlib
 import torch.utils.data
@@ -15,7 +15,7 @@ from data.base_dataset import BaseDataset
 
 
 def find_dataset_using_name(dataset_name):
-    """Import the module "data/[datasetname]_dataset.py" given the option --dataset_mode [datasetname].
+    """Import the module "data/[datasetname]_dataset.py" given the option '--dataset_mode [datasetname].
 
     In the file, the class called DatasetNameDataset() will
     be instantiated. It has to be a subclass of BaseDataset,
@@ -64,8 +64,8 @@ class CustomDatasetDataLoader():
     def __init__(self, opt):
         """Initialize this class
 
-        It first create a dataset instance given the name [dataset_mode]
-        It then create a multi-threaded data loader.
+        Step 1: create a dataset instance given the name [dataset_mode]
+        Step 2: create a multi-threaded data loader.
         """
         self.opt = opt
         dataset_class = find_dataset_using_name(opt.dataset_mode)

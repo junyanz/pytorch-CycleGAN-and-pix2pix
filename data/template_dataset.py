@@ -1,6 +1,6 @@
 """Dataset class template
 
-This module provides a templete for users to implement custom datasets.
+This module provides a template for users to implement custom datasets.
 You can specify '--dataset_mode template' to use this dataset.
 The class name should be consistent with both the filename and its dataset_mode option.
 The filename should be <dataset_mode>_dataset.py
@@ -47,7 +47,7 @@ class TemplateDataset(BaseDataset):
         # save the option and dataset root
         BaseDataset.__init__(self, opt)
         # get the image paths of your dataset;
-        self.image_paths = []  # You can call <sorted(make_dataset(self.root, opt.max_dataset_size))> to get all the image paths under the directory self.root
+        self.image_paths = []  # You can call sorted(make_dataset(self.root, opt.max_dataset_size)) to get all the image paths under the directory self.root
         # define the default transform function. You can use <base_dataset.get_transform>; You can also define your custom transform function
         self.transform = get_transform(opt)
 
@@ -58,11 +58,11 @@ class TemplateDataset(BaseDataset):
             index -- a random integer for data indexing
 
         Returns:
-            a dictionary of data with their names. It ususally contains the data itself and its metadata information.
+            a dictionary of data with their names. It usually contains the data itself and its metadata information.
 
         Step 1: get a random image path: e.g., path = self.image_paths[index]
         Step 2: load your data from the disk: e.g., image = Image.open(path).convert('RGB').
-        Step 3: convert your data to a PyTorch tensor. You can use function such as self.transform. e.g., data = self.transform(image)
+        Step 3: convert your data to a PyTorch tensor. You can use helpder functions such as self.transform. e.g., data = self.transform(image)
         Step 4: return a data point as a dictionary.
         """
         path = 'temp'    # needs to be a string
