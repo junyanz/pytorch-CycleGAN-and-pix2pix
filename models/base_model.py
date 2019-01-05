@@ -16,7 +16,7 @@ class BaseModel(ABC):
     """
 
     def __init__(self, opt):
-        """Initailize the BaseModel class.
+        """Initialize the BaseModel class.
 
         Parameters:
             opt (Option class)-- stores all the experiment flags; needs to be a subclass of BaseOptions

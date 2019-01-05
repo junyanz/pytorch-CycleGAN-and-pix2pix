@@ -45,7 +45,7 @@ class CycleGANModel(BaseModel):
         return parser
 
     def __init__(self, opt):
-        """Initailize the CycleGAN class.
+        """Initialize the CycleGAN class.
 
         Parameters:
             opt (Option class)-- stores all the experiment flags; needs to be a subclass of BaseOptions

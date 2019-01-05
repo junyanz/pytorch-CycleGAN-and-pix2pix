@@ -29,7 +29,7 @@ class TestModel(BaseModel):
         return parser
 
     def __init__(self, opt):
-        """Initailize the pix2pix class.
+        """Initialize the pix2pix class.
 
         Parameters:
             opt (Option class)-- stores all the experiment flags; needs to be a subclass of BaseOptions
