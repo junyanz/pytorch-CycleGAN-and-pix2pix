@@ -1,5 +1,4 @@
 import torch
-from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
 
@@ -62,7 +61,6 @@ class Pix2PixModel(BaseModel):
                                           opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:
-            self.fake_AB_pool = ImagePool(opt.pool_size)
             # define loss functions
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)
             self.criterionL1 = torch.nn.L1Loss()
@@ -92,7 +90,7 @@ class Pix2PixModel(BaseModel):
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
         # Fake; stop backprop to the generator by detaching fake_B
-        fake_AB = self.fake_AB_pool.query(torch.cat((self.real_A, self.fake_B), 1))  # we use conditional GANs; we need to feed both input and output to the discriminator
+        fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
         pred_fake = self.netD(fake_AB.detach())
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
         # Real
