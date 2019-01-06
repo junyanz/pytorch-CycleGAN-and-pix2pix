@@ -24,7 +24,7 @@ class Pix2PixModel(BaseModel):
         Returns:
             the modified parser.
 
-        For pix2pix, we do not use image buffer (pool_size=0),
+        For pix2pix, we do not use image buffer
         The training objective is: GAN Loss + lambda_L1 * ||G(A)-B||_1
         By default, we use vanilla GAN loss, UNet with batchnorm, and aligned datasets.
         """

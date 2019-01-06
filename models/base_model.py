@@ -22,7 +22,7 @@ class BaseModel(ABC):
             opt (Option class)-- stores all the experiment flags; needs to be a subclass of BaseOptions
 
         When creating your custom class, you need to implement your own initialization.
-        In this fucntion, you should first call  `BaseModel.__init__(self, opt)`
+        In this fucntion, you should first call <BaseModel.__init__(self, opt)>
         Then, you need to define four lists:
             -- self.loss_names (str list):          specify the training losses that you want to plot and save.
             -- self.model_names (str list):         specify the images that you want to display and save.
