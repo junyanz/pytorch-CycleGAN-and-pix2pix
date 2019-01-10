@@ -75,7 +75,9 @@ class Visualizer():
         if self.display_id > 0:  # connect to a visdom server given <display_port> and <display_server>
             import visdom
             self.ncols = opt.display_ncols
-            self.vis = visdom.Visdom(server=opt.display_server, port=opt.display_port, env=opt.display_env, raise_exceptions=True)
+            self.vis = visdom.Visdom(server=opt.display_server, port=opt.display_port, env=opt.display_env)
+            if not self.vis.check_connection():
+                self.create_visdom_connections()
 
         if self.use_html:  # create an HTML object at <checkpoints_dir>/web/; images will be saved under <checkpoints_dir>/web/images/
             self.web_dir = os.path.join(opt.checkpoints_dir, opt.name, 'web')
@@ -148,11 +150,14 @@ class Visualizer():
 
             else:     # show each image in a separate visdom panel;
                 idx = 1
-                for label, image in visuals.items():
-                    image_numpy = util.tensor2im(image)
-                    self.vis.image(image_numpy.transpose([2, 0, 1]), opts=dict(title=label),
-                                   win=self.display_id + idx)
-                    idx += 1
+                try:
+                    for label, image in visuals.items():
+                        image_numpy = util.tensor2im(image)
+                        self.vis.image(image_numpy.transpose([2, 0, 1]), opts=dict(title=label),
+                                       win=self.display_id + idx)
+                        idx += 1
+                except VisdomExceptionBase:
+                    self.create_visdom_connections()
 
         if self.use_html and (save_result or not self.saved):  # save images to an HTML file if they haven't been saved.
             self.saved = True
