@@ -1,5 +1,5 @@
 import os.path
-from data.base_dataset import BaseDataset, get_transform
+from data.base_dataset import BaseDataset, get_params, get_transform
 from data.image_folder import make_dataset
 from PIL import Image
 import random
@@ -31,10 +31,8 @@ class UnalignedDataset(BaseDataset):
         self.A_size = len(self.A_paths)  # get the size of dataset A
         self.B_size = len(self.B_paths)  # get the size of dataset B
         btoA = self.opt.direction == 'BtoA'
-        input_nc = self.opt.output_nc if btoA else self.opt.input_nc       # get the number of channels of input image
-        output_nc = self.opt.input_nc if btoA else self.opt.output_nc      # get the number of channels of output image
-        self.transform_A = get_transform(opt, grayscale=(input_nc == 1))   # if nc == 1, we convert RGB to grayscale image
-        self.transform_B = get_transform(opt, grayscale=(output_nc == 1))  # if nc == 1, we convert RGB to grayscale image
+        self.input_nc = self.opt.output_nc if btoA else self.opt.input_nc       # get the number of channels of input image
+        self.output_nc = self.opt.input_nc if btoA else self.opt.output_nc      # get the number of channels of output image
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.
@@ -57,8 +55,14 @@ class UnalignedDataset(BaseDataset):
         A_img = Image.open(A_path).convert('RGB')
         B_img = Image.open(B_path).convert('RGB')
         # apply image transformation
-        A = self.transform_A(A_img)
-        B = self.transform_B(B_img)
+        A_transform_params = get_params(self.opt, A_img.size)
+        A_transform = get_transform(self.opt, A_transform_params, grayscale=(self.input_nc == 1))
+        A = A_transform(A_img)
+
+        B_transform_params = get_params(self.opt, B_img.size)
+        B_transform = get_transform(self.opt, B_transform_params, grayscale=(self.output_nc == 1))
+        B = B_transform(B_img)
+
         return {'A': A, 'B': B, 'A_paths': A_path, 'B_paths': B_path}
 
     def __len__(self):
