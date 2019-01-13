@@ -1,5 +1,5 @@
 import os.path
-from data.base_dataset import BaseDataset, get_params, get_transform
+from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
 from skimage import color  # require skimage
 from PIL import Image
@@ -39,6 +39,7 @@ class ColorizationDataset(BaseDataset):
         self.dir = os.path.join(opt.dataroot)
         self.AB_paths = sorted(make_dataset(self.dir, opt.max_dataset_size))
         assert(opt.input_nc == 1 and opt.output_nc == 2 and opt.direction == 'AtoB')
+        self.transform = get_transform(self.opt, convert=False)
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.
@@ -54,9 +55,7 @@ class ColorizationDataset(BaseDataset):
         """
         path = self.AB_paths[index]
         im = Image.open(path).convert('RGB')
-        transform_params = get_params(self.opt, im.size)
-        transform = get_transform(self.opt, transform_params, convert=False)
-        im = transform(im)
+        im = self.transform(im)
         im = np.array(im)
         lab = color.rgb2lab(im).astype(np.float32)
         lab_t = transforms.ToTensor()(lab)
