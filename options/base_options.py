@@ -60,7 +60,7 @@ class BaseOptions():
     def gather_options(self):
         """Initialize our parser with basic options(only once).
         Add additional model-specific and dataset-specific options.
-        These options are difined in the <modify_commandline_options> function
+        These options are defined in the <modify_commandline_options> function
         in model and dataset classes.
         """
         if not self.initialized:  # check if it has been initialized
