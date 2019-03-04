@@ -17,7 +17,7 @@ class HTML:
         Parameters:
             web_dir (str) -- a directory that stores the webpage. HTML file will be created at <web_dir>/index.html; images will be saved at <web_dir/images/
             title (str)   -- the webpage name
-            reflect (int) -- how often the website refresh itself; if 0; no refreshing
+            refresh (int) -- how often the website refresh itself; if 0; no refreshing
         """
         self.title = title
         self.web_dir = web_dir
