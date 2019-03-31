@@ -42,7 +42,7 @@ for sp in splits:
             if args.use_AB:
                 name_AB = name_AB.replace('_A.', '.')  # remove _A
             path_AB = os.path.join(img_fold_AB, name_AB)
-            im_A = cv2.imread(path_A, cv2.CV_LOAD_IMAGE_COLOR)
-            im_B = cv2.imread(path_B, cv2.CV_LOAD_IMAGE_COLOR)
+            im_A = cv2.imread(path_A, cv2.IMREAD_COLOR)
+            im_B = cv2.imread(path_B, cv2.IMREAD_COLOR)
             im_AB = np.concatenate([im_A, im_B], 1)
             cv2.imwrite(path_AB, im_AB)
