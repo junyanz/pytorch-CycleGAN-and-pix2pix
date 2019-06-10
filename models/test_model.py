@@ -39,7 +39,7 @@ class TestModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts  will call <BaseModel.get_current_losses>
         self.loss_names = []
         # specify the images you want to save/display. The training/test scripts  will call <BaseModel.get_current_visuals>
-        self.visual_names = ['real_A', 'fake_B']
+        self.visual_names = ['real', 'fake']
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
         self.model_names = ['G' + opt.model_suffix]  # only generator is needed.
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG,
@@ -57,12 +57,12 @@ class TestModel(BaseModel):
 
         We need to use 'single_dataset' dataset mode. It only load images from one domain.
         """
-        self.real_A = input['A'].to(self.device)
+        self.real = input['A'].to(self.device)
         self.image_paths = input['A_paths']
 
     def forward(self):
         """Run forward pass."""
-        self.fake_B = self.netG(self.real_A)  # G(A)
+        self.fake = self.netG(self.real)  # G(real)
 
     def optimize_parameters(self):
         """No optimization for test model."""
