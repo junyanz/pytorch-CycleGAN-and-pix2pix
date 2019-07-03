@@ -121,9 +121,9 @@ def dlib_landmarks(img, opt):
 
 def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC, convert=True):
     transform_list = []
-    
+
     if 'dlib' in opt.preprocess:
-            transform_list.append(transforms.Lambda(lambda x: __dlib_crop(img, opt)))
+            transform_list.append(transforms.Lambda(lambda img: __dlib_crop(img, opt)))
 
     if grayscale:
         transform_list.append(transforms.Grayscale(1))
