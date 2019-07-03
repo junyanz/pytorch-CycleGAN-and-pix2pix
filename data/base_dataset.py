@@ -160,7 +160,7 @@ def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC, conve
 def __dlib_crop(img, opt):
     img = np.array(img)[..., ::-1] # RGB2BGR
     img = dlib_landmarks(img, opt)
-    return Image.fromarray(img)
+    return Image.fromarray(img[..., ::-1])
 
 
 def __make_power_2(img, base, method=Image.BICUBIC):
