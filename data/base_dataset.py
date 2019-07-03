@@ -8,7 +8,11 @@ import torch.utils.data as data
 from PIL import Image
 import torchvision.transforms as transforms
 from abc import ABC, abstractmethod
+import dlib
+from skimage.morphology import convex_hull_image
 
+detector = dlib.get_frontal_face_detector()
+predictor = None
 
 class BaseDataset(data.Dataset, ABC):
     """This class is an abstract base class (ABC) for datasets.
@@ -28,6 +32,7 @@ class BaseDataset(data.Dataset, ABC):
         """
         self.opt = opt
         self.root = opt.dataroot
+        self.dlib_predictor = dlib.shape_predictor(opt.dlib_path)
 
     @staticmethod
     def modify_commandline_options(parser, is_train):
@@ -78,8 +83,48 @@ def get_params(opt, size):
     return {'crop_pos': (x, y), 'flip': flip}
 
 
+def bounding_rect(mask):
+    h, w = mask.shape[:2]
+    for top in range(h):
+        if np.count_nonzero(mask[top, ...]) > 0:
+            break
+    for bottom in range(h, 1, -1):
+        if np.count_nonzero(mask[bottom-1, ...]) > 0:
+            break
+    for left in range(w):
+        if np.count_nonzero(mask[:, left, ...]) > 0:
+            break
+    for right in range(w, 1, -1):
+        if np.count_nonzero(mask[:, right, ...]) > 0:
+            break
+    assert bottom > top and left < right
+    return left, right, top, bottom
+
+
+def dlib_landmarks(img, opt):
+    global predictor
+    if predictor is None:
+        predictor = dlib.shape_predictor(opt.dlib_path)
+    h, w = img.shape[:2]
+    mask = np.zeros_like(img[..., 0], dtype=bool)
+    rects = detector(img, 1)
+    if rects is None:
+        return None
+    landmarks = predictor(img, rects[0])
+    for i in range(68):
+        x, y = landmarks.part(i).x, landmarks.part(i).y
+        mask[min(h-1, max(0, y)), min(w-1, max(0, x))] = 1
+    mask = convex_hull_image(mask)
+    x0, x1, y0, y1 = bounding_rect(mask)
+    return (img*mask[..., np.newaxis])[y0: y1, x0: x1, ...]
+
+
 def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC, convert=True):
     transform_list = []
+    
+    if 'dlib' in opt.preprocess:
+            transform_list.append(transforms.Lambda(lambda x: __dlib_crop(img, opt)))
+
     if grayscale:
         transform_list.append(transforms.Grayscale(1))
     if 'resize' in opt.preprocess:
@@ -110,6 +155,12 @@ def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC, conve
         else:
             transform_list += [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     return transforms.Compose(transform_list)
+
+
+def __dlib_crop(img, opt):
+    img = np.array(img)[..., ::-1] # RGB2BGR
+    img = dlib_landmarks(img, opt)
+    return Image.fromarray(img)
 
 
 def __make_power_2(img, base, method=Image.BICUBIC):
