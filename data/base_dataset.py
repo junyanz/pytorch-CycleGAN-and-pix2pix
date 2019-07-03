@@ -95,7 +95,7 @@ def bounding_rect(mask):
         if np.count_nonzero(mask[:, left, ...]) > 0:
             break
     for right in range(w, 1, -1):
-        if np.count_nonzero(mask[:, right, ...]) > 0:
+        if np.count_nonzero(mask[:, right-1, ...]) > 0:
             break
     assert bottom > top and left < right
     return left, right, top, bottom
