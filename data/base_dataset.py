@@ -157,9 +157,11 @@ def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC, conve
     return transforms.Compose(transform_list)
 
 
-def __dlib_crop(img, opt):
-    img = np.array(img)[..., ::-1] # RGB2BGR
+def __dlib_crop(img_rgb, opt):
+    img = np.array(img_rgb)[..., ::-1] # RGB2BGR
     img = dlib_landmarks(img, opt)
+    if img is None:
+        return img_rgb
     return Image.fromarray(img[..., ::-1])
 
 
