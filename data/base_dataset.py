@@ -108,7 +108,7 @@ def dlib_landmarks(img, opt):
     h, w = img.shape[:2]
     mask = np.zeros_like(img[..., 0], dtype=bool)
     rects = detector(img, 1)
-    if rects is None:
+    if len(rects) == 0:
         return None
     landmarks = predictor(img, rects[0])
     for i in range(68):
