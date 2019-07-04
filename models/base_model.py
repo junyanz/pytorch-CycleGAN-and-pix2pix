@@ -105,6 +105,7 @@ class BaseModel(ABC):
             self.forward()
             self.compute_visuals()
 
+
     def compute_visuals(self):
         """Calculate additional output images for visdom and HTML visualization"""
         pass
@@ -131,6 +132,14 @@ class BaseModel(ABC):
             if isinstance(name, str):
                 visual_ret[name] = getattr(self, name)
         return visual_ret
+
+    def get_current_digits(self):
+        digit_ret = OrderedDict()
+        for name in self.visual_names:
+            if isinstance(name, str) and 'idt' not in name:
+                digit_ret[name+'_discA'] = self.netD_A(getattr(self, name))
+                digit_ret[name+'_discB'] = self.netD_B(getattr(self, name))
+        return digit_ret
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console, and save them to a file"""
