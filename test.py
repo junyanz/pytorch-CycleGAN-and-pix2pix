@@ -62,7 +62,7 @@ if __name__ == '__main__':
         digits = model.get_current_digits()
         img_path = model.get_image_paths()     # get image paths
         for key in digits.keys():
-            print(key, ':\t', digits[key].detach().numpy().mean())
+            print(key, ':\t', digits[key].cpu().detach().numpy().mean())
         if i % 5 == 0:  # save images to an HTML file
             print('processing (%04d)-th image... %s' % (i, img_path))
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
