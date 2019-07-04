@@ -61,7 +61,7 @@ if __name__ == '__main__':
         visuals = model.get_current_visuals()  # get image results
         digits = model.get_current_digits()
         img_path = model.get_image_paths()     # get image paths
-        print(digits)
+        print(digits.shape)
         if i % 5 == 0:  # save images to an HTML file
             print('processing (%04d)-th image... %s' % (i, img_path))
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
