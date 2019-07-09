@@ -65,6 +65,7 @@ if __name__ == '__main__':
         print('\tresize shape:', img_tensor.size)
         img_tensor = transforms.functional.to_tensor(img_tensor)
         img_tensor = transforms.functional.normalize(img_tensor, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        img_tensor = img_tensor.unsqueeze(0)
         img_tensor = img_tensor.to(device)
         print('tensor shape:', img_tensor.shape)
 
