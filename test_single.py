@@ -53,13 +53,14 @@ if __name__ == '__main__':
         x0, x1, y0, y1 = base_dataset.bounding_rect(mask)
         # additional step to make image squared
         pad_size = int(abs(x1+y0-x0-y1))
+        print(x0, x1, y0, y1, y1-y0, x1-x0)
         padding = (int(pad_size//2), 0, pad_size-int(pad_size//2), 0) if (y1-y0)>(x1-x0) else (0, int(pad_size//2), 0, pad_size-int(pad_size//2))
         img_tensor = Image.fromarray(img[y0: y1+1, x0: x1+1, ::-1])
         print('forward shape:', img_tensor.size)
         #transform = transforms.Compose([transforms.Pad(padding), transforms.Resize((256, 256))])
         #img_tensor = transform(img_tensor)
         img_tensor = transforms.functional.pad(img_tensor, padding)
-        print('\tpadded shape:', img_tensor.size, padding)
+        print('\tpadded shape:', img_tensor.size, padding, pad_size)
         ori_size = img_tensor.size
         img_tensor = transforms.functional.resize(img_tensor, (256, 256))
         print('\tresize shape:', img_tensor.size)
