@@ -3,7 +3,7 @@ import os
 from options.test_options import TestOptions
 from data import create_dataset, base_dataset
 from models import create_model
-from util.visualizer import save_images
+from util.visualizer import save_images, tensor2im
 from skimage.morphology import convex_hull_image
 from PIL import Image
 import torch
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         img_tensor = transforms.functional.pad(img_tensor, padding)
         print('\tpadded shape:', img_tensor.size, padding, pad_size)
         ori_size = img_tensor.size
-        img_tensor = transforms.functional.resize(img_tensor, (256, 256))
+        img_tensor = transforms.functional.resize(img_tensor, (256, 256), Image.BICUBIC)
         print('\tresize shape:', img_tensor.size)
         img_tensor = transforms.functional.to_tensor(img_tensor)
         img_tensor = transforms.functional.normalize(img_tensor, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
@@ -73,11 +73,11 @@ if __name__ == '__main__':
 
         img_norm = model.netG_A(img_tensor)
         print('\ttransform shape:', img_norm.shape)
-        img_norm = np.asarray(transforms.functional.to_pil_image(img_norm.squeeze().detach().cpu()))[..., ::-1]
+        img_norm = tensor2im(img_norm)
         print('output shape:', img_norm.shape)
-        img_reverse = cv2.resize(img_norm, ori_size)
+        img_reverse = transforms.functional.resize(img_norm, ori_size)
         print('reverse resize shape:', img_reverse.shape)
         img_reverse = img_reverse[padding[1]: img_reverse.shape[0]-padding[3], padding[0]: img_reverse.shape[1]-padding[2], :]
         print('reverse shape:', img_reverse.shape, img_reverse.min(), img_reverse.max())
-        cv2.imwrite('tmp.jpg', img_reverse)
+        img_reverse.save('tmp.jpg')
         break
