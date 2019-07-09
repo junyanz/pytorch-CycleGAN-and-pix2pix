@@ -52,7 +52,7 @@ if __name__ == '__main__':
         mask = convex_hull_image(mask)
         x0, x1, y0, y1 = base_dataset.bounding_rect(mask)
         # additional step to make image squared
-        pad_size = abs(x1+y0-x0-y1)
+        pad_size = int(abs(x1+y0-x0-y1))
         padding = (int(pad_size//2), 0, pad_size-int(pad_size//2), 0) if (y1-y0)>(x1-x0) else (0, int(pad_size//2), 0, pad_size-int(pad_size//2))
         img_tensor = Image.fromarray(img[y0: y1+1, x0: x1+1, ::-1])
         print('forward shape:', img_tensor.size)
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
         img_norm = model.netG_A(img_tensor)
         print('\ttransform shape:', img_norm.shape)
-        img_norm = transforms.functional.to_pil_image(img_norm.squeeze())
+        img_norm = transforms.functional.to_pil_image(img_norm.squeeze().detach().cpu())
         img_reverse = transforms.Resize(ori_size)(img_norm)
         img_reverse = np.asarray(img_reverse)
         img_reverse = img_reverse[padding[1]: img_reverse.shape[0]-padding[3], padding[0]: img_reverse.shape[1]-padding[2], :]
