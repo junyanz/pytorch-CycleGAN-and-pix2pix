@@ -6,12 +6,25 @@ from models import create_model
 from util.visualizer import save_images
 from util.util import tensor2im
 from skimage.morphology import convex_hull_image, square, dilation, erosion
+from skimage.draw import line
 from PIL import Image
 import torch
 import numpy as np
 import cv2
 import dlib
 import torchvision.transforms as transforms
+
+
+def forehead_line(img, kpt):
+    mask = np.zeros(img.shape[:2], bool)
+    rr, cc = line(kpt.part(0).x, kpt.part(0).y, kpt.part(17).x, kpt.part(17).y)
+    mask[rr, cc] = 1
+    rr, cc = line(kpt.part(16).x, kpt.part(16).y, kpt.part(26).x, kpt.part(26).y)
+    mask[rr, cc] = 1
+    for i in range(17, 26):
+        rr, cc = line(kpt.part(i).x, kpt.part(i).y, kpt.part(i+1).x, kpt.part(i+1).y)
+        mask[rr, cc] = 1
+    return mask
 
 
 if __name__ == '__main__':
@@ -84,7 +97,7 @@ if __name__ == '__main__':
         img_trans = np.zeros_like(img, img.dtype)
         img_trans[y0: y1, x0: x1, :] = img_reverse
         img_mix = img*~mask[..., np.newaxis]+img_trans*mask[..., np.newaxis]
-        mask_neigh = dilation(mask, square((x1-x0)//10)) ^ erosion(mask, square((x1-x0)//20))
+        mask_neigh = dilation(forehead_line(img, kpt), square((x1-x0)//10))
         
         cv2.imwrite('tmp.jpg', cv2.illuminationChange(img_mix, mask_neigh.astype(img_mix.dtype)*255))
         break
