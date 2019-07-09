@@ -80,5 +80,10 @@ if __name__ == '__main__':
         print('reverse resize shape:', img_reverse.shape)
         img_reverse = img_reverse[padding[1]: img_reverse.shape[0]-padding[3], padding[0]: img_reverse.shape[1]-padding[2], ::-1]
         print('reverse shape:', img_reverse.shape, img_reverse.min(), img_reverse.max())
-        cv2.imwrite('tmp.jpg', img_reverse)
+        
+        img_trans = np.zeros_like(img, img.dtype)
+        img_trans[y0: y1, x0: x1, :] = img_reverse
+        mask = mask[..., np.newaxis]
+        
+        cv2.imwrite('tmp.jpg', img*~mask+img_trans*mask)
         break
