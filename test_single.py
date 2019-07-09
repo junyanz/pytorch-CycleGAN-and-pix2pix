@@ -1,7 +1,7 @@
 import glob
 import os
 from options.test_options import TestOptions
-from data import create_dataset
+from data import create_dataset, base_dataset
 from models import create_model
 from util.visualizer import save_images
 from skimage.morphology import convex_hull_image
@@ -9,7 +9,6 @@ from PIL import Image
 import numpy as np
 import cv2
 import dlib
-import base_dataset
 import torchvision.transforms as transforms
 
 
