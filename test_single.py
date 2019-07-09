@@ -59,7 +59,7 @@ if __name__ == '__main__':
         #transform = transforms.Compose([transforms.Pad(padding), transforms.Resize((256, 256))])
         #img_tensor = transform(img_tensor)
         img_tensor = transforms.functional.pad(img_tensor, padding)
-        print('\tpadded shape:', img_tensor.size)
+        print('\tpadded shape:', img_tensor.size, padding)
         ori_size = img_tensor.size
         img_tensor = transforms.functional.resize(img_tensor, (256, 256))
         print('\tresize shape:', img_tensor.size)
@@ -73,6 +73,7 @@ if __name__ == '__main__':
         print('\ttransform shape:', img_norm.shape)
         img_norm = transforms.functional.to_pil_image(img_norm.squeeze().detach().cpu())
         img_reverse = transforms.Resize(ori_size)(img_norm)
+        print('reverse resize shape:', img_reverse.size)
         img_reverse = np.asarray(img_reverse)
         img_reverse = img_reverse[padding[1]: img_reverse.shape[0]-padding[3], padding[0]: img_reverse.shape[1]-padding[2], :]
         print('reverse shape:', img_reverse.shape)
