@@ -3,7 +3,8 @@ import os
 from options.test_options import TestOptions
 from data import create_dataset, base_dataset
 from models import create_model
-from util.visualizer import save_images, tensor2im
+from util.visualizer import save_images
+from util.util import tensor2im
 from skimage.morphology import convex_hull_image
 from PIL import Image
 import torch
