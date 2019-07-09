@@ -99,6 +99,6 @@ if __name__ == '__main__':
         img_mix = img*~mask[..., np.newaxis]+img_trans*mask[..., np.newaxis]
         mask_neigh = dilation(forehead_line(img, kpt), square((x1-x0)//10)).astype(img_mix.dtype)*255
         
-        cv2.imwrite('tmp_forehead.jpg', mask_neigh)
-        cv2.imwrite('tmp.jpg', cv2.illuminationChange(img_mix, mask_neigh))
-        break
+        #cv2.imwrite('tmp_forehead.jpg', mask_neigh)
+        cv2.imwrite(opt.results_dir+file.rsplit('/', 1)[-1], cv2.illuminationChange(img_mix, mask_neigh))
+        
