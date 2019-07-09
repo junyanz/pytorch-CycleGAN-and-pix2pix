@@ -6,6 +6,7 @@ from models import create_model
 from util.visualizer import save_images
 from skimage.morphology import convex_hull_image
 from PIL import Image
+import torch
 import numpy as np
 import cv2
 import dlib
@@ -23,6 +24,7 @@ if __name__ == '__main__':
     #dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
+    device = torch.device('cuda:{}'.format(opt.gpu_ids[0])) if opt.gpu_ids else torch. device('cpu')
     # create a website
     # web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.epoch))  # define the website directory
     # webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
@@ -56,14 +58,14 @@ if __name__ == '__main__':
         print('forward shape:', img_tensor.size)
         #transform = transforms.Compose([transforms.Pad(padding), transforms.Resize((256, 256))])
         #img_tensor = transform(img_tensor)
-        img_tensor = transforms.Pad(padding)(img_tensor)
-        print('\tpadded shape:', img_tensor.shape)
-        ori_size = img_tensor.shape[:2]
-        img_tensor = transforms.Resize((256, 256))(img_tensor)
-        print('\tresize shape:', img_tensor.shape)
+        img_tensor = transforms.functional.pad(img_tensor, padding)
+        print('\tpadded shape:', img_tensor.size)
+        ori_size = img_tensor.size
+        img_tensor = transforms.functional.resize(img_tensor, (256, 256))
+        print('\tresize shape:', img_tensor.size)
 
 
-        img_norm = model.netG_A(img_tensor)
+        img_norm = model.netG_A(img_tensor.to(device))
         print('\ttransform shape:', img_norm.shape)
         img_reverse = transforms.Resize(ori_size)(img_norm)
         img_reverse = np.asarray(img_reverse)
