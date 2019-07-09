@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
         img_norm = model.netG_A(img_tensor)
         print('\ttransform shape:', img_norm.shape)
-        img_norm = img_norm.squeeze().detach().cpu().numpy()[..., ::-1]
+        img_norm = np.asarray(transforms.functional.to_pil_image(img_norm.squeeze().detach().cpu()))[..., ::-1]
         print('output shape:', img_norm.shape)
         img_reverse = cv2.resize(img_norm, ori_size)
         print('reverse resize shape:', img_reverse.shape)
