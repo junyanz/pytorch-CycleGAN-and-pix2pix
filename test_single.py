@@ -71,6 +71,7 @@ if __name__ == '__main__':
 
         img_norm = model.netG_A(img_tensor)
         print('\ttransform shape:', img_norm.shape)
+        img_norm = img_norm.squeeze().data
         img_reverse = transforms.Resize(ori_size)(img_norm)
         img_reverse = np.asarray(img_reverse)
         img_reverse = img_reverse[padding[1]: img_reverse.shape[0]-padding[3], padding[0]: img_reverse.shape[1]-padding[2], :]
