@@ -84,7 +84,7 @@ if __name__ == '__main__':
         img_trans = np.zeros_like(img, img.dtype)
         img_trans[y0: y1, x0: x1, :] = img_reverse
         img_mix = img*~mask[..., np.newaxis]+img_trans*mask[..., np.newaxis]
-        mask_neigh = dilation(mask, square((x1-x0)//10)) ^ erosion(mask, square((x1-x0)//15))
+        mask_neigh = dilation(mask, square((x1-x0)//10)) ^ erosion(mask, square((x1-x0)//20))
         
         cv2.imwrite('tmp.jpg', cv2.illuminationChange(img_mix, mask_neigh.astype(img_mix.dtype)*255))
         break
