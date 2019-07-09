@@ -66,6 +66,7 @@ if __name__ == '__main__':
         img_tensor = transforms.functional.to_tensor(img_tensor)
         img_tensor = transforms.functional.normalize(img_tensor, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         img_tensor = img_tensor.to(device)
+        print('tensor shape:', img_tensor.shape)
 
         img_norm = model.netG_A(img_tensor)
         print('\ttransform shape:', img_norm.shape)
