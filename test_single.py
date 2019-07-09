@@ -97,7 +97,8 @@ if __name__ == '__main__':
         img_trans = np.zeros_like(img, img.dtype)
         img_trans[y0: y1, x0: x1, :] = img_reverse
         img_mix = img*~mask[..., np.newaxis]+img_trans*mask[..., np.newaxis]
-        mask_neigh = dilation(forehead_line(img, kpt), square((x1-x0)//10))
+        mask_neigh = dilation(forehead_line(img, kpt), square((x1-x0)//10)).astype(img_mix.dtype)*255
         
-        cv2.imwrite('tmp.jpg', cv2.illuminationChange(img_mix, mask_neigh.astype(img_mix.dtype)*255))
+        cv2.imwrite('tmp_forehead.jpg', mask_neigh)
+        cv2.imwrite('tmp.jpg', cv2.illuminationChange(img_mix, mask_neigh))
         break
