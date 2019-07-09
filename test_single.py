@@ -5,7 +5,7 @@ from data import create_dataset, base_dataset
 from models import create_model
 from util.visualizer import save_images
 from util.util import tensor2im
-from skimage.morphology import convex_hull_image
+from skimage.morphology import convex_hull_image, square, dilation
 from PIL import Image
 import torch
 import numpy as np
@@ -83,7 +83,8 @@ if __name__ == '__main__':
         
         img_trans = np.zeros_like(img, img.dtype)
         img_trans[y0: y1, x0: x1, :] = img_reverse
-        mask = mask[..., np.newaxis]
+        img_mix = img*~mask[..., np.newaxis]+img_trans*mask[..., np.newaxis]
+        mask_neigh = dilation(mask, square((x1-x0)//10)) ^ mask
         
-        cv2.imwrite('tmp.jpg', img*~mask+img_trans*mask)
+        cv2.imwrite('tmp.jpg', cv2.illuminationChange(img_mix, mask_neigh.astype(img_mix.dtype)*255))
         break
