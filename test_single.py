@@ -53,7 +53,7 @@ if __name__ == '__main__':
         pad_size = abs(x1+y1-x0-y0)
         padding = [int(pad_size//2), 0, pad_size-int(pad_size//2), 0] if (y1-y0)>(x1-x0) else [0, int(pad_size//2), 0, pad_size-int(pad_size//2)]
         img_tensor = Image.fromarray(img[y0: y1+1, x0: x1+1, ::-1])
-        print('forward shape:', img_tensor.shape)
+        print('forward shape:', img_tensor.size)
         #transform = transforms.Compose([transforms.Pad(padding), transforms.Resize((256, 256))])
         #img_tensor = transform(img_tensor)
         img_tensor = transforms.Pad(padding)(img_tensor)
