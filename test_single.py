@@ -65,8 +65,9 @@ if __name__ == '__main__':
         print('\tresize shape:', img_tensor.size)
         img_tensor = transforms.functional.to_tensor(img_tensor)
         img_tensor = transforms.functional.normalize(img_tensor, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        img_tensor = img_tensor.to(device)
 
-        img_norm = model.netG_A(img_tensor.to(device))
+        img_norm = model.netG_A(img_tensor)
         print('\ttransform shape:', img_norm.shape)
         img_reverse = transforms.Resize(ori_size)(img_norm)
         img_reverse = np.asarray(img_reverse)
