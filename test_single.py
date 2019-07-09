@@ -18,6 +18,8 @@ import torchvision.transforms as transforms
 def forehead_line(img, kpt):
     h, w = img.shape[:2]
     mask = np.zeros((h, w), bool)
+    h -= 1
+    w -= 1
     rr, cc = line(min(h, max(0, kpt.part(0).y)), min(w, max(0, kpt.part(0).x)), \
                     min(h, max(0, kpt.part(17).y)), min(w, max(0, kpt.part(17).x)))
     mask[rr, cc] = 1
