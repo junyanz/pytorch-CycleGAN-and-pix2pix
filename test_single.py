@@ -17,12 +17,12 @@ import torchvision.transforms as transforms
 
 def forehead_line(img, kpt):
     mask = np.zeros(img.shape[:2], bool)
-    rr, cc = line(kpt.part(0).x, kpt.part(0).y, kpt.part(17).x, kpt.part(17).y)
+    rr, cc = line(kpt.part(0).y, kpt.part(0).x, kpt.part(17).y, kpt.part(17).x)
     mask[rr, cc] = 1
-    rr, cc = line(kpt.part(16).x, kpt.part(16).y, kpt.part(26).x, kpt.part(26).y)
+    rr, cc = line(kpt.part(16).y, kpt.part(16).x, kpt.part(26).y, kpt.part(26).x)
     mask[rr, cc] = 1
     for i in range(17, 26):
-        rr, cc = line(kpt.part(i).x, kpt.part(i).y, kpt.part(i+1).x, kpt.part(i+1).y)
+        rr, cc = line(kpt.part(i).y, kpt.part(i).x, kpt.part(i+1).y, kpt.part(i+1).x)
         mask[rr, cc] = 1
     return mask
 
