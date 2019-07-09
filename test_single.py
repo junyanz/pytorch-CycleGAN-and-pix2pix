@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
         img_norm = model.netG_A(img_tensor)
         print('\ttransform shape:', img_norm.shape)
-        img_norm = tensor2im(img_norm)
+        img_norm = Image.fromarray(tensor2im(img_norm))
         print('output shape:', img_norm.shape)
         img_reverse = transforms.functional.resize(img_norm, ori_size)
         print('reverse resize shape:', img_reverse.shape)
