@@ -72,7 +72,7 @@ if __name__ == '__main__':
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(opt.dlib_path)
     # do data preprocess here explicitly
-    test_files = glob.glob(opt.dataroot+'/testA/*.jpg')
+    test_files = glob.glob(opt.dataroot+'/*.jpg')
     for file in test_files:
         img = cv2.imread(file, -1)
         h, w = img.shape[:2]
@@ -128,4 +128,4 @@ if __name__ == '__main__':
 
         #cv2.imwrite('tmp_forehead.jpg', mask_neigh)
         cv2.imwrite(opt.results_dir+file.rsplit('/', 1)[-1].replace('_ori', ''), cv2.illuminationChange(img_mix, mask_neigh.astype(img_mix.dtype)*255))
-        shutil.copy(file, opt.results_dir)
+        #shutil.copy(file, opt.results_dir)
