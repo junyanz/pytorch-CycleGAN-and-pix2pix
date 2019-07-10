@@ -128,4 +128,4 @@ if __name__ == '__main__':
 
         #cv2.imwrite('tmp_forehead.jpg', mask_neigh)
         cv2.imwrite(os.path.join(opt.results_dir, file.rsplit('/', 1)[-1].replace('_ori', '')), cv2.illuminationChange(img_mix, mask_neigh.astype(img_mix.dtype)*255))
-        #shutil.copy(file, opt.results_dir)
+        shutil.copy(file, os.path.join(opt.results_dir, file.rsplit('/', 1)[-1].replace('.jpg', '_ori.jpg')))
