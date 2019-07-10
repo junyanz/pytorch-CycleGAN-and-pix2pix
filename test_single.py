@@ -98,7 +98,7 @@ if __name__ == '__main__':
         img_tensor = transforms.functional.pad(img_tensor, padding)
         print('\tpadded shape:', img_tensor.size, padding, pad_size)
         ori_size = img_tensor.size
-        img_tensor = transforms.functional.resize(img_tensor, (256, 256), Image.BICUBIC)
+        img_tensor = transforms.functional.resize(img_tensor, (256, 256))
         print('\tresize shape:', img_tensor.size)
         img_tensor = transforms.functional.to_tensor(img_tensor)
         img_tensor = transforms.functional.normalize(img_tensor, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
