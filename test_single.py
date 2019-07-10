@@ -127,5 +127,5 @@ if __name__ == '__main__':
         img_mix = img_mix_smooth * mask_neigh[..., np.newaxis] + img_mix * (~mask_neigh)[..., np.newaxis]
 
         #cv2.imwrite('tmp_forehead.jpg', mask_neigh)
-        cv2.imwrite(opt.results_dir+file.rsplit('/', 1)[-1].replace('_ori', ''), cv2.illuminationChange(img_mix, mask_neigh.astype(img_mix.dtype)*255))
+        cv2.imwrite(os.path.join(opt.results_dir, file.rsplit('/', 1)[-1].replace('_ori', '')), cv2.illuminationChange(img_mix, mask_neigh.astype(img_mix.dtype)*255))
         #shutil.copy(file, opt.results_dir)
