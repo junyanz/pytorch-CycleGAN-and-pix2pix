@@ -120,7 +120,8 @@ if __name__ == '__main__':
         img_mix = img*~mask[..., np.newaxis]+img_trans*mask[..., np.newaxis]
         mask_neigh = dilation(forehead_line(mask, kpt), square((x1-x0)//15))
         print('mask neigh shape:', mask_neigh.shape)
-        img_mix = gaussian(img_mix, sigma=0.8, multichannel=False).astype(img_mix.dtype) * mask_neigh[..., np.newaxis] + img_mix * ~mask_neigh[..., np.newaxis]
+        cv2.imwrite('tmp_forehead.jpg', mask_neigh)
+        img_mix = gaussian(img_mix, sigma=0.8, multichannel=False).astype(img_mix.dtype) * mask_neigh[..., np.newaxis] + img_mix * (~mask_neigh)[..., np.newaxis]
         print('img mix shape:', img_mix.shape)
 
         #cv2.imwrite('tmp_forehead.jpg', mask_neigh)
