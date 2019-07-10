@@ -20,16 +20,22 @@ def forehead_line(img, kpt):
     mask = np.zeros((h, w), bool)
     h -= 1
     w -= 1
-    rr, cc = line(min(h, max(0, kpt.part(0).y)), min(w, max(0, kpt.part(0).x)), \
+    r, c = line(min(h, max(0, kpt.part(0).y)), min(w, max(0, kpt.part(0).x)), \
                     min(h, max(0, kpt.part(17).y)), min(w, max(0, kpt.part(17).x)))
-    mask[rr, cc] = 1
     rr, cc = line(min(h, max(0, kpt.part(16).y)), min(w, max(0, kpt.part(16).x)), \
                     min(h, max(0, kpt.part(26).y)), min(w, max(0, kpt.part(26).x)))
-    mask[rr, cc] = 1
+    r, c = np.append(r, rr), np.append(c, cc)
     for i in range(17, 26):
         rr, cc = line(min(h, max(0, kpt.part(i).y)), min(w, max(0, kpt.part(i).x)), \
                         min(h, max(0, kpt.part(i+1).y)), min(w, max(0, kpt.part(i+1).x)))
-        mask[rr, cc] = 1
+        r, c = np.append(r, rr), np.append(c, cc)
+
+    overflow_idx = []
+    for i in range(r.shape[0]):
+        if r[i] < 0 or r[i] >= h or c[i] < 0 or c[i] >= w:
+            overflow_idx.append(i)
+    r, c = np.delete(r, overflow_idx), np.delete(c, overflow_idx)
+    mask[r, c] = 1
     return mask
 
 
