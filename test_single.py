@@ -7,6 +7,7 @@ from util.visualizer import save_images
 from util.util import tensor2im
 from skimage.morphology import convex_hull_image, square, dilation, erosion
 from skimage.draw import line
+from skimage.filters import gaussian
 from PIL import Image
 import torch
 import numpy as np
@@ -14,7 +15,7 @@ import cv2
 import dlib
 import torchvision.transforms as transforms
 
-
+'''
 def forehead_line(img, kpt):
     h, w = img.shape[:2]
     mask = np.zeros((h, w), bool)
@@ -37,6 +38,13 @@ def forehead_line(img, kpt):
     r, c = np.delete(r, overflow_idx), np.delete(c, overflow_idx)
     mask[r, c] = 1
     return mask
+'''
+def forehead_line(mask_convex, kpt):
+    h, w = mask_convex.shape[:2]
+    y_low = min(kpt.part(0).y, kpt.part(16).y)
+    bounding_line = dilation(mask_convex) ^ mask_convex
+    bounding_line[y_low:] = 0
+    return bounding_line
 
 
 if __name__ == '__main__':
@@ -97,7 +105,8 @@ if __name__ == '__main__':
         img_tensor = img_tensor.to(device)
         print('tensor shape:', img_tensor.shape)
 
-        img_norm = model.netG_A(img_tensor)
+        with torch.no_grad():
+            img_norm = model.netG_A(img_tensor)
         print('\ttransform shape:', img_norm.shape)
         img_norm = tensor2im(img_norm)
         print('output shape:', img_norm.shape)
@@ -109,8 +118,9 @@ if __name__ == '__main__':
         img_trans = np.zeros_like(img, img.dtype)
         img_trans[y0: y1, x0: x1, :] = img_reverse
         img_mix = img*~mask[..., np.newaxis]+img_trans*mask[..., np.newaxis]
-        mask_neigh = dilation(forehead_line(img, kpt), square((x1-x0)//10)).astype(img_mix.dtype)*255
+        mask_neigh = dilation(forehead_line(mask, kpt), square((x1-x0)//15))
+        img_mix = gaussian(img_mix, sigma=0.8) * mask_neigh[..., np.newaxis] + img_mix * ~mask_neigh[..., np.newaxis]
         
         #cv2.imwrite('tmp_forehead.jpg', mask_neigh)
-        cv2.imwrite(opt.results_dir+file.rsplit('/', 1)[-1], cv2.illuminationChange(img_mix, mask_neigh))
+        cv2.imwrite(opt.results_dir+file.rsplit('/', 1)[-1], cv2.illuminationChange(img_mix, mask_neigh.astype(img_mix.dtype)*255))
         
