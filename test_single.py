@@ -119,8 +119,10 @@ if __name__ == '__main__':
         img_trans[y0: y1, x0: x1, :] = img_reverse
         img_mix = img*~mask[..., np.newaxis]+img_trans*mask[..., np.newaxis]
         mask_neigh = dilation(forehead_line(mask, kpt), square((x1-x0)//15))
-        img_mix = gaussian(img_mix, sigma=0.8) * mask_neigh[..., np.newaxis] + img_mix * ~mask_neigh[..., np.newaxis]
-        
+        print('mask neigh shape:', mask_neigh.shape)
+        img_mix = gaussian(img_mix, sigma=0.8, multichannel=False) * mask_neigh[..., np.newaxis] + img_mix * ~mask_neigh[..., np.newaxis]
+        print('img mix shape:', img_mix.shape)
+
         #cv2.imwrite('tmp_forehead.jpg', mask_neigh)
         cv2.imwrite(opt.results_dir+file.rsplit('/', 1)[-1], cv2.illuminationChange(img_mix, mask_neigh.astype(img_mix.dtype)*255))
-        
+        break
