@@ -109,7 +109,7 @@ python test.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
 - The test results will be saved to a html file here: `./results/maps_cyclegan/latest_test/index.html`.
 
 ### pix2pix train/test
-- Download a pix2pix dataset (e.g.facades  [[Citation](../datasets/bibtex/facades.tex)]):
+- Download a pix2pix dataset (e.g.[facades](http://cmp.felk.cvut.cz/~tylecr1/facade/)):
 ```bash
 bash ./datasets/download_pix2pix_dataset.sh facades
 ```
