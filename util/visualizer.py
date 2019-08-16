@@ -5,12 +5,16 @@ import ntpath
 import time
 from . import util, html
 from subprocess import Popen, PIPE
-from scipy.misc import imresize
+from PIL import Image
 
 if sys.version_info[0] == 2:
     VisdomExceptionBase = Exception
 else:
     VisdomExceptionBase = ConnectionError
+
+
+def imresize(arr, *args, **kwargs):
+    return np.array(Image.fromarray(arr).resize(*args, **kwargs))
 
 
 def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256):
