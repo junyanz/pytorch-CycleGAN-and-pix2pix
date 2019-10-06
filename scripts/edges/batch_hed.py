@@ -9,6 +9,7 @@
 # Step 5: run the MATLAB post-processing script "PostprocessHED.m"
 
 
+import caffe
 import numpy as np
 from PIL import Image
 import os
@@ -36,7 +37,6 @@ for arg in vars(args):
 # Make sure that caffe is on the python path:
 caffe_root = args.caffe_root   # this file is expected to be in {caffe_root}/examples/hed/
 sys.path.insert(0, caffe_root + 'python')
-import caffe
 
 
 if not os.path.exists(args.hed_mat_dir):
@@ -78,4 +78,4 @@ for i in range(nImgs):
     fuse = fuse[border:-border, border:-border]
     # save hed file to the disk
     name, ext = os.path.splitext(imgList[i])
-    sio.savemat(os.path.join(args.hed_mat_dir, name + '.mat'), {'predict': fuse})
+    sio.savemat(os.path.join(args.hed_mat_dir, name + '.mat'), {'edge_predict': fuse})
