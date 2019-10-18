@@ -9,26 +9,24 @@ from os.path import abspath, isdir, join, basename
 
 
 class GetData(object):
-    """
+    """A Python script for downloading CycleGAN or pix2pix datasets.
 
-    Download CycleGAN or Pix2Pix Data.
-
-    Args:
-        technique : str
-            One of: 'cyclegan' or 'pix2pix'.
-        verbose : bool
-            If True, print additional information.
+    Parameters:
+        technique (str) -- One of: 'cyclegan' or 'pix2pix'.
+        verbose (bool)  -- If True, print additional information.
 
     Examples:
         >>> from util.get_data import GetData
         >>> gd = GetData(technique='cyclegan')
         >>> new_data_path = gd.get(save_path='./datasets')  # options will be displayed.
 
+    Alternatively, You can use bash scripts: 'scripts/download_pix2pix_model.sh'
+    and 'scripts/download_cyclegan_model.sh'.
     """
 
     def __init__(self, technique='cyclegan', verbose=True):
         url_dict = {
-            'pix2pix': 'https://people.eecs.berkeley.edu/~tinghuiz/projects/pix2pix/datasets',
+            'pix2pix': 'http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/',
             'cyclegan': 'https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets'
         }
         self.url = url_dict.get(technique.lower())
@@ -83,18 +81,15 @@ class GetData(object):
 
         Download a dataset.
 
-        Args:
-            save_path : str
-                A directory to save the data to.
-            dataset : str, optional
-                A specific dataset to download.
-                Note: this must include the file extension.
-                If None, options will be presented for you
-                to choose from.
+        Parameters:
+            save_path (str) -- A directory to save the data to.
+            dataset (str)   -- (optional). A specific dataset to download.
+                            Note: this must include the file extension.
+                            If None, options will be presented for you
+                            to choose from.
 
         Returns:
-            save_path_full : str
-                The absolute path to the downloaded data.
+            save_path_full (str) -- the absolute path to the downloaded data.
 
         """
         if dataset is None:
