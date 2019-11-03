@@ -24,7 +24,7 @@ class ColorizationDataset(BaseDataset):
             the modified parser.
 
         By default, the number of channels for input image  is 1 (L) and
-        the nubmer of channels for output image is 2 (ab). The direction is from A to B
+        the number of channels for output image is 2 (ab). The direction is from A to B
         """
         parser.set_defaults(input_nc=1, output_nc=2, direction='AtoB')
         return parser
