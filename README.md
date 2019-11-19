@@ -219,7 +219,8 @@ If you use this code for your research, please cite our papers.
 }
 ```
 
-
+## Other Languages
+[Spanish](docs/README_es.md)
 
 ## Related Projects
 **[CycleGAN-Torch](https://github.com/junyanz/CycleGAN) |
