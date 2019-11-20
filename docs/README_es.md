@@ -1,4 +1,4 @@
-<img src='imgs/horse2zebra.gif' align="right" width=384>
+<img src='https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/raw/master/imgs/horse2zebra.gif' align="right" width=384>
 
 <br><br><br>
 
@@ -12,7 +12,7 @@ Esta implementacion de PyTorch produce resultados comparables o mejores que nues
 
 **Aviso**: El software actual funciona correctamente en PyTorch 0.41+. Para soporte en PyTorch 0.1-0.3: [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1).
 
-Puede encontrar información útil en [training/test tips](docs/tips.md) y [preguntas frecuentes](docs/qa.md). Para implementar modelos y conjuntos de datos personalizados, consulte nuestro [templates](#custom-model-and-dataset). Para ayudar a los usuarios a comprender y adaptar mejor nuestra base de código, proporcionamos un [overview](docs/overview.md) de la estructura de código de este repositorio.
+Puede encontrar información útil en [training/test tips](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md) y [preguntas frecuentes](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md). Para implementar modelos y conjuntos de datos personalizados, consulte nuestro [templates](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/README_es.md#modelo-y-dataset-personalizado). Para ayudar a los usuarios a comprender y adaptar mejor nuestra base de código, proporcionamos un [overview](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/overview.md) de la estructura de código de este repositorio.
 
 **CycleGAN: [Proyecto](https://junyanz.github.io/CycleGAN/) |  [PDF](https://arxiv.org/pdf/1703.10593.pdf) |  [Torch](https://github.com/junyanz/CycleGAN) |
 [Guia de Tensorflow Core](https://www.tensorflow.org/tutorials/generative/cyclegan) | [PyTorch Colab](https://colab.research.google.com/github/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/CycleGAN.ipynb)**
@@ -27,7 +27,7 @@ Puede encontrar información útil en [training/test tips](docs/tips.md) y [preg
 
 **[EdgesCats Demo](https://affinelayer.com/pixsrv/) | [pix2pix-tensorflow](https://github.com/affinelayer/pix2pix-tensorflow) | por [Christopher Hesse](https://twitter.com/christophrhesse)**
 
-<img src='imgs/edges2cats.jpg' width="400px"/>
+<img src='https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/imgs/edges2cats.jpg' width="400px"/>
 
 Si usa este código para su investigación, cite:
 
@@ -97,7 +97,7 @@ cd pytorch-CycleGAN-and-pix2pix
   - Para uso de pip, por favor escriba el comando `pip install -r requirements.txt`.
   - Para uso de Conda, proporcionamos un script de instalación `./scripts/conda_deps.sh`. De forma alterna, puede crear un nuevo entorno Conda usando `conda env create -f environment.yml`.
   - Para uso de Docker, Proporcionamos la imagen Docker y el archivo Docker preconstruidos. Por favor, consulte nuestra página
- [Docker](docs/docker.md).
+ [Docker](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/docker.md).
 
 ### CycleGAN entreanimiento/test
 - Descargar el dataset de CycleGAN (e.g. maps):
@@ -106,13 +106,13 @@ bash ./datasets/download_cyclegan_dataset.sh maps
 ```
 - Para ver los resultados del entrenamiento y las gráficas de pérdidas, `python -m visdom.server` y haga clic en la URL
  http://localhost:8097.
-- Entrenar un modelo:
+- Entrenar el modelo:
 ```bash
 #!./scripts/train_cyclegan.sh
 python train.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
 ```
 Para ver más resultados intermedios, consulte `./checkpoints/maps_cyclegan/web/index.html`.
-- Prueba el modelo:
+- Pruebe el modelo:
 ```bash
 #!./scripts/test_cyclegan.sh
 python test.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
@@ -124,8 +124,8 @@ python test.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
 ```bash
 bash ./datasets/download_pix2pix_dataset.sh facades
 ```
-- Para ver los resultados del entrenamiento y las gráficas de pérdidas, `python -m visdom.server` y haga clic en la URL http://localhost:8097.
-- Train a model:
+- Para ver los resultados del entrenamiento y las gráficas de pérdidas `python -m visdom.server`, haga clic en la URL http://localhost:8097.
+- Para entrenar el modelo:
 ```bash
 #!./scripts/train_pix2pix.sh
 python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --direction BtoA
@@ -152,7 +152,7 @@ bash ./scripts/download_cyclegan_model.sh horse2zebra
 bash ./datasets/download_cyclegan_dataset.sh horse2zebra
 ```
 
-- Luego genera los resultados usando
+- Luego genere los resultados usando:
 ```bash
 python test.py --dataroot datasets/horse2zebra/testA --name horse2zebra_pretrained --model test --no_dropout
 ```
@@ -164,8 +164,7 @@ python test.py --dataroot datasets/horse2zebra/testA --name horse2zebra_pretrain
 ### Aplicar un modelo pre-entrenado (pix2pix)
 Descargue un modelo pre-entrenado con `./scripts/download_pix2pix_model.sh`.
 
-- Revise [aqui](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/scripts/download_pix2pix_model.sh#L3) para todos los modelos pix2pix disponibles. Por ejemplo, si desea descargar el modelo label2photo en el conjunto de datos de fachadas
-,
+- Revise [aqui](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/scripts/download_pix2pix_model.sh#L3) para todos los modelos pix2pix disponibles. Por ejemplo, si desea descargar el modelo label2photo en el dataset:
 ```bash
 bash ./scripts/download_pix2pix_model.sh facades_label2photo
 ```
@@ -173,7 +172,7 @@ bash ./scripts/download_pix2pix_model.sh facades_label2photo
 ```bash
 bash ./datasets/download_pix2pix_dataset.sh facades
 ```
-- Luego genere los resultados usando
+- Luego genere los resultados usando:
 ```bash
 python test.py --dataroot ./datasets/facades/ --direction BtoA --model pix2pix --name facades_label2photo_pretrained
 ```
@@ -183,28 +182,28 @@ python test.py --dataroot ./datasets/facades/ --direction BtoA --model pix2pix -
 
 - Vea una lista de los modelos disponibles actualmente en `./scripts/download_pix2pix_model.sh`
 
-## [Docker](docs/docker.md)
-Proporcionamos la imagen Docker y el archivo Docker preconstruidos que pueden ejecutar este repositorio de código. Ver [docker](docs/docker.md).
+## [Docker](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/docker.md)
+Proporcionamos la imagen Docker y el archivo Docker preconstruidos que pueden ejecutar este repositorio de código. Ver [docker](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/docker.md).
 
-## [Datasets](docs/datasets.md)
+## [Datasets](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/datasets.md)
 Descargue los conjuntos de datos pix2pix / CycleGAN y cree sus propios conjuntos de datos.
 
-## [Entretanimiento/Test Tips](docs/tips.md)
+## [Entretanimiento/Test Tips](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md)
 Las mejores prácticas para entrenar y probar sus modelos.
 
-## [Preguntas frecuentes](docs/qa.md)
+## [Preguntas frecuentes](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md)
 Antes de publicar una nueva pregunta, primero mire las preguntas y respuestas anteriores y los problemas existentes de GitHub.
 
 ## Modelo y Dataset personalizado
-Si planea implementar modelos y conjuntos de datos personalizados para sus nuevas aplicaciones, proporcionamos un conjunto de datos [template](data/template_dataset.py) y un modelo [template](models/template_model.py) como punto de partida.
+Si planea implementar modelos y conjuntos de datos personalizados para sus nuevas aplicaciones, proporcionamos un conjunto de datos [template](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/data/template_dataset.py) y un modelo [template](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/template_model.py) como punto de partida.
 
 
-## [Estructura de codigo](docs/overview.md)
+## [Estructura de codigo](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/overview.md)
 Para ayudar a los usuarios a comprender mejor y usar nuestro código, presentamos brevemente la funcionalidad e implementación de cada paquete y cada módulo.
 
 ## Solicitud de Pull
 Siempre puede contribuir a este repositorio enviando un [pull request](https://help.github.com/articles/about-pull-requests/).
-Por favor ejecute `flake8 --ignore E501 .` y `python ./scripts/test_before_push.py` antes de realizar un Pull en el código. Ptambién actualizar la estructura del código [overview](docs/overview.md) en consecuencia si agrega o elimina archivos.
+Por favor ejecute `flake8 --ignore E501 .` y `python ./scripts/test_before_push.py` antes de realizar un Pull en el código, asegure de también actualizar la estructura del código [overview](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/overview.md) en consecuencia si agrega o elimina archivos.
 
 
 ## Citación
