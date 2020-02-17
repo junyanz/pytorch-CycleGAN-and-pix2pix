@@ -181,7 +181,7 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
         than a full-image discriminator and can work on arbitrarily-sized images
         in a fully convolutional fashion.
 
-        [n_layers]: With this mode, you cna specify the number of conv layers in the discriminator
+        [n_layers]: With this mode, you can specify the number of conv layers in the discriminator
         with the parameter <n_layers_D> (default=3 as used in [basic] (PatchGAN).)
 
         [pixel]: 1x1 PixelGAN discriminator can classify whether a pixel is real or not.
