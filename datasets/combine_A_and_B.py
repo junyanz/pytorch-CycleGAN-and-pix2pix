@@ -2,6 +2,7 @@ import os
 import numpy as np
 import cv2
 import argparse
+from PIL import Image
 
 parser = argparse.ArgumentParser('create image pairs')
 parser.add_argument('--fold_A', dest='fold_A', help='input directory for image A', type=str, default='../dataset/50kshoes_edges')
@@ -42,7 +43,12 @@ for sp in splits:
             if args.use_AB:
                 name_AB = name_AB.replace('_A.', '.')  # remove _A
             path_AB = os.path.join(img_fold_AB, name_AB)
-            im_A = cv2.imread(path_A, 1) # python2: cv2.CV_LOAD_IMAGE_COLOR; python3: cv2.IMREAD_COLOR
-            im_B = cv2.imread(path_B, 1) # python2: cv2.CV_LOAD_IMAGE_COLOR; python3: cv2.IMREAD_COLOR
-            im_AB = np.concatenate([im_A, im_B], 1)
-            cv2.imwrite(path_AB, im_AB)
+            im_A = cv2.imread(path_A, cv2.IMREAD_UNCHANGED) # python2: cv2.CV_LOAD_IMAGE_COLOR; python3: cv2.IMREAD_COLOR
+            im_B = cv2.imread(path_B, cv2.IMREAD_UNCHANGED) # python2: cv2.CV_LOAD_IMAGE_COLOR; python3: cv2.IMREAD_COLOR
+            try:
+                im_AB = np.concatenate([im_A, im_B], 1)
+                im_AB = Image.fromarray(im_AB.astype(np.uint8))
+                im_AB.save(path_AB)
+            #cv2.imwrite(path_AB, im_AB, 1)
+            except:
+                print(path_A, path_B)
