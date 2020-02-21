@@ -22,6 +22,7 @@ export PATH=${CUDA_HOME}/bin:${PATH}
 
 export PYTHON_PATH=$PATH
 
+print(/disk/scratch/${STUDENT_ID})
 mkdir -p /disk/scratch/${STUDENT_ID}
 
 
