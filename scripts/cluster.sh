@@ -33,7 +33,7 @@ export DATASET_DIR=${TMP}/datasets/
 rsync -ua /home/${STUDENT_ID}/pytorch-CycleGAN-and-pix2pix/tars/AB.tar.gz "${DATASET_DIR}"
 tar -xzf "${DATASET_DIR}/AB.tar.gz" -C "${DATASET_DIR}"
 
-source /home/${STUDENT_ID}/miniconda3/bin/activate mlp2
+source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 
 sh /home/s1885912/pytorch-CycleGAN-and-pix2pix/scripts/pix2pix_mnist_4channel.sh
 
