@@ -34,6 +34,6 @@ export DATASET_DIR=${TMP}/datasets/
 
 source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 cd ..
-sh /Users/leonie/Documents/MDS/MLP/GroupProject/pytorch-CycleGAN-and-pix2pix.nosync/scripts/pix2pix_mnist_4channel.sh
+sh /home/s1885912/pytorch-CycleGAN-and-pix2pix/scripts/pix2pix_mnist_4channel.sh
 
 #python train_evaluate_emnist_classification_system.py --filepath_to_arguments_json_file experiment_configs/emnist_tutorial_config.json
