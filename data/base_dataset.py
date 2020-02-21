@@ -65,13 +65,18 @@ def get_params(opt, size):
     new_h = h
     new_w = w
     if opt.preprocess == 'resize_and_crop':
+        #print('opt load size', opt.load_size)
         new_h = new_w = opt.load_size
+        #print(new_h, new_w)
     elif opt.preprocess == 'scale_width_and_crop':
         new_w = opt.load_size
         new_h = opt.load_size * h // w
 
+    #print('crop size', opt.crop_size)
     x = random.randint(0, np.maximum(0, new_w - opt.crop_size))
+    #print(x)
     y = random.randint(0, np.maximum(0, new_h - opt.crop_size))
+    #print(y)
 
     flip = random.random() > 0.5
 
@@ -108,7 +113,7 @@ def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC, conve
         if grayscale:
             transform_list += [transforms.Normalize((0.5,), (0.5,))]
         else:
-            transform_list += [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+            transform_list += [transforms.Normalize((0.5, 0.5, 0.5, 0.5), (0.5, 0.5, 0.5, 0.5))]
     return transforms.Compose(transform_list)
 
 
@@ -120,6 +125,7 @@ def __make_power_2(img, base, method=Image.BICUBIC):
         return img
 
     __print_size_warning(ow, oh, w, h)
+
     return img.resize((w, h), method)
 
 

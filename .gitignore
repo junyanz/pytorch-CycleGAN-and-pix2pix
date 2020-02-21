@@ -44,3 +44,4 @@ test/data/legacy_serialized.pt
 
 
 .env
+sftp-config.json

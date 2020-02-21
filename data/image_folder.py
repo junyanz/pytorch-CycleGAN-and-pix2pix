@@ -16,12 +16,12 @@ IMG_EXTENSIONS = [
     '.tif', '.TIF', '.tiff', '.TIFF',
 ]
 
-
 def is_image_file(filename):
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
 
 def make_dataset(dir, max_dataset_size=float("inf")):
+    print('make dataset')
     images = []
     assert os.path.isdir(dir), '%s is not a valid directory' % dir
 
@@ -34,6 +34,7 @@ def make_dataset(dir, max_dataset_size=float("inf")):
 
 
 def default_loader(path):
+    print('default_loader')
     return Image.open(path).convert('RGB')
 
 
@@ -41,6 +42,7 @@ class ImageFolder(data.Dataset):
 
     def __init__(self, root, transform=None, return_paths=False,
                  loader=default_loader):
+        print('Image folder init')
         imgs = make_dataset(root)
         if len(imgs) == 0:
             raise(RuntimeError("Found 0 images in: " + root + "\n"
