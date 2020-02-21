@@ -22,18 +22,17 @@ export PATH=${CUDA_HOME}/bin:${PATH}
 
 export PYTHON_PATH=$PATH
 
-print(/disk/scratch/${STUDENT_ID})
-mkdir -p /disk/scratch/${STUDENT_ID}
+mkdir -p /disk/scratch/${s1885912}
 
 
-export TMPDIR=/disk/scratch/${STUDENT_ID}/
-export TMP=/disk/scratch/${STUDENT_ID}/
+export TMPDIR=/disk/scratch/${s1885912}/
+export TMP=/disk/scratch/${s1885912}/
 
 mkdir -p ${TMP}/datasets/
 export DATASET_DIR=${TMP}/datasets/
 # Activate the relevant virtual environment:
 
-source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
+source /home/${s1885912}/miniconda3/bin/activate mlp
 cd ..
 sh /home/s1885912/pytorch-CycleGAN-and-pix2pix/scripts/pix2pix_mnist_4channel.sh
 
