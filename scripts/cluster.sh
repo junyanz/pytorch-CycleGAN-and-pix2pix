@@ -10,7 +10,7 @@ export CUDA_HOME=/opt/cuda-9.0.176.1/
 
 export CUDNN_HOME=/opt/cuDNN-7.0/
 
-export STUDENT_ID=$(whoami)
+export STUDENT_ID=$(s1885912)
 
 export LD_LIBRARY_PATH=${CUDNN_HOME}/lib64:${CUDA_HOME}/lib64:$LD_LIBRARY_PATH
 
@@ -33,7 +33,7 @@ export DATASET_DIR=${TMP}/datasets/
 rsync -ua /home/${STUDENT_ID}/pytorch-CycleGAN-and-pix2pix/tars/AB.tar.gz "${DATASET_DIR}"
 tar -xzf "${DATASET_DIR}/AB.tar.gz" -C "${DATASET_DIR}"
 
-source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
+source /home/${STUDENT_ID}/miniconda3/bin/activate mlp2
 
 sh /home/s1885912/pytorch-CycleGAN-and-pix2pix/scripts/pix2pix_mnist_4channel.sh
 
