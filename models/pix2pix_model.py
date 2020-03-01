@@ -78,6 +78,13 @@ class Pix2PixModel(BaseModel):
 
         The option 'direction' can be used to swap images in domain A and domain B.
         """
+        print('\nINPUT labels: ', input['true_label'])
+        print('B_paths: ', input['B_paths'])
+
+        for file, label in input['labels_dict'].items():
+            print(file, label)
+            exit()
+
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device)
@@ -85,7 +92,11 @@ class Pix2PixModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
+        # embedding lookup here
+        print('real_A', self.real_A.shape)
         self.fake_B = self.netG(self.real_A)  # G(A)
+        print('real_B', self.fake_B.shape)
+        exit()
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""

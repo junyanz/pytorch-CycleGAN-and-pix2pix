@@ -94,7 +94,6 @@ def init_weights(net, init_type='normal', init_gain=0.02):
             init.normal_(m.weight.data, 1.0, init_gain)
             init.constant_(m.bias.data, 0.0)
 
-    print('initialize network with %s' % init_type)
     net.apply(init_func)  # apply the initialization function <init_func>
 
 
@@ -143,6 +142,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
 
     The generator has been initialized by <init_net>. It uses RELU for non-linearity.
     """
+    print('---netG:', netG)
+    print('---ngf:', ngf)
     net = None
     norm_layer = get_norm_layer(norm_type=norm)
 
@@ -449,6 +450,8 @@ class UnetGenerator(nn.Module):
         We construct the U-Net from the innermost layer to the outermost layer.
         It is a recursive process.
         """
+        print('UnetGenerator params: %d input_nc, %d output_nc, %d num_downs, %d ngf' % (input_nc, output_nc, num_downs, ngf))
+
         super(UnetGenerator, self).__init__()
         # construct unet structure
         unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  # add the innermost layer
@@ -459,6 +462,7 @@ class UnetGenerator(nn.Module):
         unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
         unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
         self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)  # add the outermost layer
+        # print('MODEL:', self.model)
 
     def forward(self, input):
         """Standard forward"""
@@ -532,6 +536,7 @@ class UnetSkipConnectionBlock(nn.Module):
         if self.outermost:
             return self.model(x)
         else:   # add skip connections
+            print('X', x.shape)
             return torch.cat([x, self.model(x)], 1)
 
 
