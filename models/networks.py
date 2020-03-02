@@ -9,6 +9,10 @@ from torch.optim import lr_scheduler
 # Helper Functions
 ###############################################################################
 
+def fwd_hook(m, inputs):
+    print(inputs)
+    return inputs[0]['real_A']
+
 
 class Identity(nn.Module):
     def forward(self, x):
@@ -115,7 +119,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     return net
 
 
-def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_G(input_nc, output_nc, ngf, netG, embedding, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
     """Create a generator
 
     Parameters:
@@ -128,6 +132,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         init_type (str)    -- the name of our initialization method.
         init_gain (float)  -- scaling factor for normal, xavier and orthogonal.
         gpu_ids (int list) -- which GPUs the network runs on: e.g., 0,1,2
+        embedding (torch.nn.Embedding) -- embedding initialisation for image labels
 
     Returns a generator
 
@@ -142,10 +147,10 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
 
     The generator has been initialized by <init_net>. It uses RELU for non-linearity.
     """
-    print('---netG:', netG)
-    print('---ngf:', ngf)
     net = None
     norm_layer = get_norm_layer(norm_type=norm)
+    # self.embeddings = embeddings
+    # embeddings = embedding(self.tensor_labels)
 
     if netG == 'resnet_9blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
@@ -466,6 +471,8 @@ class UnetGenerator(nn.Module):
 
     def forward(self, input):
         """Standard forward"""
+        print('unetgenerator forward')
+        # print('INPUT:', input)
         return self.model(input)
 
 
@@ -491,6 +498,7 @@ class UnetSkipConnectionBlock(nn.Module):
         """
         super(UnetSkipConnectionBlock, self).__init__()
         self.outermost = outermost
+        self.innermost = innermost
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
@@ -503,6 +511,12 @@ class UnetSkipConnectionBlock(nn.Module):
         downnorm = norm_layer(inner_nc)
         uprelu = nn.ReLU(True)
         upnorm = norm_layer(outer_nc)
+
+        downconv.register_forward_pre_hook(fwd_hook)
+        downrelu.register_forward_pre_hook(fwd_hook)
+        uprelu.register_forward_pre_hook(fwd_hook)
+        upnorm.register_forward_pre_hook(fwd_hook)
+
 
         if outermost:
             upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
@@ -532,12 +546,27 @@ class UnetSkipConnectionBlock(nn.Module):
 
         self.model = nn.Sequential(*model)
 
-    def forward(self, x):
+    def forward(self, kwargs):
+        """
+            x (dict)  -- {real_A, true_label}
+        """
+        print('unetskipconnections forward')
+        # print('---embeddings: ', self.embedding)
+
         if self.outermost:
-            return self.model(x)
+            return self.model(kwargs)
+        elif self.innermost:
+            print('innermost')
+            # print('---x true_label: ', x)
+            return self.model(kwargs)
         else:   # add skip connections
-            print('X', x.shape)
-            return torch.cat([x, self.model(x)], 1)
+            print('--skip connections x:')
+            # xx = torch.cat([x, self.model(x)], 1)
+            left = kwargs['real_A']
+            print(left.shape)
+            act = torch.cat([kwargs['real_A'], self.model(kwargs)], 1)
+            return dict(real_A=act, true_labels=kwargs['true_labels'])
+            # return torch.cat([x, self.model(x)], 1)
 
 
 class NLayerDiscriminator(nn.Module):

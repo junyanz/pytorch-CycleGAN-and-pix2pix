@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from .base_model import BaseModel
 from . import networks
 
@@ -52,8 +53,12 @@ class Pix2PixModel(BaseModel):
             self.model_names = ['G', 'D']
         else:  # during test time, only load G
             self.model_names = ['G']
+
+        # Image at lowest level: torch.Size([8, 512, 2, 2]) so emb_dim = 512*4=2048
+        self.embedding = torch.nn.Embedding(4, 2048)
+
         # define networks (both generator and discriminator)
-        self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
+        self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, self.embedding, opt.norm,
                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define a discriminator; conditional GANs need to take both input and output images; Therefore, #channels for D is input_nc + output_nc
@@ -78,12 +83,16 @@ class Pix2PixModel(BaseModel):
 
         The option 'direction' can be used to swap images in domain A and domain B.
         """
-        print('\nINPUT labels: ', input['true_label'])
-        print('B_paths: ', input['B_paths'])
+        # print('\nINPUT labels: ', input['true_label'])
+        # print('B_paths: ', input['B_paths'])
+        self.true_label = input['true_label']
 
-        for file, label in input['labels_dict'].items():
-            print(file, label)
-            exit()
+        # tensor_labels = torch.as_tensor(set(input['true_label']))
+        self.tensor_labels = torch.tensor(np.array([int(d) for d in self.true_label]))
+        # self.embeddings = self.embedding(self.tensor_labels)
+
+        # print('embedding:', embeddings.shape)
+        # print('\nembedding matrix:', self.embedding.parameters())
 
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
@@ -94,9 +103,13 @@ class Pix2PixModel(BaseModel):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         # embedding lookup here
         print('real_A', self.real_A.shape)
-        self.fake_B = self.netG(self.real_A)  # G(A)
-        print('real_B', self.fake_B.shape)
-        exit()
+        dict_A = {'real_A': self.real_A, 'true_labels': self.true_label}
+        print('DICT')
+
+        self.fake_B = self.netG(dict_A)  # G(A)
+        # self.fake_B = self.netG(self.real_A)  # G(A)
+        print('fake_B', self.fake_B.shape)
+        # exit()
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
@@ -125,6 +138,7 @@ class Pix2PixModel(BaseModel):
         self.loss_G.backward()
 
     def optimize_parameters(self):
+        print('optimize_parameters')
         self.forward()                   # compute fake images: G(A)
         # update D
         self.set_requires_grad(self.netD, True)  # enable backprop for D
