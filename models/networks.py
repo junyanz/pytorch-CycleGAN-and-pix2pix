@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import torch.nn as nn
 from torch.nn import init
 import functools
@@ -9,9 +10,22 @@ from torch.optim import lr_scheduler
 # Helper Functions
 ###############################################################################
 
-def fwd_hook(m, inputs):
-    print(inputs)
+dict_vals = None
+
+# Hooks are called before and after each forward method in each one of the layers in Sequential
+
+
+def pre_fwd_hook(m, inputs):
+    global dict_vals
+    # print(m, 'prehook', inputs)
+    dict_vals = inputs[0]['true_labels']
     return inputs[0]['real_A']
+
+
+def fwd_hook(m, inputs, outputs):
+    # outputs is output from forward
+    outputs = dict(real_A=outputs, true_labels=dict_vals)
+    return outputs
 
 
 class Identity(nn.Module):
@@ -119,7 +133,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     return net
 
 
-def define_G(input_nc, output_nc, ngf, netG, embedding, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_G(input_nc, output_nc, ngf, netG, embedding, device, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
     """Create a generator
 
     Parameters:
@@ -149,17 +163,15 @@ def define_G(input_nc, output_nc, ngf, netG, embedding, norm='batch', use_dropou
     """
     net = None
     norm_layer = get_norm_layer(norm_type=norm)
-    # self.embeddings = embeddings
-    # embeddings = embedding(self.tensor_labels)
 
     if netG == 'resnet_9blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
     elif netG == 'unet_128':
-        net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+        net = UnetGenerator(input_nc, output_nc, 7, embedding, device, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
-        net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+        net = UnetGenerator(input_nc, output_nc, 8, embedding, device, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -442,7 +454,7 @@ class ResnetBlock(nn.Module):
 class UnetGenerator(nn.Module):
     """Create a Unet-based generator"""
 
-    def __init__(self, input_nc, output_nc, num_downs, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False):
+    def __init__(self, input_nc, output_nc, num_downs, embedding, device, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False):
         """Construct a Unet generator
         Parameters:
             input_nc (int)  -- the number of channels in input images
@@ -459,20 +471,19 @@ class UnetGenerator(nn.Module):
 
         super(UnetGenerator, self).__init__()
         # construct unet structure
-        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  # add the innermost layer
+        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, device, embedding, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  # add the innermost layer
         for i in range(num_downs - 5):          # add intermediate layers with ngf * 8 filters
-            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
+            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, device, embedding=None, input_nc=None, submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
         # gradually reduce the number of filters from ngf * 8 to ngf
-        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)  # add the outermost layer
+        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, device, embedding=None, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, device, embedding=None, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, device, embedding=None, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+        self.model = UnetSkipConnectionBlock(output_nc, ngf, device, embedding=None, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)  # add the outermost layer
         # print('MODEL:', self.model)
 
     def forward(self, input):
         """Standard forward"""
         print('unetgenerator forward')
-        # print('INPUT:', input)
         return self.model(input)
 
 
@@ -482,7 +493,7 @@ class UnetSkipConnectionBlock(nn.Module):
         |-- downsampling -- |submodule| -- upsampling --|
     """
 
-    def __init__(self, outer_nc, inner_nc, input_nc=None,
+    def __init__(self, outer_nc, inner_nc, device, embedding=None, input_nc=None,
                  submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm2d, use_dropout=False):
         """Construct a Unet submodule with skip connections.
 
@@ -490,6 +501,8 @@ class UnetSkipConnectionBlock(nn.Module):
             outer_nc (int) -- the number of filters in the outer conv layer
             inner_nc (int) -- the number of filters in the inner conv layer
             input_nc (int) -- the number of channels in input images/features
+            device (string) -- CPU/GPU
+            embedding (Embedding) -- The initialised embedding array
             submodule (UnetSkipConnectionBlock) -- previously defined submodules
             outermost (bool)    -- if this module is the outermost module
             innermost (bool)    -- if this module is the innermost module
@@ -499,6 +512,9 @@ class UnetSkipConnectionBlock(nn.Module):
         super(UnetSkipConnectionBlock, self).__init__()
         self.outermost = outermost
         self.innermost = innermost
+        self.embedding = embedding
+        self.device = device
+
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
@@ -511,24 +527,48 @@ class UnetSkipConnectionBlock(nn.Module):
         downnorm = norm_layer(inner_nc)
         uprelu = nn.ReLU(True)
         upnorm = norm_layer(outer_nc)
+        tanh = nn.Tanh()
 
-        downconv.register_forward_pre_hook(fwd_hook)
-        downrelu.register_forward_pre_hook(fwd_hook)
-        uprelu.register_forward_pre_hook(fwd_hook)
-        upnorm.register_forward_pre_hook(fwd_hook)
+        if use_dropout:
+            drop = nn.Dropout(0.5)
+            drop.register_forward_pre_hook(pre_fwd_hook)
+            drop.register_forward_hook(fwd_hook)
 
+        downconv.register_forward_pre_hook(pre_fwd_hook)
+        downconv.register_forward_hook(fwd_hook)
+
+        downrelu.register_forward_pre_hook(pre_fwd_hook)
+        downrelu.register_forward_hook(fwd_hook)
+
+        uprelu.register_forward_pre_hook(pre_fwd_hook)
+        uprelu.register_forward_hook(fwd_hook)
+
+        downnorm.register_forward_pre_hook(pre_fwd_hook)
+        downnorm.register_forward_hook(fwd_hook)
+
+        upnorm.register_forward_pre_hook(pre_fwd_hook)
+        upnorm.register_forward_hook(fwd_hook)
+
+        tanh.register_forward_pre_hook(pre_fwd_hook)
+        tanh.register_forward_hook(fwd_hook)
 
         if outermost:
             upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
                                         kernel_size=4, stride=2,
                                         padding=1)
+            upconv.register_forward_pre_hook(pre_fwd_hook)
+            upconv.register_forward_hook(fwd_hook)
+
             down = [downconv]
-            up = [uprelu, upconv, nn.Tanh()]
+            up = [uprelu, upconv, tanh]
             model = down + [submodule] + up
         elif innermost:
             upconv = nn.ConvTranspose2d(inner_nc, outer_nc,
                                         kernel_size=4, stride=2,
                                         padding=1, bias=use_bias)
+            upconv.register_forward_pre_hook(pre_fwd_hook)
+            upconv.register_forward_hook(fwd_hook)
+
             down = [downrelu, downconv]
             up = [uprelu, upconv, upnorm]
             model = down + up
@@ -536,11 +576,14 @@ class UnetSkipConnectionBlock(nn.Module):
             upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
                                         kernel_size=4, stride=2,
                                         padding=1, bias=use_bias)
+            upconv.register_forward_pre_hook(pre_fwd_hook)
+            upconv.register_forward_hook(fwd_hook)
+
             down = [downrelu, downconv, downnorm]
             up = [uprelu, upconv, upnorm]
 
             if use_dropout:
-                model = down + [submodule] + up + [nn.Dropout(0.5)]
+                model = down + [submodule] + up + [drop]
             else:
                 model = down + [submodule] + up
 
@@ -548,25 +591,41 @@ class UnetSkipConnectionBlock(nn.Module):
 
     def forward(self, kwargs):
         """
-            x (dict)  -- {real_A, true_label}
+            kwargs (dict)  -- {real_A, true_labels}
         """
-        print('unetskipconnections forward')
-        # print('---embeddings: ', self.embedding)
 
         if self.outermost:
+            print('-outermost:')
+            print('\treal_A', kwargs['real_A'].shape)
             return self.model(kwargs)
         elif self.innermost:
-            print('innermost')
-            # print('---x true_label: ', x)
-            return self.model(kwargs)
+            print('-innermost')
+            print('\treal_A', kwargs['real_A'].shape)
+
+            tensor_labels = torch.tensor(np.array([int(d) for d in kwargs['true_labels']]))  # Create tensor of the labels
+            embeddings = self.embedding(tensor_labels.to(self.device))
+
+            # embeddings_reshaped = embeddings.view(8, 1, 2, 2)   # Reshape embedding from (8,4) to (8,1,2,2)
+            # activation = torch.cat([kwargs['real_A'], embeddings_reshaped], 0)
+            #
+            # The above solution creates an activation (8,513,2,2) which gives an error that the next layer expects
+            # 512 filters instead of 513.
+            #
+            batch_size = kwargs['real_A'].shape[0]
+
+            embeddings_reshaped = embeddings.view(batch_size, 512, 2, 2)   # Reshape embedding from (8,4) to (8,1,2,2)
+            print('\tembeddings', embeddings_reshaped.shape)
+            activation = kwargs['real_A'] + embeddings_reshaped
+            print('\tactivation', activation.shape)
+            tensor = torch.cat([activation, self.model(kwargs)['real_A']], 1)
+            print('\ttensor', tensor.shape)
+
+            return dict(real_A=tensor, true_labels=kwargs['true_labels'])
         else:   # add skip connections
-            print('--skip connections x:')
-            # xx = torch.cat([x, self.model(x)], 1)
-            left = kwargs['real_A']
-            print(left.shape)
-            act = torch.cat([kwargs['real_A'], self.model(kwargs)], 1)
-            return dict(real_A=act, true_labels=kwargs['true_labels'])
-            # return torch.cat([x, self.model(x)], 1)
+            print('-skip connections')
+            print('\treal_A', kwargs['real_A'].shape)
+            tensor = torch.cat([kwargs['real_A'], self.model(kwargs)['real_A']], 1)
+            return dict(real_A=tensor, true_labels=kwargs['true_labels'])
 
 
 class NLayerDiscriminator(nn.Module):
@@ -614,6 +673,7 @@ class NLayerDiscriminator(nn.Module):
 
     def forward(self, input):
         """Standard forward."""
+        print('NLayerDiscriminator', input.shape)
         return self.model(input)
 
 

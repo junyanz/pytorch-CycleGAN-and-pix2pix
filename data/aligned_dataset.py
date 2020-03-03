@@ -48,10 +48,8 @@ class AlignedDataset(BaseDataset):
             true_label (str) - - true label of B image
         """
         # read a image given a random integer index
-        # print('---read image with random index ', index)
         AB_path = self.AB_paths[index]
         AB = Image.open(AB_path).convert('RGB')
-        # print('---AB ', AB)
         # split AB image into A and B
         w, h = AB.size
         w2 = int(w / 2)
@@ -65,7 +63,6 @@ class AlignedDataset(BaseDataset):
 
         A = A_transform(A)
         B = B_transform(B)
-        # print('---AB_path: %s, label: %s' % (AB_path, self.true_labels[AB_path]))
 
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path, 'true_label': self.true_labels[AB_path], 'labels_dict': self.true_labels}
 

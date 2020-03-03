@@ -54,11 +54,16 @@ class Pix2PixModel(BaseModel):
         else:  # during test time, only load G
             self.model_names = ['G']
 
-        # Image at lowest level: torch.Size([8, 512, 2, 2]) so emb_dim = 512*4=2048
-        self.embedding = torch.nn.Embedding(4, 2048)
+        # Image at lowest level: torch.Size([8, 512, 2, 2]) so emb_dim = 512*2*2=2048
+        self.embedding = torch.nn.Embedding(4, 512 * 2 * 2)
+        # self.embedding = torch.nn.Embedding(4, 4)
+
+        # or one-hot encoding
+        # labels = torch.zeros(32, 4)
+        # self.projection_layer = nn.Linear(4, 512 * 2 * 2)
 
         # define networks (both generator and discriminator)
-        self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, self.embedding, opt.norm,
+        self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, self.embedding, self.device, opt.norm,
                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define a discriminator; conditional GANs need to take both input and output images; Therefore, #channels for D is input_nc + output_nc
@@ -83,8 +88,6 @@ class Pix2PixModel(BaseModel):
 
         The option 'direction' can be used to swap images in domain A and domain B.
         """
-        # print('\nINPUT labels: ', input['true_label'])
-        # print('B_paths: ', input['B_paths'])
         self.true_label = input['true_label']
 
         # tensor_labels = torch.as_tensor(set(input['true_label']))
@@ -102,18 +105,17 @@ class Pix2PixModel(BaseModel):
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         # embedding lookup here
-        print('real_A', self.real_A.shape)
-        dict_A = {'real_A': self.real_A, 'true_labels': self.true_label}
-        print('DICT')
+        print('pix2pix forward')
 
-        self.fake_B = self.netG(dict_A)  # G(A)
+        dict_A = {'real_A': self.real_A, 'true_labels': self.true_label}
+        self.fake_B = self.netG(dict_A)['real_A']  # G(A)
         # self.fake_B = self.netG(self.real_A)  # G(A)
-        print('fake_B', self.fake_B.shape)
-        # exit()
+        print('fake_B')
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
         # Fake; stop backprop to the generator by detaching fake_B
+        print('backward_D')
         fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
         pred_fake = self.netD(fake_AB.detach())
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
@@ -128,6 +130,7 @@ class Pix2PixModel(BaseModel):
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
         # First, G(A) should fake the discriminator
+        print('backward_G')
         fake_AB = torch.cat((self.real_A, self.fake_B), 1)
         pred_fake = self.netD(fake_AB)
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
@@ -138,7 +141,6 @@ class Pix2PixModel(BaseModel):
         self.loss_G.backward()
 
     def optimize_parameters(self):
-        print('optimize_parameters')
         self.forward()                   # compute fake images: G(A)
         # update D
         self.set_requires_grad(self.netD, True)  # enable backprop for D
