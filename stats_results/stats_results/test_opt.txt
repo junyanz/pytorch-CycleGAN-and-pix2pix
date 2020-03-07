@@ -1,0 +1,40 @@
+----------------- Options ---------------
+             aspect_ratio: 1.0                           
+               batch_size: 1                             
+          checkpoints_dir: ./checkpoints                 
+                crop_size: 128                           	[default: 256]
+                 dataroot: ./datasets/mnist0123/AB       	[default: None]
+             dataset_mode: aligned                       
+                direction: AtoB                          
+          display_winsize: 256                           
+                    epoch: latest                        
+                     eval: False                         
+                  gpu_ids: 0                             
+                init_gain: 0.02                          
+                init_type: normal                        
+                 input_nc: 3                             
+                  isTrain: False                         	[default: None]
+                load_iter: 0                             	[default: 0]
+                load_size: 142                           	[default: 256]
+         max_dataset_size: inf                           
+                    model: pix2pix                       	[default: test]
+               n_layers_D: 3                             
+                     name: mnist0123_pix2pix_bs8         	[default: experiment_name]
+                      ndf: 64                            
+                     netD: basic                         
+                     netG: unet_128                      	[default: unet_256]
+                      ngf: 64                            
+               no_dropout: False                         
+                  no_flip: False                         
+                     norm: batch                         
+                    ntest: inf                           
+                 num_test: 947                           	[default: 50]
+              num_threads: 4                             
+                output_nc: 3                             
+                    phase: test                          
+               preprocess: resize_and_crop               
+              results_dir: ./results/                    
+           serial_batches: False                         
+                   suffix:                               
+                  verbose: False                         
+----------------- End -------------------
