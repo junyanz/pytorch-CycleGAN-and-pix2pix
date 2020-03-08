@@ -48,6 +48,7 @@ class HairColorGANModel(BaseModel):
         self.visual_names = ['real_A','orig_color_A', 'fake_B','target_color', 'rec_A']
         if self.isTrain and self.opt.lambda_identity > 0.0:  # if identity loss is used, we also visualize idt = G(concat(real_B,orig_color_B))
             self.visual_names.append('real_B')
+            self.visual_names.append('orig_color_B')
             self.visual_names.append('idt')
 
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>.
