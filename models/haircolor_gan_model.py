@@ -128,6 +128,7 @@ class HairColorGANModel(BaseModel):
 
     def backward_G(self):
         """Calculate the loss for generator G"""
+        lambda_cyc = self.opt.lambda_cyc
         lambda_idt = self.opt.lambda_identity
         # Identity loss
         if lambda_idt > 0:
