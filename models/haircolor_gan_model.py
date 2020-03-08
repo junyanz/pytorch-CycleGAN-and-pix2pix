@@ -135,8 +135,7 @@ class HairColorGANModel(BaseModel):
             self.idt = self.netG(real_with_real_color)
             self.loss_idt = self.criterionIdt(self.idt, self.real_B) * lambda_idt
         else:
-            self.loss_idt_A = 0
-            self.loss_idt_B = 0
+            self.loss_idt = 0
 
         # GAN loss D(G(A))
         fake_and_target = torch.cat((self.fake_B, self.target_color), 1)
