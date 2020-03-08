@@ -45,3 +45,4 @@ test/data/legacy_serialized.pt
 
 .env
 sftp-config.json
+stats_results_detach_beforeNETD/
