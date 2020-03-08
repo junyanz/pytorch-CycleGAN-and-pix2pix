@@ -30,6 +30,7 @@ class HairColorGANModel(BaseModel):
         parser.set_defaults(print_freq=50)
         parser.set_defaults(display_freq=400)
         if is_train:
+            parser.add_argument('--lambda_cyc', type=float, default=10.0, help='weight for cycle loss')
             parser.add_argument('--lambda_identity', type=float, default=0.5, help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
 
         return parser
@@ -133,7 +134,7 @@ class HairColorGANModel(BaseModel):
             # G should be identity if target hair color is original hair color.
             real_with_real_color = torch.cat((self.real_B, self.orig_color_B), 1)
             self.idt = self.netG(real_with_real_color)
-            self.loss_idt = self.criterionIdt(self.idt, self.real_B) * lambda_idt
+            self.loss_idt = self.criterionIdt(self.idt, self.real_B) * lambda_cyc * lambda_idt
         else:
             self.loss_idt = 0
 
@@ -141,7 +142,7 @@ class HairColorGANModel(BaseModel):
         fake_and_target = torch.cat((self.fake_B, self.target_color), 1)
         self.loss_G = self.criterionGAN(self.netD(fake_and_target), True)
         # Forward cycle loss || G(G(A)) - A||
-        self.loss_cycle = self.criterionCycle(self.rec_A, self.real_A)
+        self.loss_cycle = self.criterionCycle(self.rec_A, self.real_A) * lambda_cyc
         # combined loss and calculate gradients
         self.loss_G_total = self.loss_G + self.loss_cycle + self.loss_idt
         self.loss_G_total.backward()
