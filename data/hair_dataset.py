@@ -30,8 +30,8 @@ class HairDataset(BaseDataset):
         Returns:
             the modified parser.
         """
-        parser.add_argument('--num_colors_to_match', type=int, default=5, help='number of images and colors from which to create pairs with large distance')
-        parser.add_argument('--num_mc_drawings', type=int, default=100, help='number of drawings for the monte carlo algorithm that matches colors in' +
+        parser.add_argument('--num_colors_to_match', type=int, default=3, help='number of images and colors from which to create pairs with large distance')
+        parser.add_argument('--num_mc_drawings', type=int, default=4, help='number of drawings for the monte carlo algorithm that matches colors in' +
         'order to create pairs with large distance')
         parser.set_defaults(n_epochs=14)
         parser.set_defaults(n_epochs_decay = 12)
