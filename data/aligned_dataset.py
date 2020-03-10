@@ -23,7 +23,7 @@ class AlignedDataset(BaseDataset):
         self.true_labels = {}
 
         # Save true labels for each image pair
-        with open('./datasets/mnist0123_labels.txt', 'r') as f:
+        with open('./datasets/satellite_AB_labels.txt', 'r') as f:
             lines = f.readlines()
             for line in lines:
                 AB_path, label = line.replace('\n', '').split(' ')
@@ -63,7 +63,8 @@ class AlignedDataset(BaseDataset):
 
         A = A_transform(A)
         B = B_transform(B)
-
+	
+        # print(self.true_labels[AB_path])
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path, 'true_label': self.true_labels[AB_path], 'labels_dict': self.true_labels}
 
     def __len__(self):
