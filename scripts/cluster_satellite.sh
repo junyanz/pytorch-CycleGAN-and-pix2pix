@@ -34,10 +34,10 @@ export DATASET_DIR=${TMP}datasets/
 # Activate the relevant virtual environment:
 rsync -ua /home/${STUDENT_ID}/pytorch-CycleGAN-and-pix2pix/tars/AB.tar.gz "${DATASET_DIR}"
 echo $DATASET_DIR
-tar -xzf "${DATASET_DIR}/AB.tar.gz" -C "${DATASET_DIR}"
+tar -xzf "${DATASET_DIR}/AB.tar.gz" -C "${DATASET_DIR}AB"
 
 source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 
-sh /home/${STUDENT_ID}/pytorch-CycleGAN-and-pix2pix/scripts/pix2pix_satellite.sh ${DATASET_DIR}AB
+sh /home/${STUDENT_ID}/pytorch-CycleGAN-and-pix2pix/scripts/pix2pix_satellite_cluster.sh ${DATASET_DIR}AB
 
 #python train_evaluate_emnist_classification_system.py --filepath_to_arguments_json_file experiment_configs/emnist_tutorial_config.json
