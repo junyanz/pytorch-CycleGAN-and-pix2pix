@@ -741,10 +741,17 @@ class NLayerDiscriminator(nn.Module):
         """Standard forward."""
         #print('NLayerDiscriminator', list(kwargs.keys())[0])
 
-        #print('\t forward D shape:', kwargs[list(kwargs.keys())[0]].shape) #8, 6, 128, 128
+        # print('\t forward D shape:', kwargs[list(kwargs.keys())[0]].shape) #8, 6, 128, 128
         tensor_labels = torch.tensor(np.array([int(d) for d in kwargs['true_labels']]))  # Create tensor of the labels
         embeddings = self.embedding(tensor_labels.to(self.device))
-        batch_size = kwargs[list(kwargs.keys())[0]].shape[0]
+        # print('kwards', kwargs[list(kwargs.keys())[0]])
+        
+        if type(kwargs[list(kwargs.keys())[0]]) == 'list':
+                batch_size = kwargs[list(kwargs.keys())[0]][0]
+        else:
+                batch_size = kwargs[list(kwargs.keys())[0]].shape[0]
+        # print('batch_size', batch_size)
+        # batch_size = kwargs[list(kwargs.keys())[0]][0]
 
         embeddings_reshaped = embeddings.view(batch_size, 6, 128, 128)   # Reshape embedding from (8,4) to (8,1,2,2)
         #print('\tembeddings', embeddings_reshaped.shape)

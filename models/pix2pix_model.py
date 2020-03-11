@@ -55,8 +55,8 @@ class Pix2PixModel(BaseModel):
             self.model_names = ['G']
 
         # Image at lowest level: torch.Size([8, 512, 2, 2]) so emb_dim = 512*2*2=2048
-        self.embedding = torch.nn.Embedding(4, 512 * 2 * 2)
-        self.embedding_discr = torch.nn.Embedding(4, 6 * 128 * 128)
+        self.embedding = torch.nn.Embedding(24, 512 * 2 * 2)
+        self.embedding_discr = torch.nn.Embedding(24, 6 * 128 * 128)
         # self.embedding = torch.nn.Embedding(4, 4)
 
         # or one-hot encoding
