@@ -91,12 +91,13 @@ class HairDataset(BaseDataset):
             
             
         Rather than sampling one image image_A and one hair color target_hair_color directly from A_data_list and B_data_list, 
-        we sample several (=opt.num_colors_to_match) images and and hair colors and match the different possiblities into pairs 
+        we sample several (=opt.num_colors_to_match) images and and hair colors and match the them into pairs of one image and 
+        one hair color each. 
         The matching is optimized with a Monte Carlo algorithm so as to maximize the expected difference between original 
         hair color and target hair color. We then pick one of the pairs at random. 
         The algorithm is designed such that every hair color from train_B is equally likely to be picked, so the 
-        distribution of hair colors is not changed as compared to the distribution in hair_B.
-        similarly, every image from trainA is equally likely to be picked (if index is random).
+        distribution of hair colors is not changed as compared to the distribution in B_data_list.
+        similarly, every image from A_data_list is equally likely to be picked (if index is random).
         """
 
         index_B = random.randint(0,self.B_size - 1)
