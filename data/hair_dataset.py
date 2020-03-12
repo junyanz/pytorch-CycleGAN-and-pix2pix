@@ -82,7 +82,7 @@ class HairDataset(BaseDataset):
         Parameters:
             index -- a random integer for data indexing
 
-        Returns a dictionary that contains A, B, A_paths and B_paths
+        Returns a dictionary that contains A, B, orig_color_A_img, orig_color_B_img and target_hair_color_img
             A (tensor)       -- an image in the input domain
             B (tensor)       -- an image in the target domain
             orig_color_A_img (tensor)    -- a monocolored image that shows the hair color of image A
@@ -178,7 +178,7 @@ def color_distances(list1,list2):
         list1 -- a list where each element is a list that contains RGB values in positions with indices 1,2,3
         list2 -- a list (of same length as list1) where each element is a list that contains RGB values in positions with indices 1,2,3
     Returns:
-        compute the sum of L2 distances between RGB values taken from list1 and list2
+        return the sum of L2 distances between RGB values taken from list1 and list2
     """
     sum = 0.0
     for entry1, entry2 in zip(list1,list2):
