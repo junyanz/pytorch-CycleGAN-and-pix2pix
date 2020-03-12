@@ -95,8 +95,6 @@ class HairColorGANModel(BaseModel):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         image_and_target_color = torch.cat((self.real_A, self.target_color), 1)
         self.fake_B = self.netG(image_and_target_color)  
-        fake_and_orig_color = torch.cat((self.fake_B, self.orig_color_A), 1)
-        self.rec_A = self.netG(fake_and_orig_color)
 
     def backward_D_basic(self, netD, real, fake):
         """Calculate GAN loss for the discriminator
@@ -141,7 +139,11 @@ class HairColorGANModel(BaseModel):
             self.loss_idt = self.criterionIdt(self.idt, self.real_B) * lambda_cyc * lambda_idt
         else:
             self.loss_idt = 0
-
+        
+        #calculate self.recA:
+        fake_and_orig_color = torch.cat((self.fake_B, self.orig_color_A), 1)
+        self.rec_A = self.netG(fake_and_orig_color)
+        
         # GAN loss D(G(A))
         fake_and_target = torch.cat((self.fake_B, self.target_color), 1)
         self.loss_G = self.criterionGAN(self.netD(fake_and_target), True)
