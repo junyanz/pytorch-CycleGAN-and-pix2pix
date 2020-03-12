@@ -91,6 +91,8 @@ class HairColorGANModel(BaseModel):
         self.orig_color_A = input['orig_color_A_img'].to(self.device)
         self.orig_color_B = input['orig_color_B_img'].to(self.device)
         self.target_color = input['target_hair_color_img'].to(self.device)
+        self.image_paths = input['path']
+
         
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
