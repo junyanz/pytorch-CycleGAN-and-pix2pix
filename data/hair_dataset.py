@@ -168,7 +168,7 @@ def create_image_from_rgb(color, height = 256, width = 256):
     
     img_array = np.ones((height,width,3)) * colors_array
     
-    img = Image.fromarray(np.uint8(colors_array * 255))
+    img = Image.fromarray(np.uint8(img_array * 255))
     
     return img
         
