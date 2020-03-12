@@ -144,7 +144,8 @@ class HairDataset(BaseDataset):
         orig_color_B_img = self.transform(orig_color_B_img)
         target_hair_color_img = self.transform(target_hair_color_img)
         
-        return {'A': A, 'B': B, 'orig_color_A_img': orig_color_A_img, 'orig_color_B_img': orig_color_B_img, 'target_hair_color_img':target_hair_color_img}
+        return {'A': A, 'B': B, 'orig_color_A_img': orig_color_A_img, 'orig_color_B_img': orig_color_B_img, 
+                'target_hair_color_img':target_hair_color_img, 'path': img_A_path}
 
     def __len__(self):
         """Return the total number of images in input domain."""
