@@ -63,7 +63,7 @@ class AlignedDataset(BaseDataset):
 
         A = A_transform(A)
         B = B_transform(B)
-	
+
         # print(self.true_labels[AB_path])
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path, 'true_label': self.true_labels[AB_path], 'labels_dict': self.true_labels}
 

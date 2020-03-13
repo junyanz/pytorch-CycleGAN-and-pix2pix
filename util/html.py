@@ -3,6 +3,33 @@ from dominate.tags import meta, h3, table, tr, td, p, a, img, br
 import os
 
 
+disaster_type_names = {
+    0: 'flooding-0',
+    1: 'flooding-1',
+    2: 'flooding-2',
+    3: 'flooding-3',
+    4: 'fire-0',
+    5: 'fire-1',
+    6: 'fire-2',
+    7: 'fire-3',
+    8: 'wind-0',
+    9: 'wind-1',
+    10: 'wind-2',
+    11: 'wind-3',
+    12: 'tsunami-0',
+    13: 'tsunami-1',
+    14: 'tsunami-2',
+    15: 'tsunami-3',
+    16: 'earthquake-0',
+    17: 'earthquake-1',
+    18: 'earthquake-2',
+    19: 'earthquake-3',
+    20: 'volcano-0',
+    21: 'volcano-1',
+    22: 'volcano-2',
+    23: 'volcano-3'
+}
+
 class HTML:
     """This HTML class allows us to save images and write texts into a single HTML file.
 
@@ -45,7 +72,7 @@ class HTML:
         with self.doc:
             h3(text)
 
-    def add_images(self, ims, txts, links, width=400):
+    def add_images(self, ims, txts, links, labels, width=400):
         """add images to the HTML file
 
         Parameters:
@@ -57,13 +84,13 @@ class HTML:
         self.doc.add(self.t)
         with self.t:
             with tr():
-                for im, txt, link in zip(ims, txts, links):
+                for im, txt, link, label in zip(ims, txts, links, labels):
                     with td(style="word-wrap: break-word;", halign="center", valign="top"):
                         with p():
                             with a(href=os.path.join('images', link)):
                                 img(style="width:%dpx" % width, src=os.path.join('images', im))
                             br()
-                            p(txt)
+                            p(txt + str(label[0]) + str(disaster_type_names[int(label[0])]))
 
     def save(self):
         """save the current content to the HMTL file"""
