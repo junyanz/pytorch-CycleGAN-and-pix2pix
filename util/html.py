@@ -72,7 +72,7 @@ class HTML:
         with self.doc:
             h3(text)
 
-    def add_images(self, ims, txts, links, labels, width=400):
+    def add_images(self, ims, txts, links, labels=[], width=400):
         """add images to the HTML file
 
         Parameters:
@@ -84,13 +84,22 @@ class HTML:
         self.doc.add(self.t)
         with self.t:
             with tr():
-                for im, txt, link, label in zip(ims, txts, links, labels):
-                    with td(style="word-wrap: break-word;", halign="center", valign="top"):
-                        with p():
-                            with a(href=os.path.join('images', link)):
-                                img(style="width:%dpx" % width, src=os.path.join('images', im))
-                            br()
-                            p(txt + str(label[0]) + str(disaster_type_names[int(label[0])]))
+                if len(labels) > 0:
+                    for im, txt, link, label in zip(ims, txts, links, labels):
+                        with td(style="word-wrap: break-word;", halign="center", valign="top"):
+                            with p():
+                                with a(href=os.path.join('images', link)):
+                                    img(style="width:%dpx" % width, src=os.path.join('images', im))
+                                br()
+                                p(txt + str(label[0]) + str(disaster_type_names[int(label[0])]))
+                else:
+                    for im, txt, link in zip(ims, txts, links):
+                        with td(style="word-wrap: break-word;", halign="center", valign="top"):
+                            with p():
+                                with a(href=os.path.join('images', link)):
+                                    img(style="width:%dpx" % width, src=os.path.join('images', im))
+                                br()
+                                p(txt)
 
     def save(self):
         """save the current content to the HMTL file"""

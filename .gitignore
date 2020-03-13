@@ -42,6 +42,7 @@ test/data/legacy_serialized.pt
 *~
 .idea
 tars
+results_satellite_labels/
 
 .env
 sftp-config.json
