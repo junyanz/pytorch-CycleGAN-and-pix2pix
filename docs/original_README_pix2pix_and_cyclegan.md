@@ -12,7 +12,7 @@ This PyTorch implementation produces results comparable to or better than our or
 
 **Note**: The current software works well with PyTorch 0.41+. Check out the older [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1) that supports PyTorch 0.1-0.3.
 
-You may find useful information in [training/test tips](docs/tips.md) and [frequently asked questions](docs/qa.md). To implement custom models and datasets, check out our [templates](#custom-model-and-dataset). To help users better understand and adapt our codebase, we provide an [overview](docs/overview.md) of the code structure of this repository.
+You may find useful information in [training/test tips](tips.md) and [frequently asked questions](qa.md). To implement custom models and datasets, check out our [templates](#custom-model-and-dataset). To help users better understand and adapt our codebase, we provide an [overview](overview.md) of the code structure of this repository.
 
 **CycleGAN: [Project](https://junyanz.github.io/CycleGAN/) |  [Paper](https://arxiv.org/pdf/1703.10593.pdf) |  [Torch](https://github.com/junyanz/CycleGAN) |
 [Tensorflow Core Tutorial](https://www.tensorflow.org/tutorials/generative/cyclegan) | [PyTorch Colab](https://colab.research.google.com/github/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/CycleGAN.ipynb)**
@@ -97,7 +97,7 @@ cd pytorch-CycleGAN-and-pix2pix
 - Install [PyTorch](http://pytorch.org) and 0.4+ and other dependencies (e.g., torchvision, [visdom](https://github.com/facebookresearch/visdom) and [dominate](https://github.com/Knio/dominate)).
   - For pip users, please type the command `pip install -r requirements.txt`.
   - For Conda users, we provide a installation script `./scripts/conda_deps.sh`. Alternatively, you can create a new Conda environment using `conda env create -f environment.yml`.
-  - For Docker users, we provide the pre-built Docker image and Dockerfile. Please refer to our [Docker](docs/docker.md) page.
+  - For Docker users, we provide the pre-built Docker image and Dockerfile. Please refer to our [Docker](docker.md) page.
 
 ### CycleGAN train/test
 - Download a CycleGAN dataset (e.g. maps):
@@ -179,27 +179,27 @@ python test.py --dataroot ./datasets/facades/ --direction BtoA --model pix2pix -
 
 - See a list of currently available models at `./scripts/download_pix2pix_model.sh`
 
-## [Docker](docs/docker.md)
-We provide the pre-built Docker image and Dockerfile that can run this code repo. See [docker](docs/docker.md).
+## [Docker](docker.md)
+We provide the pre-built Docker image and Dockerfile that can run this code repo. See [docker](docker.md).
 
-## [Datasets](docs/datasets.md)
+## [Datasets](datasets.md)
 Download pix2pix/CycleGAN datasets and create your own datasets.
 
-## [Training/Test Tips](docs/tips.md)
+## [Training/Test Tips](tips.md)
 Best practice for training and testing your models.
 
-## [Frequently Asked Questions](docs/qa.md)
+## [Frequently Asked Questions](qa.md)
 Before you post a new question, please first look at the above Q & A and existing GitHub issues.
 
 ## Custom Model and Dataset
-If you plan to implement custom models and dataset for your new applications, we provide a dataset [template](data/template_dataset.py) and a model [template](models/template_model.py) as a starting point.
+If you plan to implement custom models and dataset for your new applications, we provide a dataset [template](../data/template_dataset.py) and a model [template](../models/template_model.py) as a starting point.
 
-## [Code structure](docs/overview.md)
+## [Code structure](overview.md)
 To help users better understand and use our code, we briefly overview the functionality and implementation of each package and each module.
 
 ## Pull Request
 You are always welcome to contribute to this repository by sending a [pull request](https://help.github.com/articles/about-pull-requests/).
-Please run `flake8 --ignore E501 .` and `python ./scripts/test_before_push.py` before you commit the code. Please also update the code structure [overview](docs/overview.md) accordingly if you add or remove files.
+Please run `flake8 --ignore E501 .` and `python ./scripts/test_before_push.py` before you commit the code. Please also update the code structure [overview](overview.md) accordingly if you add or remove files.
 
 ## Citation
 If you use this code for your research, please cite our papers.
@@ -221,7 +221,7 @@ If you use this code for your research, please cite our papers.
 ```
 
 ## Other Languages
-[Spanish](docs/README_es.md)
+[Spanish](README_es.md)
 
 ## Related Projects
 **[CycleGAN-Torch](https://github.com/junyanz/CycleGAN) |
