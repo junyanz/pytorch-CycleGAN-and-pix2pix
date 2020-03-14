@@ -1,14 +1,14 @@
-<img src='imgs/horse2zebra.gif' align="right" width=384>
+<img src='imgs/haircolorGAN_actress.png' align="right" width=384>
 
 <br><br><br>
 
-# CycleGAN and pix2pix in PyTorch
+# haircolorGAN
 
-We provide PyTorch implementations for both unpaired and paired image-to-image translation.
+We build on the pyTorch implementation of pix2pix and cycleGAN from here [pytorch-cycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) in order to implement a variation of the cycleGAN architecture for changing between multiple hair colors. The modified cycleGAN architecture is sketched in the following diagram. 
 
-The code was written by [Jun-Yan Zhu](https://github.com/junyanz) and [Taesung Park](https://github.com/taesung), and supported by [Tongzhou Wang](https://ssnl.github.io/).
 
-This PyTorch implementation produces results comparable to or better than our original Torch software. If you would like to reproduce the same results as in the papers, check out the original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) and [pix2pix Torch](https://github.com/phillipi/pix2pix) code
+<img src="imgs/multiple_colors_architecture.png" width="800px"/>
+
 
 **Note**: The current software works well with PyTorch 0.41+. Check out the older [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1) that supports PyTorch 0.1-0.3.
 
