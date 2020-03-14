@@ -82,13 +82,13 @@ class HairDataset(BaseDataset):
         Parameters:
             index -- a random integer for data indexing
 
-        Returns a dictionary that contains A, B, orig_color_A_img, orig_color_B_img and target_hair_color_img
+        Returns a dictionary that contains A, B, orig_color_A_img, orig_color_B_img and target_hair_color_img, path
             A (tensor)       -- an image in the input domain
             B (tensor)       -- an image in the target domain
             orig_color_A_img (tensor)    -- a monocolored image that shows the hair color of image A
             orig_color_B_img (tensor)    -- a monocolored image that shows the hair color of image B
             target_hair_color_img (tensor) -- a monocolored image that shows a random hair color from the target domain
-            
+            path (str) -- file path for image A
             
         Rather than sampling one image image_A and one hair color target_hair_color directly from A_data_list and B_data_list, 
         we sample several (=opt.num_colors_to_match) images and and hair colors and match the them into pairs of one image and 
