@@ -186,6 +186,12 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
 
         [pixel]: 1x1 PixelGAN discriminator can classify whether a pixel is real or not.
         It encourages greater color diversity but has no effect on spatial statistics.
+        
+        [sigmoid]: This is a modified version of the PatchGAN discriminator where the normalization 
+        layers have been removed, and some linear layers as well as a Sigmoid nonlinearity have been
+        added at the end.
+        Thus, this discriminator outputs a single number instead of outputting one prediction for
+        each image patch.
 
     The discriminator has been initialized by <init_net>. It uses Leakly RELU for non-linearity.
     """
@@ -198,6 +204,8 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
         net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
     elif netD == 'pixel':     # classify if each pixel is real or fake
         net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
+    elif netD == 'sigmoid':  # modified PatchGAN w/ scalar output between 0 and 1
+        net = SigmoidDiscriminator(input_nc, ndf, n_layers=3)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -581,6 +589,57 @@ class NLayerDiscriminator(nn.Module):
     def forward(self, input):
         """Standard forward."""
         return self.model(input)
+
+
+class SigmoidDiscriminator(nn.Module):
+    """Defines a SigmoidDiscriminator discriminator. This is a modified version of 
+    the PatchGAN discriminator where the normalization layers have been removed, and some 
+    linear layers as well as a Sigmoid nonlinearity have been added at the end.
+    Thus, this discriminator outputs a single number instead of outputting one prediction for
+    each image patch. """
+
+    def __init__(self, input_nc, ndf=64, n_layers=3):
+        """Construct a PatchGAN discriminator
+
+        Parameters:
+            input_nc (int)  -- the number of channels in input images
+            ndf (int)       -- the number of filters in the last conv layer
+            n_layers (int)  -- the number of conv layers in the discriminator
+        """
+        super(NLayerDiscriminator, self).__init__()
+        use_bias = True
+
+        kw = 4
+        padw = 1
+        sequence = [nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]
+        nf_mult = 1
+        nf_mult_prev = 1
+        for n in range(1, n_layers):  # gradually increase the number of filters
+            nf_mult_prev = nf_mult
+            nf_mult = min(2 ** n, 8)
+            sequence += [
+                nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias),
+                nn.LeakyReLU(0.2, True)
+            ]
+
+        nf_mult_prev = nf_mult
+        nf_mult = min(2 ** n_layers, 8)
+        sequence += [
+            nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias),
+            nn.LeakyReLU(0.2, True)
+        ]
+
+        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
+        
+        sequence += [nn.Flatten(), nn.Linear(900,10), nn.ReLU(),  nn.Linear(10,1), nn.Sigmoid()]
+
+        self.model = nn.Sequential(*sequence)
+
+    def forward(self, input):
+        """Standard forward."""
+        return self.model(input)
+
+
 
 
 class PixelDiscriminator(nn.Module):
