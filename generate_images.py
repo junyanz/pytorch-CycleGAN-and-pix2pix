@@ -102,12 +102,12 @@ def create_label_entry(label, split, name, textfile_name):
             new_filename = re.sub('.png','_'+str(label)+'.png',image_name)
             myFile.write(new_filename + ' ' + str(label) + '\n')
 
-def copy_file_into_A(label, split, name, path_generated):
+def copy_file_into_A(label, split, name, output_path):
     i = 0
     for image_name in split:
         filename = re.sub('./data/satellite_AB/B/train/', '', image_name)
         new_filename = re.sub('.png','_'+str(label)+'.png',filename)
-        new_path = os.path.join(path_generated, new_filename)
+        new_path = os.path.join(output_path, new_filename)
         old_path = os.path.join(path_to_ABtrain, filename)
         print('old path', old_path, 'new_path', new_path)
         try:
@@ -129,8 +129,8 @@ def create_input(rate, name):
     print(disaster_type_mapping)
     non_zero_classes = non_zero_classes_fct(disaster_type_mapping)
     print(non_zero_classes)
-    path_generated = './datasets/satellite_AB_generated/AB/test'
-    pathlib.Path(path_generated).mkdir(parents=True, exist_ok=True)
+    output_path = './datasets/satellite_AB_generated/AB/test'
+    pathlib.Path(output_path).mkdir(parents=True, exist_ok=True)
     zeros_for_label = {}
     to_be_used_zeros = list_zeros_to_be_used(rate, disaster_type_mapping, labels_dict_full)
     print(len(to_be_used_zeros), ' zeros will be used')
@@ -142,7 +142,7 @@ def create_input(rate, name):
     open(textfile_name, 'w').close()
     for label, split in splits_dict.items():
         create_label_entry(label, split, name, textfile_name)
-        copy_file_into_A(label, split, name, path_generated)
+        copy_file_into_A(label, split, name, output_path)
 
 if __name__ == '__main__':
 
@@ -159,6 +159,10 @@ if __name__ == '__main__':
                         required=True,
                         type=str,
                         help="Relative path to original labels file")
+    parser.add_argument('--output_path',
+                        required=True,
+                        type=str,
+                        help="Relative path to output")
 
     rate_names = {
         1: 'every',
@@ -172,6 +176,7 @@ if __name__ == '__main__':
     rate = args.rate
     name = rate_names[rate]
     original_labels_file = args.original_labels_file
+    output_path = args.output_path
 
     with open(original_labels_file, 'r') as fp:
         labels = fp.read()
