@@ -73,41 +73,6 @@ disaster_levels = {
     3: [3, 7, 11, 15, 19, 23],
 }
 
-with open(original_labels_file, 'r') as fp:
-    labels = fp.read()
-    labels = re.split('\n', labels)
-    for line in labels:
-        if len(line)>0:
-            line_split = re.split(' ', line)
-            path = line_split[0]
-            label = line_split[1]
-            if int(label) in labels_dict:
-                labels_dict[int(label)].append(path)
-            else:
-                labels_dict[int(label)] = [path]
-
-labels_dict_full = labels_dict
-
-#Show distribution of labels:
-dict_levels = {}
-
-for level, labels in disaster_levels.items():
-    length_train = 0
-    length_test = 0
-    length_val = 0
-    length_total = 0
-    for label in labels:
-        for element in labels_dict_full[label]:
-            if '/train/' in element:
-                length_train += 1
-            if '/test/' in element:
-                length_val += 1
-            if '/val/' in element:
-                length_test += 1
-            length_total += 1
-    dict_levels[level] = [length_total, length_train, length_val, length_test]
-
-print(dict_levels)
 
 def list_zeros_to_be_used(rate, disaster_type_mapping, labels_dict_full):
     zero_list = []
@@ -206,6 +171,43 @@ if __name__ == '__main__':
     rate = args.rate
     name = rate_names[rate]
     original_labels_file = args.original_labels_file
+
+    with open(original_labels_file, 'r') as fp:
+        labels = fp.read()
+        labels = re.split('\n', labels)
+        for line in labels:
+            if len(line)>0:
+                line_split = re.split(' ', line)
+                path = line_split[0]
+                label = line_split[1]
+                if int(label) in labels_dict:
+                    labels_dict[int(label)].append(path)
+                else:
+                    labels_dict[int(label)] = [path]
+
+    labels_dict_full = labels_dict
+
+    #Show distribution of labels:
+    dict_levels = {}
+
+    for level, labels in disaster_levels.items():
+        length_train = 0
+        length_test = 0
+        length_val = 0
+        length_total = 0
+        for label in labels:
+            for element in labels_dict_full[label]:
+                if '/train/' in element:
+                    length_train += 1
+                if '/test/' in element:
+                    length_val += 1
+                if '/val/' in element:
+                    length_test += 1
+                length_total += 1
+        dict_levels[level] = [length_total, length_train, length_val, length_test]
+
+    print(dict_levels)
+
 
     create_input(rate, name)
 
