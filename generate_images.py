@@ -114,7 +114,7 @@ def copy_file_into_A(label, split, name, output_path):
             copyfile(old_path, new_path)
         except:
             i += 1
-            print('didnt copy: old path', old_path, 'new_path', new_path)
+            #print('didnt copy: old path', old_path, 'new_path', new_path)
     print('Didnt copy ', i, ' of label ', label)
 
 def non_zero_classes_fct(disaster_type_mapping):
