@@ -106,6 +106,7 @@ def copy_file_into_A(label, split, name, output_path):
     i = 0
     for image_name in split:
         filename = re.sub('./data/satellite_AB/AB/train/', '', image_name)
+        filename = re.sub('satellite_AB', 'satellite_AB_generated', filename)
         new_filename = re.sub('.png','_'+str(label)+'.png',filename)
         new_path = os.path.join(output_path, new_filename)
         old_path = os.path.join(path_to_ABtrain, filename)
