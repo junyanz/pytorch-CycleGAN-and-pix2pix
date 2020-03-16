@@ -23,7 +23,7 @@ class AlignedDataset(BaseDataset):
         self.true_labels = {}
 
         # Save true labels for each image pair
-        with open(args.labels_file, 'r') as f:
+        with open(opt.labels_file, 'r') as f:
             lines = f.readlines()
             for line in lines:
                 AB_path, label = line.replace('\n', '').split(' ')
