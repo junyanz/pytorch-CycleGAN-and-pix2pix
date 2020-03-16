@@ -111,7 +111,7 @@ def list_zeros_to_be_used(rate, disaster_type_mapping, labels_dict_full):
     zero_list = []
     for key in disaster_type_mapping:
         zero_list.extend(list(labels_dict_full[zero_labels[key]]))
-        shuffle(zero_list)
+    random.Random(483745342).shuffle(zero_list)
 
     #print(len(zero_list))
     zeros_in_train = []
@@ -179,7 +179,7 @@ def create_input(rate, name):
 if __name__ == '__main__':
     rate = 2
     origin_path = './datasets/satellite_AB/AB/train'
-    create_input(2, 'every_second')
-    #create_input(3, 'every_third')
+    #create_input(2, 'every_second')
+    create_input(3, 'every_third')
     #create_input(1, 'every')
 

@@ -43,6 +43,8 @@ test/data/legacy_serialized.pt
 .idea
 tars
 results_satellite_labels/
+gan_intermediate_results/
+generated_to_classifier.py
 
 .env
 sftp-config.json
