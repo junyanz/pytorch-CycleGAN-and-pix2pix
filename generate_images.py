@@ -73,7 +73,7 @@ disaster_levels = {
     3: [3, 7, 11, 15, 19, 23],
 }
 
-with open('datasets/satellite_AB_labels.txt', 'r') as fp:
+with open('original_labels_file, 'r') as fp:
     labels = fp.read()
     labels = re.split('\n', labels)
     for line in labels:
@@ -163,7 +163,7 @@ def create_input(rate, name):
     print(disaster_type_mapping)
     non_zero_classes = non_zero_classes_fct(disaster_type_mapping)
     print(non_zero_classes)
-    path_generated = './datasets/satellite_AB_generated_' + name + '/AB/test'
+    path_generated = './datasets/satellite_AB_generated/AB/test'
     pathlib.Path(path_generated).mkdir(parents=True, exist_ok=True)
     zeros_for_label = {}
     to_be_used_zeros = list_zeros_to_be_used(rate, disaster_type_mapping, labels_dict_full)
@@ -172,7 +172,7 @@ def create_input(rate, name):
     print('one split has length ', splits_length)
     splits_dict = match_zero_to_class(splits_length, to_be_used_zeros, non_zero_classes, disaster_type_mapping, labels_dict_full, zeros_for_label)
     print(splits_dict.keys())
-    textfile_name = 'datasets/generated_labels_' + name + '.txt'
+    textfile_name = 'datasets/generated_labels.txt'
     open(textfile_name, 'w').close()
     for label, split in splits_dict.items():
         create_label_entry(label, split, name, textfile_name)
@@ -189,6 +189,10 @@ if __name__ == '__main__':
                         required=True,
                         type=int,
                         help="Rate at which to use zeros: 1: use every zero, 2: use every second zero, 3: use every third zero")
+    parser.add_argument('--original_labels_file',
+                        required=True,
+                        type=str,
+                        help="Relative path to original labels file")
 
     rate_names = {
         1: 'every',
