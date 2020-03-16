@@ -109,7 +109,7 @@ def copy_file_into_A(label, split, name, output_path):
         new_filename = re.sub('.png','_'+str(label)+'.png',filename)
         new_path = os.path.join(output_path, new_filename)
         old_path = os.path.join(path_to_ABtrain, filename)
-        print('old path', old_path, 'new_path', new_path)
+        #print('old path', old_path, 'new_path', new_path)
         try:
             copyfile(old_path, new_path)
         except:
