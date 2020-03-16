@@ -129,7 +129,6 @@ def create_input(rate, name):
     print(disaster_type_mapping)
     non_zero_classes = non_zero_classes_fct(disaster_type_mapping)
     print(non_zero_classes)
-    output_path = './datasets/satellite_AB_generated/AB/test'
     pathlib.Path(output_path).mkdir(parents=True, exist_ok=True)
     zeros_for_label = {}
     to_be_used_zeros = list_zeros_to_be_used(rate, disaster_type_mapping, labels_dict_full)
