@@ -100,13 +100,14 @@ def create_label_entry(label, split, name, labels_output):
     with open(labels_output, "a") as myFile:
         for image_name in split:
             new_filename = re.sub('.png','_'+str(label)+'.png',image_name)
+            filename = re.sub('satellite_AB', 'satellite_AB_generated', new_filename)
+
             myFile.write(new_filename + ' ' + str(label) + '\n')
 
 def copy_file_into_A(label, split, name, output_path):
     i = 0
     for image_name in split:
         filename = re.sub('./data/satellite_AB/AB/train/', '', image_name)
-        filename = re.sub('satellite_AB', 'satellite_AB_generated', filename)
         new_filename = re.sub('.png','_'+str(label)+'.png',filename)
         new_path = os.path.join(output_path, new_filename)
         old_path = os.path.join(path_to_ABtrain, filename)
@@ -114,7 +115,7 @@ def copy_file_into_A(label, split, name, output_path):
             copyfile(old_path, new_path)
         except:
             i += 1
-            print('didnt copy: old path', old_path, 'new_path', new_path)
+            #print('didnt copy: old path', old_path, 'new_path', new_path)
     print('Didnt copy ', i, ' of label ', label)
 
 def non_zero_classes_fct(disaster_type_mapping):
