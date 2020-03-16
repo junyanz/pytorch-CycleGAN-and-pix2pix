@@ -73,7 +73,7 @@ disaster_levels = {
     3: [3, 7, 11, 15, 19, 23],
 }
 
-with open('original_labels_file, 'r') as fp:
+with open(original_labels_file, 'r') as fp:
     labels = fp.read()
     labels = re.split('\n', labels)
     for line in labels:
@@ -205,6 +205,7 @@ if __name__ == '__main__':
     origin_path = args.path_to_ABtrain
     rate = args.rate
     name = rate_names[rate]
+    original_labels_file = args.original_labels_file
 
     create_input(rate, name)
 
