@@ -100,7 +100,7 @@ def create_label_entry(label, split, name, labels_output):
     with open(labels_output, "a") as myFile:
         for image_name in split:
             new_filename = re.sub('.png','_'+str(label)+'.png',image_name)
-            new_filename = re.sub('satellite_AB', 'satellite_AB_generated', new_filename)
+            new_filename = re.sub('./data/satellite_AB/', './datasets/satellite_AB_generated/', new_filename)
             print('new filename', new_filename)
             myFile.write(new_filename + ' ' + str(label) + '\n')
 
