@@ -105,7 +105,7 @@ def create_label_entry(label, split, name, textfile_name):
 def copy_file_into_A(label, split, name, path_generated):
     i = 0
     for image_name in split:
-        filename = re.sub(path_to_ABtrain, '', image_name)
+        filename = re.sub('./data/satellite_AB/B/train/', '', image_name)
         new_filename = re.sub('.png','_'+str(label)+'.png',filename)
         new_path = os.path.join(path_generated, new_filename)
         old_path = os.path.join(path_to_ABtrain, filename)
