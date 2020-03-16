@@ -101,7 +101,7 @@ def create_label_entry(label, split, name, labels_output):
         for image_name in split:
             new_filename = re.sub('.png','_'+str(label)+'.png',image_name)
             new_filename = re.sub('./data/satellite_AB/', './datasets/satellite_AB_generated/', new_filename)
-            print('new filename', new_filename)
+            #print('new filename', new_filename)
             myFile.write(new_filename + ' ' + str(label) + '\n')
 
 def copy_file_into_A(label, split, name, output_path):
@@ -170,7 +170,8 @@ if __name__ == '__main__':
     rate_names = {
         1: 'every',
         2: 'every_second',
-        3: 'every_third'
+        3: 'every_third',
+        20: 'every_20th'
         }
 
     args = parser.parse_args()
