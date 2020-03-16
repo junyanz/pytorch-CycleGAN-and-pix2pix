@@ -45,7 +45,8 @@ tars
 results_satellite_labels/
 gan_intermediate_results/
 generated_to_classifier.py
-
+labels_every_second_gcloud.txt
+new_train_every_third.csv
 .env
 sftp-config.json
 stats_results_detach_beforeNETD/

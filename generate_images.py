@@ -6,6 +6,8 @@ from shutil import copyfile
 import pathlib
 import os
 import random
+import argparse
+
 
 random.seed(483745342)
 labels_dict = {}
@@ -177,9 +179,28 @@ def create_input(rate, name):
         copy_file_into_A(label, split, name, path_generated)
 
 if __name__ == '__main__':
-    rate = 2
-    origin_path = './datasets/satellite_AB/AB/train'
-    #create_input(2, 'every_second')
-    create_input(3, 'every_third')
-    #create_input(1, 'every')
+
+    parser = argparse.ArgumentParser(description='Plot Stat Logs')
+    parser.add_argument('--path_to_ABtrain',
+                        required=False,
+                        default='datasets/satellite_AB/AB/train',
+                        help="Relative path to the AB/train zeros")
+    parser.add_argument('--rate',
+                        required=True,
+                        type=int,
+                        help="Rate at which to use zeros: 1: use every zero, 2: use every second zero, 3: use every third zero")
+
+    rate_names = {
+        1: 'every',
+        2: 'every_second',
+        3: 'every_third'
+        }
+
+    args = parser.parse_args()
+    #output = args.output
+    origin_path = args.path_to_ABtrain
+    rate = args.rate
+    name = rate_names[rate]
+
+    create_input(rate, name)
 
