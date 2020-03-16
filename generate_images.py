@@ -96,8 +96,8 @@ def match_zero_to_class(splits_length, to_be_used_zeros, non_zero_classes, disas
         print(len(to_be_used_zeros), ' zeros are left over')
     return zeros_for_label
 
-def create_label_entry(label, split, name, textfile_name):
-    with open(textfile_name, "a") as myFile:
+def create_label_entry(label, split, name, labels_output):
+    with open(labels_output, "a") as myFile:
         for image_name in split:
             new_filename = re.sub('.png','_'+str(label)+'.png',image_name)
             myFile.write(new_filename + ' ' + str(label) + '\n')
@@ -114,6 +114,7 @@ def copy_file_into_A(label, split, name, output_path):
             copyfile(old_path, new_path)
         except:
             i += 1
+            print('didnt copy: old path', old_path, 'new_path', new_path)
     print('Didnt copy ', i, ' of label ', label)
 
 def non_zero_classes_fct(disaster_type_mapping):
@@ -137,10 +138,9 @@ def create_input(rate, name):
     print('one split has length ', splits_length)
     splits_dict = match_zero_to_class(splits_length, to_be_used_zeros, non_zero_classes, disaster_type_mapping, labels_dict_full, zeros_for_label)
     print(splits_dict.keys())
-    textfile_name = 'datasets/generated_labels.txt'
-    open(textfile_name, 'w').close()
+    open(labels_output, 'w').close()
     for label, split in splits_dict.items():
-        create_label_entry(label, split, name, textfile_name)
+        create_label_entry(label, split, name, labels_output)
         copy_file_into_A(label, split, name, output_path)
 
 if __name__ == '__main__':
@@ -162,7 +162,10 @@ if __name__ == '__main__':
                         required=True,
                         type=str,
                         help="Relative path to output")
-
+    parser.add_argument('--labels_output',
+                        required=True,
+                        type=str,
+                        help="Relative path to labels_output")
     rate_names = {
         1: 'every',
         2: 'every_second',
@@ -176,6 +179,7 @@ if __name__ == '__main__':
     name = rate_names[rate]
     original_labels_file = args.original_labels_file
     output_path = args.output_path
+    labels_output = args.labels_output
 
     with open(original_labels_file, 'r') as fp:
         labels = fp.read()
