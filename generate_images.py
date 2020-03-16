@@ -105,10 +105,10 @@ def create_label_entry(label, split, name, textfile_name):
 def copy_file_into_A(label, split, name, path_generated):
     i = 0
     for image_name in split:
-        filename = re.sub('./datasets/satellite_AB/AB/train/', '', image_name)
+        filename = re.sub(path_to_ABtrain, '', image_name)
         new_filename = re.sub('.png','_'+str(label)+'.png',filename)
         new_path = os.path.join(path_generated, new_filename)
-        old_path = os.path.join(origin_path, filename)
+        old_path = os.path.join(path_to_ABtrain, filename)
         try:
             copyfile(old_path, new_path)
         except:
@@ -167,7 +167,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     #output = args.output
-    origin_path = args.path_to_ABtrain
+    path_to_ABtrain = args.path_to_ABtrain
     rate = args.rate
     name = rate_names[rate]
     original_labels_file = args.original_labels_file
