@@ -100,14 +100,14 @@ def create_label_entry(label, split, name, labels_output):
     with open(labels_output, "a") as myFile:
         for image_name in split:
             new_filename = re.sub('.png','_'+str(label)+'.png',image_name)
-            new_filename = re.sub('./data/satellite_AB/', './datasets/satellite_AB_generated/', new_filename)
+            new_filename = re.sub('./datasets/satellite_AB/', './datasets/satellite_AB_generated/', new_filename)
             #print('new filename', new_filename)
             myFile.write(new_filename + ' ' + str(label) + '\n')
 
 def copy_file_into_A(label, split, name, output_path):
     i = 0
     for image_name in split:
-        filename = re.sub('./data/satellite_AB/AB/train/', '', image_name)
+        filename = re.sub('./datasets/satellite_AB/AB/train/', '', image_name)
         new_filename = re.sub('.png','_'+str(label)+'.png',filename)
         new_path = os.path.join(output_path, new_filename)
         old_path = os.path.join(path_to_ABtrain, filename)
@@ -177,9 +177,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
     #output = args.output
     path_to_ABtrain = args.path_to_ABtrain
+    print('path to AB train', path_to_ABtrain)
     rate = args.rate
+    print('rate', rate)
     name = rate_names[rate]
     original_labels_file = args.original_labels_file
+    print('original labels file', original_labels_file) 
     output_path = args.output_path
     labels_output = args.labels_output
 
