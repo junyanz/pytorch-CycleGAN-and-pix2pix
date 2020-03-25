@@ -1,6 +1,6 @@
 source .env/bin/activate
 python generate_images.py \
---rate 2 \
+--rate 3 \
 --path_to_ABtrain datasets/satellite_AB/AB/train \
 --original_labels_file datasets/satellite_AB_labels.txt \
 --output_path datasets/satellite_AB_generated/AB/test \
@@ -22,3 +22,4 @@ python test.py \
 --input_nc 3 \
 --output_nc 3 \
 --labels_file ./datasets/generated_labels.txt
+--eval True
