@@ -171,6 +171,7 @@ if __name__ == '__main__':
         1: 'every',
         2: 'every_second',
         3: 'every_third',
+        4: 'every_fourth',
         20: 'every_20th'
         }
 
@@ -182,7 +183,7 @@ if __name__ == '__main__':
     print('rate', rate)
     name = rate_names[rate]
     original_labels_file = args.original_labels_file
-    print('original labels file', original_labels_file) 
+    print('original labels file', original_labels_file)
     output_path = args.output_path
     labels_output = args.labels_output
 
