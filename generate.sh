@@ -22,4 +22,4 @@ python test.py \
 --input_nc 3 \
 --output_nc 3 \
 --labels_file ./datasets/generated_labels.txt
---eval True
+--eval
