@@ -21,5 +21,5 @@ python test.py \
 --crop_size 128 \
 --input_nc 3 \
 --output_nc 3 \
---labels_file ./datasets/generated_labels.txt
+--labels_file ./datasets/generated_labels.txt \
 --eval
