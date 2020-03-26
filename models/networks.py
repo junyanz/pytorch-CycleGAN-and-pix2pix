@@ -154,6 +154,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
         net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+    elif netG == 'small_generator':
+        net = small_generator()
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -613,3 +615,27 @@ class PixelDiscriminator(nn.Module):
     def forward(self, input):
         """Standard forward."""
         return self.net(input)
+
+class small_generator():
+    ''' Generator for MNIST -> USPS dataset, input shape and output_shape must be (1, 28, 28)'''
+    def __init__(self):
+        super(small_generator, self).__init__()
+        self.encoder = nn.Sequential(
+                nn.Conv2d(1, 16, 3, stride=3, padding=1),  # output size: 16, 10, 10
+                nn.ReLU(True),
+                nn.MaxPool2d(2, stride=2),  # output size: 16, 5, 5
+                nn.Conv2d(16, 8, 3, stride=2, padding=1),  # output size: 8, 3, 3
+                nn.ReLU(True),
+                nn.MaxPool2d(2, stride=1))  # output size: 8, 2, 2)
+        self.decoder = nn.Sequential(
+                nn.ConvTranspose2d(8, 16, 3, stride=2),  # output size: 16, 5, 5
+                nn.ReLU(True),
+                nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # output size: 8, 15, 15
+                nn.ReLU(True),
+                nn.ConvTranspose2d(8, 1, 2, stride=2, padding=1),  # output size: 1, 28, 28
+                nn.Tanh())
+
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
