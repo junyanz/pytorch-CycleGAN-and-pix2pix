@@ -50,3 +50,4 @@ new_train_every_third.csv
 .env
 sftp-config.json
 stats_results_detach_beforeNETD/
+generated_imgs_every_third
