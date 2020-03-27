@@ -616,7 +616,7 @@ class PixelDiscriminator(nn.Module):
         """Standard forward."""
         return self.net(input)
 
-class small_generator():
+class small_generator(nn.Module):
     ''' Generator for MNIST -> USPS dataset, input shape and output_shape must be (1, 28, 28)'''
     def __init__(self):
         super(small_generator, self).__init__()
