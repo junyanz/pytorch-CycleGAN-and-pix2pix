@@ -67,11 +67,26 @@ if __name__ == '__main__':
     output_path = args.output_path
     labels_output = args.labels_output
 
-    image_names = ['005b347d-54f3-4c3d-99af-2b0be4b9e0c2.png',
-                   '000219bd-5e7a-4407-9486-55860990b504.png',
-                   '0040469a-2df4-4320-8d35-a1c5eee41769.png',
-                   'fefcb9bf-57ba-4e32-ac50-c5654e19a6e6.png',
-                   'ff3d1306-2f37-47ea-b4df-09972d6a672b.png']
+    # image_names_5images = ['005b347d-54f3-4c3d-99af-2b0be4b9e0c2.png',
+    #                '000219bd-5e7a-4407-9486-55860990b504.png',
+    #                '0040469a-2df4-4320-8d35-a1c5eee41769.png',
+    #                'fefcb9bf-57ba-4e32-ac50-c5654e19a6e6.png',
+    #                'ff3d1306-2f37-47ea-b4df-09972d6a672b.png']
+
+    image_names = ['04e76283-8c83-4768-8b35-cc364591677c.png',
+                   '00d6130e-853c-4284-888a-9407219d1834.png',
+                   '02e490cc-bc3f-4eb9-bffa-40cd3e75faeb.png',
+                   '04b3f6d8-1aca-4d8b-bfc3-42a687c7ad2b.png',
+                   '015b085c-0a18-41db-8577-14c95d6cfb48.png',
+                   '04486b0a-5f12-4138-8cfd-005dca6e4bea.png',
+                   '0358f3fd-64af-4e7c-9ba6-b04d333abfa3.png',
+                   '041b7756-30f7-495a-b6d4-483527058ca5.png',
+                   '0358f3fd-64af-4e7c-9ba6-b04d333abfa3.png',
+                   '041b7756-30f7-495a-b6d4-483527058ca5.png',
+                   '02885ccc-a6e6-44e5-ac3c-0ec091199fda.png',
+                   'bb015b58-5020-4389-a18e-fc4843e496c7.png',
+                   '689bc699-c490-4b9e-bd26-a79cb54309a6.png',
+                   '66ab3129-0068-400c-8ad4-d0a518eac9f9.png']
 
     labels = range(0,24)
     pathlib.Path(output_path).mkdir(parents=True, exist_ok=True)
