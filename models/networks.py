@@ -154,7 +154,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
         net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
-    elif netG == 'small_generator':
+    elif netG == 'small':
         net = small_generator()
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
@@ -200,6 +200,8 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
         net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
     elif netD == 'pixel':     # classify if each pixel is real or fake
         net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
+    elif netD == 'small':
+        net = small_discriminator()
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -638,4 +640,23 @@ class small_generator(nn.Module):
     def forward(self, x):
         x = self.encoder(x)
         x = self.decoder(x)
+        return x
+
+class small_discriminator(nn.Module):
+    def __init__(self):
+        super(small_discriminator, self).__init__()
+        self.conv_blocks = nn.Sequential(nn.Conv2d(1, 16, 3, stride=1, padding=1),  # output size: 16, 28, 28
+                                         nn.ReLU(True),
+                                         nn.MaxPool2d(2, stride=2),  # output size: 16, 14, 14
+                                         nn.Conv2d(16, 32, 3, stride=2, padding=1),  # output size: 32, 14, 14
+                                         nn.ReLU(True),
+                                         nn.MaxPool2d(2, stride=1),  # output size: 32, 7, 7
+                                         nn.Conv2d(32, 64, 3, stride=2, padding=1),  # output size: 64, 7, 7
+                                         nn.ReLU(True),
+                                         nn.MaxPool2d(2, stride=1)) # output size: 64, 3, 3)
+        self.fc = torch.nn.Linear(64 * 3 * 3, 1)
+
+    def forward(self, x):
+        x = self.conv_blocks(x)
+        x = torch.sigmoid(self.fc(x))
         return x
