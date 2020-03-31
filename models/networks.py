@@ -659,4 +659,5 @@ class small_discriminator(nn.Module):
     def forward(self, x):
         x = self.conv_blocks(x)
         x = torch.sigmoid(self.fc(x))
+        print(x)
         return x
