@@ -41,3 +41,13 @@ test/.coverage
 test/data/legacy_serialized.pt
 *~
 .idea
+tars
+results_satellite_labels/
+gan_intermediate_results/
+generated_to_classifier.py
+labels_every_second_gcloud.txt
+new_train_every_third.csv
+.env
+sftp-config.json
+stats_results_detach_beforeNETD/
+generated_imgs_every_third
