@@ -4,6 +4,7 @@ import cv2
 import argparse
 from PIL import Image
 
+print('Started combine_A_and_B')
 parser = argparse.ArgumentParser('create image pairs')
 parser.add_argument('--fold_A', dest='fold_A', help='input directory for image A', type=str, default='../dataset/50kshoes_edges')
 parser.add_argument('--fold_B', dest='fold_B', help='input directory for image B', type=str, default='../dataset/50kshoes_jpg')
@@ -49,6 +50,8 @@ for sp in splits:
                 im_AB = np.concatenate([im_A, im_B], 1)
                 im_AB = Image.fromarray(im_AB.astype(np.uint8))
                 im_AB.save(path_AB)
-            #cv2.imwrite(path_AB, im_AB, 1)
+            # cv2.imwrite(path_AB, im_AB, 1)
             except:
                 print(path_A, path_B)
+
+print('Finished combine_A_and_B')

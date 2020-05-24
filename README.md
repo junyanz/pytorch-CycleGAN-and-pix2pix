@@ -2,6 +2,11 @@
 
 <br><br><br>
 
+# DamageGAN
+
+**Follow `DamageGAN_README.md`**: it has instructions on how to train the DamageGAN from scratch including preprocessing
+of the xBD dataset. The rest of this doc is just for reference and should not be followed.
+
 # CycleGAN and pix2pix in PyTorch
 
 We provide PyTorch implementations for both unpaired and paired image-to-image translation.

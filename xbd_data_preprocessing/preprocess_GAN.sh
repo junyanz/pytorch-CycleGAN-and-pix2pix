@@ -38,6 +38,7 @@ XBD_POLYGONS_CSV=$path_to_dataset/xBD_polygons_csv
 XBD_POLYGONS_AB=$path_to_dataset/xBD_polygons_AB
 XBD_POLYGONS_AB_CSV=$path_to_dataset/xBD_polygons_AB_csv
 XBD_POLYGONS_SPLIT=$path_to_dataset/xBD_polygons_split
+DATASETS=../datasets
 
 set -e
 
@@ -71,3 +72,11 @@ python split_to_AB.py \
 
 rm -r $XBD_POLYGONS_SPLIT
 rm -r $XBD_POLYGONS_AB_CSV/satellite_labels.txt
+
+# Generated folders: $XBD_POLYGONS_AB and $XBD_POLYGONS_AB_CSV
+
+# Combine folders A, B into AB
+python $DATASETS/combine_A_and_B.py \
+--fold_A $DATASETS/$XBD_POLYGONS_AB/A \
+--fold_B $DATASETS/$XBD_POLYGONS_AB/B \
+--fold_AB $DATASETS/$XBD_POLYGONS_AB/AB

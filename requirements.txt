@@ -9,7 +9,6 @@ numpy==1.18.1
 opencv-python==4.2.0.32
 pandas==0.25.3
 Pillow==7.0.0
-pkg-resources==0.0.0
 python-dateutil==2.8.1
 pytz==2020.1
 pyzmq==19.0.0
