@@ -16,12 +16,13 @@ args = parser.parse_args()
 for arg in vars(args):
     print('[%s] = ' % arg, getattr(args, arg))
 
-splits = os.listdir(args.fold_A)
+splits = [f for f in os.listdir(args.fold_A) if not f.startswith('.')]
+counter = 0
 
 for sp in splits:
     img_fold_A = os.path.join(args.fold_A, sp)
     img_fold_B = os.path.join(args.fold_B, sp)
-    img_list = os.listdir(img_fold_A)
+    img_list = [f for f in os.listdir(img_fold_A) if not f.startswith('.')]
     if args.use_AB:
         img_list = [img_path for img_path in img_list if '_A.' in img_path]
 
@@ -50,8 +51,8 @@ for sp in splits:
                 im_AB = np.concatenate([im_A, im_B], 1)
                 im_AB = Image.fromarray(im_AB.astype(np.uint8))
                 im_AB.save(path_AB)
-            # cv2.imwrite(path_AB, im_AB, 1)
             except:
-                print(path_A, path_B)
+                counter += 1
 
 print('Finished combine_A_and_B')
+print('Didnt combine', counter, 'images')
