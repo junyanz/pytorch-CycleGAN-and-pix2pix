@@ -33,6 +33,10 @@ class BaseOptions():
         parser.add_argument('--netD', type=str, default='basic', help='specify discriminator architecture [basic | n_layers | pixel]. The basic model is a 70x70 PatchGAN. n_layers allows you to specify the layers in the discriminator')
         parser.add_argument('--netG', type=str, default='resnet_9blocks', help='specify generator architecture [resnet_9blocks | resnet_6blocks | unet_256 | unet_128]')
         parser.add_argument('--n_layers_D', type=int, default=3, help='only used if netD==n_layers')
+        parser.add_argument('--kwsD', type=str, default='', help='n_layers + 2 numbers separated by underscores, corresponding to the discriminator kernel widths. default empty string will be interpreted as 4_4_..._4. Give a custom input as a string in the form 4_3_4_3_3_3 for example.')
+        parser.add_argument('--paddingsD', type=str, default='', help='n_layers + 2 numbers separated by underscores, corresponding to the discriminator padding amounts. Default empty string will be interpreted as 1_ ... _1. Give a custom input as a string in the form 2_1_1_1_2_2 for example.')
+        parser.add_argument('--kwsG', type=str, default='', help='The kernel widths for the generator blocks, starting from outermost in (only works for Unet currently). Must be length 8 for unet256, and length 7 for unet128. Default empty string is interpreted as 4_4_4_4_4_4_4_4 for unet256 and 4_4_4_4_4_4_4 for unet128')
+        parser.add_argument('--paddingsG', type=str, default='', help='The padding amounts for the generator blocks, starting from outermost in (only works for Unet currently). Must be length 8 for unet256, and length 7 for unet128. Default empty string is interpreted as 1_1_1_1_1_1_1_1 for unet256 and 1_1_1_1_1_1_1 for unet128')
         parser.add_argument('--norm', type=str, default='instance', help='instance normalization or batch normalization [instance | batch | none]')
         parser.add_argument('--init_type', type=str, default='normal', help='network initialization [normal | xavier | kaiming | orthogonal]')
         parser.add_argument('--init_gain', type=float, default=0.02, help='scaling factor for normal, xavier and orthogonal.')
@@ -121,7 +125,19 @@ class BaseOptions():
             opt.name = opt.name + suffix
 
         self.print_options(opt)
-
+        # decode kws and paddings strings
+        kwsD = opt.kwsD.split('_')
+        kwsD = None if kwsD == [''] else [int(value) for value in kwsD]
+        opt.kwsD = kwsD
+        kwsG = opt.kwsG.split('_')
+        kwsG = None if kwsG == [''] else [int(value) for value in kwsG]
+        opt.kwsG = kwsG
+        paddingsD = opt.paddingsD.split('_')
+        paddingsD = None if paddingsD == [''] else [int(value) for value in paddingsD]
+        opt.paddingsD = paddingsD
+        paddingsG = opt.paddingsG.split('_')
+        paddingsG = None if paddingsG == [''] else [int(value) for value in paddingsG]
+        opt.paddingsG = paddingsG
         # set gpu ids
         str_ids = opt.gpu_ids.split(',')
         opt.gpu_ids = []
