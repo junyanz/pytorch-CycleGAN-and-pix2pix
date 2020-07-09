@@ -67,6 +67,8 @@ class TemplateModel(BaseModel):
             self.optimizer = torch.optim.Adam(self.netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers = [self.optimizer]
 
+        # need to be wrapped after amp.initialize
+        self.make_data_parallel()
         # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
 
     def set_input(self, input):

@@ -105,6 +105,9 @@ class CycleGANModel(BaseModel):
                 [self.netG_A, self.netG_B, self.netD_A, self.netD_B], [self.optimizer_G, self.optimizer_D] = amp.initialize(
                     [self.netG_A, self.netG_B, self.netD_A, self.netD_B], [self.optimizer_G, self.optimizer_D], opt_level=opt.opt_level, num_losses=3)
 
+        # need to be wrapped after amp.initialize
+        self.make_data_parallel()
+
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 

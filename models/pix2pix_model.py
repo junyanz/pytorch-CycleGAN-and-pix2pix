@@ -81,6 +81,8 @@ class Pix2PixModel(BaseModel):
                 [self.netG, self.netD], [self.optimizer_G, self.optimizer_D] = amp.initialize(
                     [self.netG, self.netD], [self.optimizer_G, self.optimizer_D], opt_level=opt.opt_level, num_losses=2)
 
+        self.make_data_parallel()
+
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 

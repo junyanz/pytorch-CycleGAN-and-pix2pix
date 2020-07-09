@@ -55,7 +55,7 @@ class BaseOptions():
         parser.add_argument('--verbose', action='store_true', help='if specified, print more debugging information')
         parser.add_argument('--suffix', default='', type=str, help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{load_size}')
 
-        parser.add_argument('--checkpointing', default=False, type=bool,
+        parser.add_argument('--checkpointing', action='store_true',
                             help='if true, it applies gradient checkpointing, saves memory but it makes the training slower')
         parser.add_argument('--opt_level', default='O0', help='amp opt_level, default="O0" equals fp32 training')
 
