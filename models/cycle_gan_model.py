@@ -124,12 +124,12 @@ class CycleGANModel(BaseModel):
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B = self.netG_A(self.real_A)  # G_A(A)
-        if not self.opt.checkpointing:
+        if not self.opt.checkpointing or not self.isTrain:
             self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
         else:
             self.rec_A = checkpoint(self.netG_B, self.fake_B)
         self.fake_A = self.netG_B(self.real_B)  # G_B(B)
-        if not self.opt.checkpointing:
+        if not self.opt.checkpointing or not self.isTrain:
             self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
         else:
             self.rec_B = checkpoint(self.netG_A, self.fake_A)

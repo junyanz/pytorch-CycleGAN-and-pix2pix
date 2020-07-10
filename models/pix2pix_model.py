@@ -98,10 +98,7 @@ class Pix2PixModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        if not self.opt.checkpointing:
-            self.fake_B = self.netG(self.real_A)  # G(A)
-        else:
-            self.fake_B = checkpoint(self.netG, self.real_A)
+        self.fake_B = self.netG(self.real_A)  # G(A)
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
