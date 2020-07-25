@@ -14,8 +14,14 @@ class ProGanModel(BaseModel):
     """
     This is an implementation of the paper "Progressive Growing of GANs": https://arxiv.org/abs/1710.10196.
     Model requires dataset of type dataset_mode='single', generator netG='progan', discriminator netD='progan'.
-    ngf and ndf controlls dimensions of the backbone.
-    Network G is a master-generator (for eval) and network C (stands for current) is a current trainable generator.
+    Please note that opt.crop_size (default 256) == 4 * 2 ** opt.max_steps (default max_steps is 6).
+    ngf and ndf controlls dimensions of the backbone (128-512).
+    Network G is a master-generator (accumulates weights for eval) and network C (stands for current) is a
+    current trainable generator.
+
+    See also:
+        https://github.com/tkarras/progressive_growing_of_gans
+        https://github.com/odegeasslbc/Progressive-GAN-pytorch
     """
 
     @staticmethod
@@ -49,14 +55,23 @@ class ProGanModel(BaseModel):
         self.netG = networks.define_G(opt.z_dim, opt.input_nc, opt.ngf, opt.netG, opt.norm,
                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids,
                                       init_weights=False, max_steps=self.max_steps)
+        """
+        resulting generator, not for training, just for eval
+        """
 
         if self.isTrain:
             self.netC = networks.define_G(opt.z_dim, opt.input_nc, opt.ngf, opt.netG, opt.norm,
                                           not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids,
                                           init_weights=False, max_steps=self.max_steps)
+            """
+            current training generator
+            """
             self.netD = networks.define_D(opt.input_nc, opt.ndf, opt.netD,
                                           opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids,
                                           init_weights=False, max_steps=self.max_steps)
+            """
+            current training discr.
+            """
 
         if self.isTrain:
             # define loss functions
@@ -76,9 +91,21 @@ class ProGanModel(BaseModel):
 
         # inner counters
         self.total_steps = opt.n_epochs + opt.n_epochs_decay + 1
+        """
+        total epochs
+        """
         self.step = 1
+        """
+        current step of network, 1-6
+        """
         self.iter = 0
+        """
+        current iter, 0-(total epochs)//6
+        """
         self.alpha = 0.
+        """
+        current alpha rate to fuse different scales
+        """
 
         if self.isTrain:
             assert self.total_steps > 12
