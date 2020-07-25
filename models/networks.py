@@ -832,7 +832,7 @@ class DiscriminatorProGan(nn.Module):
     def __init__(self, feat_dim=128, in_dim=3, max_steps=6):
         super().__init__()
         self.max_steps = max_steps
-        self.progression = nn.ModuleList([ConvBlockProGan(feat_dim // 4, feat_dim // 4, 3, 1),
+        self.progression = nn.ModuleList([ConvBlockProGan(feat_dim // 8, feat_dim // 4, 3, 1),
                                           ConvBlockProGan(feat_dim // 4, feat_dim // 4, 3, 1),
                                           ConvBlockProGan(feat_dim // 4, feat_dim // 2, 3, 1),
                                           ConvBlockProGan(feat_dim // 2, feat_dim, 3, 1),
@@ -841,7 +841,7 @@ class DiscriminatorProGan(nn.Module):
                                           ConvBlockProGan(feat_dim, feat_dim, 3, 1),
                                           ConvBlockProGan(feat_dim + 1, feat_dim, 3, 1, 4, 0)])
 
-        self.from_rgb = nn.ModuleList([EqualConv2d(in_dim, feat_dim // 4, 1),
+        self.from_rgb = nn.ModuleList([EqualConv2d(in_dim, feat_dim // 8, 1),
                                        EqualConv2d(in_dim, feat_dim // 4, 1),
                                        EqualConv2d(in_dim, feat_dim // 4, 1),
                                        EqualConv2d(in_dim, feat_dim // 2, 1),
