@@ -131,11 +131,13 @@ class ProGanModel(BaseModel):
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         net = self.netC if self.isTrain else self.netG
+        step = self.step if self.isTrain else self.max_steps
+        alpha = self.alpha if self.isTrain else 1
         batch_size = self.real_B.size(0)
         z = torch.randn((batch_size, self.z_dim, self.opt.crop_size // (2 ** self.max_steps),
                          self.opt.crop_size // (2 ** self.max_steps)),
                         device=self.device)
-        self.fake_B = net(z, step=self.step, alpha=self.alpha)
+        self.fake_B = net(z, step=step, alpha=alpha)
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
