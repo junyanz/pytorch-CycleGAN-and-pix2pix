@@ -40,20 +40,24 @@ class ProGanModel(BaseModel):
             self.model_names = ['G', 'D', 'C']
         else:  # during test time, only load G
             self.model_names = ['G']
-        # define networks (both generator and discriminator)
-        self.netG = networks.define_G(opt.z_dim, opt.output_nc, opt.ngf, opt.netG, opt.norm,
-                                      not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids,
-                                      init_weights=False)
-        self.netC = networks.define_G(opt.z_dim, opt.output_nc, opt.ngf, opt.netG, opt.norm,
-                                      not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids,
-                                      init_weights=False)
 
         if self.isTrain:
+            assert opt.crop_size == 4 * 2 ** self.max_steps
+            assert opt.beta1 == 0
+
+        # define networks (both generator and discriminator)
+        self.netG = networks.define_G(opt.z_dim, opt.input_nc, opt.ngf, opt.netG, opt.norm,
+                                      not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids,
+                                      init_weights=False, max_steps=self.max_steps)
+
+        if self.isTrain:
+            self.netC = networks.define_G(opt.z_dim, opt.input_nc, opt.ngf, opt.netG, opt.norm,
+                                          not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids,
+                                          init_weights=False, max_steps=self.max_steps)
             self.netD = networks.define_D(opt.input_nc, opt.ndf, opt.netD,
                                           opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids,
-                                          init_weights=False)
+                                          init_weights=False, max_steps=self.max_steps)
 
-        assert opt.beta1 == 0
         if self.isTrain:
             # define loss functions
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)
@@ -76,8 +80,9 @@ class ProGanModel(BaseModel):
         self.iter = 0
         self.alpha = 0.
 
-        assert self.total_steps > 12
-        assert self.opt.crop_size % 2 ** self.max_steps == 0
+        if self.isTrain:
+            assert self.total_steps > 12
+            assert self.opt.crop_size % 2 ** self.max_steps == 0
 
         # set fusing
         self.netG.eval()
@@ -98,11 +103,12 @@ class ProGanModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
+        net = self.netC if self.isTrain else self.netG
         batch_size = self.real_B.size(0)
         z = torch.randn((batch_size, self.z_dim, self.opt.crop_size // (2 ** self.max_steps),
                          self.opt.crop_size // (2 ** self.max_steps)),
                         device=self.device)
-        self.fake_B = self.netC(z, step=self.step, alpha=self.alpha)
+        self.fake_B = net(z, step=self.step, alpha=self.alpha)
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""

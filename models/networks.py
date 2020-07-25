@@ -118,7 +118,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[], init_weights_=
 
 
 def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[],
-             init_weights=True):
+             init_weights=True, **kwargs):
     """Create a generator
 
     Parameters:
@@ -157,14 +157,14 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     elif netG == 'unet_256':
         net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'progan':
-        net = GeneratorProGan(input_code_dim=input_nc, in_channel=ngf)
+        net = GeneratorProGan(input_code_dim=input_nc, in_channel=ngf, max_steps=kwargs['max_steps'], out_channels=output_nc)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids, init_weights_=init_weights)
 
 
 def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[],
-             init_weights=True):
+             init_weights=True, **kwargs):
     """Create a discriminator
 
     Parameters:
@@ -204,7 +204,7 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
     elif netD == 'pixel':     # classify if each pixel is real or fake
         net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
     elif netD == 'progan':
-        net = DiscriminatorProGan(feat_dim=ndf, in_dim=input_nc)
+        net = DiscriminatorProGan(feat_dim=ndf, in_dim=input_nc, max_steps=kwargs['max_steps'])
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids, init_weights_=init_weights)
@@ -740,10 +740,11 @@ def upscale(feat):
 
 
 class GeneratorProGan(nn.Module):
-    def __init__(self, input_code_dim=128, in_channel=128, pixel_norm=True, tanh=True):
+    def __init__(self, input_code_dim=128, in_channel=128, pixel_norm=True, tanh=True, max_steps=6, out_channels=3):
         super().__init__()
-        self.input_dim = input_code_dim
+        self.z_dim = input_code_dim
         self.tanh = tanh
+        self.max_steps = max_steps
         # self.input_layer = nn.Sequential(
         #     EqualConvTranspose2d(input_code_dim, in_channel, 4, 1, 0),
         #     PixelNorm(),
@@ -765,15 +766,15 @@ class GeneratorProGan(nn.Module):
         self.progression_64 = ConvBlockProGan(in_channel, in_channel // 2, 3, 1, pixel_norm=pixel_norm)
         self.progression_128 = ConvBlockProGan(in_channel // 2, in_channel // 4, 3, 1, pixel_norm=pixel_norm)
         self.progression_256 = ConvBlockProGan(in_channel // 4, in_channel // 4, 3, 1, pixel_norm=pixel_norm)
+        self.progression_512 = ConvBlockProGan(in_channel // 4, in_channel // 8, 3, 1, pixel_norm=pixel_norm)
 
-        self.to_rgb_8 = EqualConv2d(in_channel, 3, 1)
-        self.to_rgb_16 = EqualConv2d(in_channel, 3, 1)
-        self.to_rgb_32 = EqualConv2d(in_channel, 3, 1)
-        self.to_rgb_64 = EqualConv2d(in_channel // 2, 3, 1)
-        self.to_rgb_128 = EqualConv2d(in_channel // 4, 3, 1)
-        self.to_rgb_256 = EqualConv2d(in_channel // 4, 3, 1)
-
-        self.max_step = 6
+        self.to_rgb_8 = EqualConv2d(in_channel, out_channels, 1)
+        self.to_rgb_16 = EqualConv2d(in_channel, out_channels, 1)
+        self.to_rgb_32 = EqualConv2d(in_channel, out_channels, 1)
+        self.to_rgb_64 = EqualConv2d(in_channel // 2, out_channels, 1)
+        self.to_rgb_128 = EqualConv2d(in_channel // 4, out_channels, 1)
+        self.to_rgb_256 = EqualConv2d(in_channel // 4, out_channels, 1)
+        self.to_rgb_512 = EqualConv2d(in_channel // 8, out_channels, 1)
 
     def progress(self, feat, module):
         out = F.interpolate(feat, scale_factor=2, mode='bilinear', align_corners=False)
@@ -791,8 +792,8 @@ class GeneratorProGan(nn.Module):
         return out
 
     def forward(self, input, step=0, alpha=-1):
-        if step > self.max_step:
-            step = self.max_step
+        if step > self.max_steps:
+            step = self.max_steps
         # out_4 = self.input_layer(input.view(-1, self.input_dim, 1, 1))
         out_4 = self.input_layer(input)
         out_4 = self.progression_4(out_4)
@@ -822,12 +823,17 @@ class GeneratorProGan(nn.Module):
         if step == 6:
             return self.output(out_128, out_256, self.to_rgb_128, self.to_rgb_256, alpha)
 
+        out_512 = self.progress(out_256, self.progression_512)
+        if step == 7:
+            return self.output(out_256, out_512, self.to_rgb_256, self.to_rgb_512, alpha)
+
 
 class DiscriminatorProGan(nn.Module):
-    def __init__(self, feat_dim=128, in_dim=3):
+    def __init__(self, feat_dim=128, in_dim=3, max_steps=6):
         super().__init__()
-
+        self.max_steps = max_steps
         self.progression = nn.ModuleList([ConvBlockProGan(feat_dim // 4, feat_dim // 4, 3, 1),
+                                          ConvBlockProGan(feat_dim // 4, feat_dim // 4, 3, 1),
                                           ConvBlockProGan(feat_dim // 4, feat_dim // 2, 3, 1),
                                           ConvBlockProGan(feat_dim // 2, feat_dim, 3, 1),
                                           ConvBlockProGan(feat_dim, feat_dim, 3, 1),
@@ -836,6 +842,7 @@ class DiscriminatorProGan(nn.Module):
                                           ConvBlockProGan(feat_dim + 1, feat_dim, 3, 1, 4, 0)])
 
         self.from_rgb = nn.ModuleList([EqualConv2d(in_dim, feat_dim // 4, 1),
+                                       EqualConv2d(in_dim, feat_dim // 4, 1),
                                        EqualConv2d(in_dim, feat_dim // 4, 1),
                                        EqualConv2d(in_dim, feat_dim // 2, 1),
                                        EqualConv2d(in_dim, feat_dim, 1),
@@ -857,7 +864,7 @@ class DiscriminatorProGan(nn.Module):
             if i == 0:
                 out_std = torch.sqrt(out.var(0, unbiased=False) + 1e-8)
                 mean_std = out_std.mean()
-                mean_std = mean_std.expand(out.size(0), 1, 4, 4)
+                mean_std = mean_std.expand(out.size(0), 1, out_std.size(1), out_std.size(2))
                 out = torch.cat([out, mean_std], 1)
 
             out = self.progression[index](out)
