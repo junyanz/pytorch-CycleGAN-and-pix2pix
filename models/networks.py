@@ -157,7 +157,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     elif netG == 'unet_256':
         net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'progan':
-        net = GeneratorProGan(input_code_dim=128)
+        net = GeneratorProGan(input_code_dim=input_nc, in_channel=ngf)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids, init_weights_=init_weights)
@@ -204,7 +204,7 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
     elif netD == 'pixel':     # classify if each pixel is real or fake
         net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
     elif netD == 'progan':
-        net = DiscriminatorProGan()
+        net = DiscriminatorProGan(feat_dim=ndf, in_dim=input_nc)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids, init_weights_=init_weights)
@@ -750,9 +750,13 @@ class GeneratorProGan(nn.Module):
         #     nn.LeakyReLU(0.1))
 
         self.input_layer = nn.Sequential(
+            EqualConv2d(input_code_dim, input_code_dim, 3, padding=1),
+            PixelNorm(),
+            nn.LeakyReLU(0.1),
             EqualConv2d(input_code_dim, in_channel, 3, padding=1),
             PixelNorm(),
-            nn.LeakyReLU(0.1))
+            nn.LeakyReLU(0.1)
+        )
 
         self.progression_4 = ConvBlockProGan(in_channel, in_channel, 3, 1, pixel_norm=pixel_norm)
         self.progression_8 = ConvBlockProGan(in_channel, in_channel, 3, 1, pixel_norm=pixel_norm)
@@ -820,7 +824,7 @@ class GeneratorProGan(nn.Module):
 
 
 class DiscriminatorProGan(nn.Module):
-    def __init__(self, feat_dim=128):
+    def __init__(self, feat_dim=128, in_dim=3):
         super().__init__()
 
         self.progression = nn.ModuleList([ConvBlockProGan(feat_dim // 4, feat_dim // 4, 3, 1),
@@ -831,13 +835,13 @@ class DiscriminatorProGan(nn.Module):
                                           ConvBlockProGan(feat_dim, feat_dim, 3, 1),
                                           ConvBlockProGan(feat_dim + 1, feat_dim, 3, 1, 4, 0)])
 
-        self.from_rgb = nn.ModuleList([EqualConv2d(3, feat_dim // 4, 1),
-                                       EqualConv2d(3, feat_dim // 4, 1),
-                                       EqualConv2d(3, feat_dim // 2, 1),
-                                       EqualConv2d(3, feat_dim, 1),
-                                       EqualConv2d(3, feat_dim, 1),
-                                       EqualConv2d(3, feat_dim, 1),
-                                       EqualConv2d(3, feat_dim, 1)])
+        self.from_rgb = nn.ModuleList([EqualConv2d(in_dim, feat_dim // 4, 1),
+                                       EqualConv2d(in_dim, feat_dim // 4, 1),
+                                       EqualConv2d(in_dim, feat_dim // 2, 1),
+                                       EqualConv2d(in_dim, feat_dim, 1),
+                                       EqualConv2d(in_dim, feat_dim, 1),
+                                       EqualConv2d(in_dim, feat_dim, 1),
+                                       EqualConv2d(in_dim, feat_dim, 1)])
 
         self.n_layer = len(self.progression)
 

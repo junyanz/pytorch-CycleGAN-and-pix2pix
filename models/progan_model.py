@@ -3,6 +3,7 @@ import torch
 from .base_model import BaseModel
 from . import networks
 from torch.nn import functional as F
+
 try:
     from apex import amp
 except ImportError:
@@ -10,24 +11,26 @@ except ImportError:
 
 
 class ProGanModel(BaseModel):
+    """
+    This is an implementation of the paper "Progressive Growing of GANs": https://arxiv.org/abs/1710.10196.
+    Model requires dataset of type dataset_mode='single', generator netG='progan', discriminator netD='progan'.
+    ngf and ndf controlls dimensions of the backbone.
+    Network G is a master-generator (for eval) and network C (stands for current) is a current trainable generator.
+    """
 
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
 
-        parser.set_defaults(netG='progan', netD='progan', dataset_mode='single', beta1=0.)
-
+        parser.set_defaults(netG='progan', netD='progan', dataset_mode='single', beta1=0., ngf=512, ndf=512)
+        parser.add_argument('--z_dim', type=int, default=32, help='random noise dim')
+        parser.add_argument('--max_steps', type=int, default=6, help='steps of growing')
         return parser
-
-    def accumulate(self, decay=0.999):
-        par1 = dict(self.netG.named_parameters())
-        par2 = dict(self.netC.named_parameters())
-
-        for k in par1.keys():
-            par1[k].data.mul_(decay).add_(1 - decay, par2[k].data)
 
     def __init__(self, opt):
 
         BaseModel.__init__(self, opt)
+        self.z_dim = opt.z_dim
+        self.max_steps = opt.max_steps
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['G_GAN', 'D_real', 'D_fake']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
@@ -38,15 +41,15 @@ class ProGanModel(BaseModel):
         else:  # during test time, only load G
             self.model_names = ['G']
         # define networks (both generator and discriminator)
-        self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
+        self.netG = networks.define_G(opt.z_dim, opt.output_nc, opt.ngf, opt.netG, opt.norm,
                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids,
                                       init_weights=False)
-        self.netC = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
+        self.netC = networks.define_G(opt.z_dim, opt.output_nc, opt.ngf, opt.netG, opt.norm,
                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids,
                                       init_weights=False)
 
         if self.isTrain:
-            self.netD = networks.define_D(opt.input_nc + opt.output_nc, opt.ndf, opt.netD,
+            self.netD = networks.define_D(opt.input_nc, opt.ndf, opt.netD,
                                           opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids,
                                           init_weights=False)
 
@@ -69,11 +72,12 @@ class ProGanModel(BaseModel):
 
         # inner counters
         self.total_steps = opt.n_epochs + opt.n_epochs_decay + 1
-        assert self.total_steps > 12
-        assert self.opt.crop_size % 2 ** 6 == 0
         self.step = 1
         self.iter = 0
         self.alpha = 0.
+
+        assert self.total_steps > 12
+        assert self.opt.crop_size % 2 ** self.max_steps == 0
 
         # set fusing
         self.netG.eval()
@@ -95,7 +99,9 @@ class ProGanModel(BaseModel):
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         batch_size = self.real_B.size(0)
-        z = torch.randn((batch_size, 128, self.opt.crop_size // (2 ** 6), self.opt.crop_size // (2 ** 6)), device=self.device)
+        z = torch.randn((batch_size, self.z_dim, self.opt.crop_size // (2 ** self.max_steps),
+                         self.opt.crop_size // (2 ** self.max_steps)),
+                        device=self.device)
         self.fake_B = self.netC(z, step=self.step, alpha=self.alpha)
 
     def backward_D(self):
@@ -146,16 +152,30 @@ class ProGanModel(BaseModel):
         self.accumulate()  # fuse params
 
     def update_inners_counters(self):
+        """
+        Update counters of iterations
+        """
         self.iter += 1
-        self.alpha = min(1, (2 / (self.total_steps // 6)) * self.iter)
-        if self.iter > self.total_steps // 6:
+        self.alpha = min(1, (2 / (self.total_steps // self.max_steps)) * self.iter)
+        if self.iter > self.total_steps // self.max_steps:
             self.alpha = 0
             self.iter = 0
             self.step += 1
 
-            if self.step > 6:
+            if self.step > self.max_steps:
                 self.alpha = 1
-                self.step = 6
+                self.step = self.max_steps
+
+    def accumulate(self, decay=0.999):
+        """
+        Accumulate weights from self.C to self.G with decay
+        @param decay decay
+        """
+        par1 = dict(self.netG.named_parameters())
+        par2 = dict(self.netC.named_parameters())
+
+        for k in par1.keys():
+            par1[k].data.mul_(decay).add_(1 - decay, par2[k].data)
 
     def update_learning_rate(self):
         super(ProGanModel, self).update_learning_rate()
