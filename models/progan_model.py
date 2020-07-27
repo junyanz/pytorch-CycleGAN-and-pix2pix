@@ -217,9 +217,9 @@ class ProGanModel(BaseModel):
 
     def create_epochs_schedule(self, steps_schedule_type):
         if steps_schedule_type == 'fibonacci':
-            basic_weights = np.array([0., 1., 2., 3., 5., 8., 13., 21.])
+            basic_weights = np.array([0., 1., 2., 3., 5., 8., 13., 21., 34.])
         else:
-            basic_weights = np.array([0., 1, 1, 1, 1, 1, 1, 1])
+            basic_weights = np.array([0., 1, 1, 1, 1, 1, 1, 1, 1])
         basic_weights = basic_weights[:self.max_steps + 1]
         epochs_schedule = self.total_steps * basic_weights / np.sum(basic_weights)
         epochs_schedule = epochs_schedule.astype(np.int)
