@@ -862,7 +862,7 @@ class DiscriminatorProGan(nn.Module):
                 out = self.from_rgb[index](input)
 
             if i == 0:
-                out_std = torch.sqrt(out.var(0, unbiased=False) + 1e-8)
+                out_std = torch.sqrt(out.var(0, unbiased=False) + 1e-6)
                 mean_std = out_std.mean()
                 mean_std = mean_std.expand(out.size(0), 1, out_std.size(1), out_std.size(2))
                 out = torch.cat([out, mean_std], 1)
