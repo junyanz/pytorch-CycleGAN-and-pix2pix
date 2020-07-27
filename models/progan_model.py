@@ -1,8 +1,11 @@
 import torch
+from torch.autograd import grad
 
 from .base_model import BaseModel
 from . import networks
 from torch.nn import functional as F
+
+from .networks import cal_gradient_penalty
 
 try:
     from apex import amp
@@ -27,7 +30,7 @@ class ProGanModel(BaseModel):
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
 
-        parser.set_defaults(netG='progan', netD='progan', dataset_mode='single', beta1=0., ngf=512, ndf=512)
+        parser.set_defaults(netG='progan', netD='progan', dataset_mode='single', beta1=0., ngf=512, ndf=512, gan_mode='wgangp')
         parser.add_argument('--z_dim', type=int, default=32, help='random noise dim')
         parser.add_argument('--max_steps', type=int, default=6, help='steps of growing')
         return parser
@@ -38,7 +41,9 @@ class ProGanModel(BaseModel):
         self.z_dim = opt.z_dim
         self.max_steps = opt.max_steps
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
-        self.loss_names = ['G_GAN', 'D_real', 'D_fake']
+        self.loss_names = ['G_GAN', 'D_real', 'D_fake', 'D']
+        if self.opt.gan_mode == 'wgangp':
+            self.loss_names.append('D_gradpen')
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         self.visual_names = ['fake_B', 'real_B']
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
@@ -149,8 +154,24 @@ class ProGanModel(BaseModel):
         real_B = self.real_B
         pred_real = self.netD(real_B, step=self.step, alpha=self.alpha)
         self.loss_D_real = self.criterionGAN(pred_real, True)
+        if self.opt.gan_mode == 'wgangp':
+            # some correction of D loss
+            self.loss_D_real += 0.001 * (pred_real ** 2).mean()
         # combine loss and calculate gradients
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
+        if self.opt.gan_mode == 'wgangp':
+            ### gradient penalty for D
+            b_size = fake_B.size(0)
+            eps = torch.rand(b_size, 1, 1, 1, dtype=fake_B.dtype, device=fake_B.device).to(fake_B.device)
+            x_hat = eps * real_B.data + (1 - eps) * fake_B.detach().data
+            x_hat.requires_grad = True
+            hat_predict = self.netD(x_hat, step=self.step, alpha=self.alpha)
+            grad_x_hat = grad(
+                outputs=hat_predict.sum(), inputs=x_hat, create_graph=True)[0]
+            grad_penalty = ((grad_x_hat.view(grad_x_hat.size(0), -1)
+                             .norm(2, dim=1) - 1) ** 2).mean()
+            self.loss_D_gradpen = 10 * grad_penalty
+            self.loss_D += self.loss_D_gradpen
 
         if self.opt.apex:
             with amp.scale_loss(self.loss_D, self.optimizer_D, loss_id=0) as loss_D_scaled:
