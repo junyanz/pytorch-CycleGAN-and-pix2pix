@@ -4,6 +4,7 @@ from torch.autograd import grad
 from .base_model import BaseModel
 from . import networks
 from torch.nn import functional as F
+import numpy as np
 
 from .networks import cal_gradient_penalty
 
@@ -30,9 +31,12 @@ class ProGanModel(BaseModel):
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
 
-        parser.set_defaults(netG='progan', netD='progan', dataset_mode='single', beta1=0., ngf=512, ndf=512, gan_mode='wgangp')
+        parser.set_defaults(netG='progan', netD='progan', dataset_mode='single', beta1=0., ngf=512, ndf=512,
+                            gan_mode='wgangp')
         parser.add_argument('--z_dim', type=int, default=32, help='random noise dim')
         parser.add_argument('--max_steps', type=int, default=6, help='steps of growing')
+        parser.add_argument('--steps_schedule', type=str, default='linear',
+                            help='type of when to turn to the next step: linear or fibonacci')
         return parser
 
     def __init__(self, opt):
@@ -110,6 +114,10 @@ class ProGanModel(BaseModel):
         self.alpha = 0.
         """
         current alpha rate to fuse different scales
+        """
+        self.epochs_schedule = self.create_epochs_schedule(opt.steps_schedule)
+        """
+        schedule when to turn to the next step
         """
 
         if self.isTrain:
@@ -207,13 +215,25 @@ class ProGanModel(BaseModel):
         self.optimizer_C.step()  # udpate G's weights
         self.accumulate()  # fuse params
 
+    def create_epochs_schedule(self, steps_schedule_type):
+        if steps_schedule_type == 'fibonacci':
+            basic_weights = np.array([0., 1., 2., 3., 5., 8., 13., 21.])
+        else:
+            basic_weights = np.array([0., 1, 1, 1, 1, 1, 1, 1])
+        basic_weights = basic_weights[:self.max_steps + 1]
+        epochs_schedule = self.total_steps * basic_weights / np.sum(basic_weights)
+        epochs_schedule = epochs_schedule.astype(np.int)
+        print('schedule of step turning: %s' % str(epochs_schedule))
+        return epochs_schedule
+
     def update_inners_counters(self):
         """
         Update counters of iterations
         """
         self.iter += 1
-        self.alpha = min(1, (2 / (self.total_steps // self.max_steps)) * self.iter)
-        if self.iter > self.total_steps // self.max_steps:
+        self.alpha = min(1, (2. / (self.epochs_schedule[self.step])) * self.iter)
+        if self.iter > self.epochs_schedule[self.step]:
+            print('turn to step % s' % str(self.step + 1))
             self.alpha = 0
             self.iter = 0
             self.step += 1
