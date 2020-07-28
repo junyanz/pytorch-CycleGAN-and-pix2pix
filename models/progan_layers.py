@@ -158,7 +158,7 @@ class PixelwiseNorm(th.nn.Module):
     def __init__(self):
         super(PixelwiseNorm, self).__init__()
 
-    def forward(self, x, alpha=1e-8):
+    def forward(self, x, alpha=1e-6):
         """
         forward pass of the module
         :param x: input activations volume
@@ -325,7 +325,7 @@ class MinibatchStdDev(th.nn.Module):
         """
         super(MinibatchStdDev, self).__init__()
 
-    def forward(self, x, alpha=1e-8):
+    def forward(self, x, alpha=1e-6):
         """
         forward pass of the layer
         :param x: input activation volume
