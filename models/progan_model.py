@@ -86,8 +86,8 @@ class ProGanModel(BaseModel):
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)
             self.criterionL1 = torch.nn.L1Loss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
-            self.optimizer_C = torch.optim.Adam(self.netC.parameters(), lr=opt.lr, betas=(opt.beta1, 0.99))
-            self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.99))
+            self.optimizer_C = torch.optim.Adam(self.netC.parameters(), lr=opt.lr, betas=(opt.beta1, 0.99), eps=1e-6)
+            self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.99), eps=1e-6)
             self.optimizers.append(self.optimizer_C)
             self.optimizers.append(self.optimizer_D)
 
@@ -182,11 +182,12 @@ class ProGanModel(BaseModel):
             self.loss_D_gradpen = 10 * grad_penalty
             self.loss_D += self.loss_D_gradpen
 
-        if self.opt.apex:
-            with amp.scale_loss(self.loss_D, self.optimizer_D, loss_id=0) as loss_D_scaled:
-                loss_D_scaled.backward()
-        else:
-            self.loss_D.backward()
+        if not (torch.isinf(self.loss_D) or torch.isnan(self.loss_D) or torch.mean(torch.abs(self.loss_D)) > 100):
+            if self.opt.apex:
+                with amp.scale_loss(self.loss_D, self.optimizer_D, loss_id=0) as loss_D_scaled:
+                    loss_D_scaled.backward()
+            else:
+                self.loss_D.backward()
 
     def backward_G(self):
         """Calculate GAN loss for the generator"""
@@ -196,11 +197,12 @@ class ProGanModel(BaseModel):
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
         self.loss_G = self.loss_G_GAN
 
-        if self.opt.apex:
-            with amp.scale_loss(self.loss_G, self.optimizer_C, loss_id=1) as loss_G_scaled:
-                loss_G_scaled.backward()
-        else:
-            self.loss_G.backward()
+        if not (torch.isinf(self.loss_G) or torch.isnan(self.loss_G) or torch.mean(torch.abs(self.loss_G)) > 100):
+            if self.opt.apex:
+                with amp.scale_loss(self.loss_G, self.optimizer_C, loss_id=1) as loss_G_scaled:
+                    loss_G_scaled.backward()
+            else:
+                self.loss_G.backward()
 
     def optimize_parameters(self):
         self.forward()  # compute fake images: G(A)
