@@ -228,6 +228,7 @@ If you use this code for your research, please cite our papers.
 [Spanish](docs/README_es.md)
 
 ## Related Projects
+**[contrastive-unpaired-translation](https://github.com/taesungp/contrastive-unpaired-translation) (CUT)**<br>
 **[CycleGAN-Torch](https://github.com/junyanz/CycleGAN) |
 [pix2pix-Torch](https://github.com/phillipi/pix2pix) | [pix2pixHD](https://github.com/NVIDIA/pix2pixHD)|
 [BicycleGAN](https://github.com/junyanz/BicycleGAN) | [vid2vid](https://tcwang0509.github.io/vid2vid/) | [SPADE/GauGAN](https://github.com/NVlabs/SPADE)**<br>
