@@ -8,7 +8,7 @@ Implementacion en PyTorch de Unpaired Image-to-Image Translation.
 
 Este codigo fue escrito por [Jun-Yan Zhu](https://github.com/junyanz) y [Taesung Park](https://github.com/taesung), y con ayuda de [Tongzhou Wang](https://ssnl.github.io/).
 
-Esta implementacion de PyTorch produce resultados comparables o mejores que nuestros original software de Torch. Si te gustaria producir los mismos resultados que en documento oficial, echa un vistazo al codigo original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) y [pix2pix Torch](https://github.com/phillipi/pix2pix) 
+Esta implementacion de PyTorch produce resultados comparables o mejores que nuestros original software de Torch. Si te gustaria producir los mismos resultados que en documento oficial, echa un vistazo al codigo original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) y [pix2pix Torch](https://github.com/phillipi/pix2pix)
 
 **Aviso**: El software actual funciona correctamente en PyTorch 0.41+. Para soporte en PyTorch 0.1-0.3: [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1).
 
@@ -32,11 +32,11 @@ Puede encontrar información útil en [training/test tips](https://github.com/ju
 Si usa este código para su investigación, cite:
 
 Unpaired Image-to-Image Translation usando Cycle-Consistent Adversarial Networks.<br>
-[Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz/)\*,  [Taesung Park](https://taesung.me/)\*, [Phillip Isola](https://people.eecs.berkeley.edu/~isola/), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros). In ICCV 2017. (* contribucion igualitaria) [[Bibtex]](https://junyanz.github.io/CycleGAN/CycleGAN.txt)
+[Jun-Yan Zhu](https://www.cs.cmu.edu/~junyanz/)\*,  [Taesung Park](https://taesung.me/)\*, [Phillip Isola](https://people.eecs.berkeley.edu/~isola/), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros). In ICCV 2017. (* contribucion igualitaria) [[Bibtex]](https://junyanz.github.io/CycleGAN/CycleGAN.txt)
 
 
 Image-to-Image Translation usando Conditional Adversarial Networks.<br>
-[Phillip Isola](https://people.eecs.berkeley.edu/~isola), [Jun-Yan Zhu](https://people.eecs.berkeley.edu/~junyanz), [Tinghui Zhou](https://people.eecs.berkeley.edu/~tinghuiz), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros). In CVPR 2017. [[Bibtex]](http://people.csail.mit.edu/junyanz/projects/pix2pix/pix2pix.bib)
+[Phillip Isola](https://people.eecs.berkeley.edu/~isola), [Jun-Yan Zhu](https://www.cs.cmu.edu/~junyanz/), [Tinghui Zhou](https://people.eecs.berkeley.edu/~tinghuiz), [Alexei A. Efros](https://people.eecs.berkeley.edu/~efros). In CVPR 2017. [[Bibtex]](https://www.cs.cmu.edu/~junyanz/projects/pix2pix/pix2pix.bib)
 
 ## Charlas y curso
 Presentacion en PowerPoint de Pix2pix: [keynote](http://efrosgans.eecs.berkeley.edu/CVPR18_slides/pix2pix.key) | [pdf](http://efrosgans.eecs.berkeley.edu/CVPR18_slides/pix2pix.pdf),
