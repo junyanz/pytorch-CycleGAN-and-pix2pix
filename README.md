@@ -1,3 +1,4 @@
+[![Run on Repl.it](https://repl.it/badge/github/junyanz/pytorch-CycleGAN-and-pix2pix)](https://repl.it/github/junyanz/pytorch-CycleGAN-and-pix2pix)
 <img src='imgs/horse2zebra.gif' align="right" width=384>
 
 <br><br><br>
