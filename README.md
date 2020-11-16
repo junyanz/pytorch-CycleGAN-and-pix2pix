@@ -3,8 +3,7 @@
 
 <br><br><br>
 
-# CycleGAN and pix2pix in PyTorch
-# Sketch2Fashion
+# Sketch2Fashion with CycleGAN and pix2pix in PyTorch
 
 
 **Information**:  This is the implementation for Sketch2Fashion project which aims to generate realistic pieces of clothing given the sketches. The project uses Pix2Pix and CycleGAN models to achieve the goal. More information about the project can be found at: 
