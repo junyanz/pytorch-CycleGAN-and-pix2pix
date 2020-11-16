@@ -1,5 +1,5 @@
 
-<img src='imgs/horse2zebra.gif' align="right" width=384>
+<img src='imgs/sketch2fashion.png' align="center" width=600>
 
 <br><br><br>
 
