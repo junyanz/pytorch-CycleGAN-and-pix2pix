@@ -135,7 +135,7 @@ class Copd2classDataset(BaseDataset):
         # Discard item from cache if its getting too big
         if len(cache) > self.opt.cache_capacity:
             cache.popitem(last=False)
-        return patch
+        return patch[None]
 
 
     def __len__(self):
