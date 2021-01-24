@@ -6,7 +6,7 @@ from torch.optim import lr_scheduler
 
 class Unet3dGenerator(nn.Module):
     '''
-    Generator for 3D Unet (adapted from Li et al. Context Matters: Graph-based Self-supervised Representation Learning for Medical Images)
+    Generator for 3D Unet (adapted from Li et al. Context Matters: Graph-based Self-supervised Representation Learning for Medical Images and modified a bit)
     '''
 
     def __init__(self, input_nc, output_nc, norm_layer):
@@ -44,6 +44,32 @@ class Unet3dGenerator(nn.Module):
         return dec
 
 
+class Unet3dDiscriminator(nn.Module):
+    '''
+    Discriminator for 3D Unet (adapted from Li et al. Context Matters: Graph-based Self-supervised Representation Learning for Medical Images and modified a bit)
+    '''
+
+    def __init__(self, input_nc, norm_layer, output_nc=1):
+        super().__init__()
+        # Encoder modules
+        enc_modules = []
+        enc_modules.append(BasicBlock3d(input_nc, 8, 3, 1, norm_layer))
+        enc_modules.append(BasicBlock3d(8, 8, 3, 2, norm_layer))   # 16
+        enc_modules.append(BasicBlock3d(8, 16, 3, 1, norm_layer))
+        enc_modules.append(BasicBlock3d(16, 16, 3, 1, norm_layer))
+        enc_modules.append(BasicBlock3d(16, 16, 3, 2, norm_layer))  # 8
+        enc_modules.append(BasicBlock3d(16, 32, 3, 1, norm_layer))
+        enc_modules.append(BasicBlock3d(32, 32, 3, 1, norm_layer))
+        enc_modules.append(BasicBlock3d(32, 32, 3, 2, norm_layer))  # 4
+        enc_modules.append(BasicBlock3d(32, 32, 3, 1, norm_layer))
+        enc_modules.append(BasicBlock3d(32, 32, 3, 2, norm_layer))  # 2
+        enc_modules.append(BasicBlock3d(32, 32, 3, 1, norm_layer))
+        enc_modules.append(BasicBlock3d(32, output_nc, 3, 2, None))  # 1 channel, 1 spatial resolution
+        self.encoder = nn.Sequential(*enc_modules)
+
+    def forward(self, x):
+        return self.encoder(x)
+
 
 class BasicBlock3d(nn.Module):
     '''
@@ -75,7 +101,8 @@ class BasicBlock3d(nn.Module):
 
 
 if __name__ == "__main__":
-    model = Unet3dGenerator(1, 1, nn.BatchNorm3d)
+    model = Unet3dDiscriminator(1, nn.BatchNorm3d)
+    #model = Unet3dGenerator(1, 1, nn.BatchNorm3d)
     inp = torch.rand(5, 1, 32, 32, 32)
     out = model(inp)
     print(inp.shape, out.shape)
