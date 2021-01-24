@@ -12,7 +12,22 @@ See our template dataset class 'template_dataset.py' for more details.
 """
 import importlib
 import torch.utils.data
+from torch.utils.data import Sampler
 from data.base_dataset import BaseDataset
+
+
+def find_sampler_using_name(sampler_name):
+    """
+    Import sampler from  data/sampler.py
+    """
+    samplerlib = importlib.import_module('data.sampler')
+    samplername = sampler_name + 'sampler'
+    sampler = None
+    for name, cls in samplerlib.__dict__.items():
+        if name.lower() == samplername.lower() and issubclass(cls, Sampler):
+            sampler = cls
+
+    return sampler
 
 
 def find_dataset_using_name(dataset_name):
@@ -59,6 +74,14 @@ def create_dataset(opt):
     return dataset
 
 
+def create_sampler(samplername, dataset):
+    """ Create custom sampler from name """
+    samplercls = find_sampler_using_name(samplername)
+    if samplercls is not None:
+        samplercls = samplercls(dataset)
+    return samplercls
+
+
 class CustomDatasetDataLoader():
     """Wrapper class of Dataset class that performs multi-threaded data loading"""
 
@@ -71,11 +94,19 @@ class CustomDatasetDataLoader():
         self.opt = opt
         dataset_class = find_dataset_using_name(opt.dataset_mode)
         self.dataset = dataset_class(opt)
+
+        self.sampler = create_sampler(opt.sampler, self.dataset)
+        print("Using sampler : {}".format(self.sampler))
+        if self.sampler is not None:
+            shuffle = False
+        else:
+            shuffle = not opt.serial_batches
+
         print("dataset [%s] was created" % type(self.dataset).__name__)
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,
             batch_size=opt.batch_size,
-            shuffle=not opt.serial_batches,
+            shuffle=shuffle,
             num_workers=int(opt.num_threads))
 
     def load_data(self):
