@@ -99,10 +99,10 @@ class Copd2classDataset(BaseDataset):
         patchidx = index%NUM_PATCHES
         imgidx = int(index//NUM_PATCHES)
 
-        path = 'temp'    # needs to be a string
-        data_A = self.load_patch(imgidx % size0, patchidx, 0)
-        data_B = self.load_patch(imgidx % size4, patchidx, 4)
-        return {'data_A': data_A, 'data_B': data_B, 'path': path}
+        path = 'temp{}'.format(index)    # needs to be a string
+        data_A = self.load_patch(imgidx % self.size0, patchidx, 0)
+        data_B = self.load_patch(imgidx % self.size4, patchidx, 4)
+        return {'A': data_A, 'B': data_B, 'path': path, 'A_paths': path, 'B_paths': path}
 
 
     def transform_patch(self, patch):
@@ -111,7 +111,9 @@ class Copd2classDataset(BaseDataset):
         '''
         m = -1024
         M = 240
-        return (patch - m)/(M - m)
+        norm = (patch - m)/(M - m)
+        norm = 2*norm - 1
+        return norm
 
 
     def load_patch(self, imgidx, patchidx, goldidx):
