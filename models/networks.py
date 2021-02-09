@@ -4,11 +4,11 @@ from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
 from models.networks3d import Unet3dGenerator, Unet3dDiscriminator
+from models.networks3d import Unet3dPatchGenerator, Unet3dPatchDiscriminator
 
 ###############################################################################
 # Helper Functions
 ###############################################################################
-
 
 class Identity(nn.Module):
     def forward(self, x):

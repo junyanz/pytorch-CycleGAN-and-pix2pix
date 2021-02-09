@@ -144,12 +144,8 @@ class CycleGANPatchModel(BaseModel):
         loss_D_fake_1 = self.criterionGAN(pred_fake_1, False)
 
         # Another fake, which is real images with fake ids
-        B, N = realidx.shape
-        batchid, patchid = torch.where(realidx > 0)  # Get the one-hot IDs
-        # Add some random index
-        patchid = (patchid + 1 + torch.randint(N-1, size=patchid.shape).to(patchid.device)) % N
-        augidx = realidx*0
-        augidx[batchid, patchid] = 1
+        augidx = realidx + 1 + torch.randint(N-1, size=realidx.shape).to(realidx.device)
+        augidx = augidx % 581
         # Use this augmented index with the real images
         pred_fake_2 = netD(real, augidx)
         loss_D_fake_2 = self.criterionGAN(pred_fake_2, False)

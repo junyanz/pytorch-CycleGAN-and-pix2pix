@@ -104,8 +104,8 @@ class CopdpatchlabelsDataset(BaseDataset):
         data_B = self.load_patch(hifile)
 
         # Get patch ids
-        label_A = one_hot(int(lofile.split('/')[-2]))
-        label_B = one_hot(int(hifile.split('/')[-2]))
+        label_A = int(lofile.split('/')[-2])
+        label_B = int(hifile.split('/')[-2])
 
         #path = 'temp{}'.format(index)    # needs to be a string
         #data_A = self.load_patch(imgidx % self.size0, patchidx, 0)
