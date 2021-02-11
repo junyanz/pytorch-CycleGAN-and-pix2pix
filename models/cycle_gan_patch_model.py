@@ -4,6 +4,7 @@ from util.image_pool import ImagePool, ImageLabelPool
 from .base_model import BaseModel
 from . import networks
 
+N = 581
 
 class CycleGANPatchModel(BaseModel):
     """
@@ -55,8 +56,8 @@ class CycleGANPatchModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        visual_names_A = ['real_A', 'fake_B', 'rec_A']
-        visual_names_B = ['real_B', 'fake_A', 'rec_B']
+        visual_names_A = ['real_A', 'fake_B', 'rec_A', 'real_A_patchidx']
+        visual_names_B = ['real_B', 'fake_A', 'rec_B', 'real_B_patchidx']
         if self.isTrain and self.opt.lambda_identity > 0.0:  # if identity loss is used, we also visualize idt_B=G_A(B) ad idt_A=G_A(B)
             visual_names_A.append('idt_B')
             visual_names_B.append('idt_A')
@@ -119,6 +120,9 @@ class CycleGANPatchModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
+        #print('real a patchidx shape', self.real_A_patchidx.shape)
+        #print('real b patchidx shape', self.real_B_patchidx.shape)
+
         self.fake_B = self.netG_A(self.real_A, self.real_A_patchidx)  # G_A(A)
         self.rec_A = self.netG_B(self.fake_B, self.real_A_patchidx)   # G_B(G_A(A))
         self.fake_A = self.netG_B(self.real_B, self.real_B_patchidx)  # G_B(B)
@@ -145,7 +149,7 @@ class CycleGANPatchModel(BaseModel):
 
         # Another fake, which is real images with fake ids
         augidx = realidx + 1 + torch.randint(N-1, size=realidx.shape).to(realidx.device)
-        augidx = augidx % 581
+        augidx = augidx % N
         # Use this augmented index with the real images
         pred_fake_2 = netD(real, augidx)
         loss_D_fake_2 = self.criterionGAN(pred_fake_2, False)
@@ -161,13 +165,13 @@ class CycleGANPatchModel(BaseModel):
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         fake_B, fake_B_patchidx = self.fake_B_pool.query(self.fake_B, self.real_A_patchidx)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, self.real_B_patchidx, fake_B, fake_B_patchidx)
+        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B, self.real_B_patchidx, fake_B_patchidx)
 
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         fake_A, fake_A_patchidx = self.fake_A_pool.query(self.fake_A, self.real_B_patchidx)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, self.real_A_patchidx, fake_A, fake_A_patchidx)
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A, self.real_A_patchidx, fake_A_patchidx)
 
 
     def backward_G(self):

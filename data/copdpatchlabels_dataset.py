@@ -139,20 +139,22 @@ class CopdpatchlabelsDataset(BaseDataset):
         '''
         Load a patch from image (or cache defined by LRU)
         '''
-        if cache.get(filename) is None:
+        if self.cache.get(filename) is None:
             data = np.load(filename)
-            cache[filename] = data
-            cache.move_to_end(filename)
+            self.cache[filename] = data
+            self.cache.move_to_end(filename)
 
-        patch = cache[filename] + 0
+        patch = self.cache[filename] + 0
         patch = self.transform_patch(patch)
 
         # Discard item from cache if its getting too big
-        if len(cache) > self.opt.cache_capacity:
-            cache.popitem(last=False)
+        if len(self.cache) > self.opt.cache_capacity:
+            self.cache.popitem(last=False)
         return patch[None]
 
 
     def __len__(self):
         """Return the total number of images."""
         return max(self.lo_size, self.hi_size)
+
+

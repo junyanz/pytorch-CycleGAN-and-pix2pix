@@ -44,10 +44,10 @@ class Unet3dPatchGenerator(nn.Module):
 
 
     def forward(self, x, label):
-        enc = self.encoder(x)                           # [B, 32, H, W]
-        embed = self.embed(label)[..., None, None]      # [B, 32, 1, 1]
+        enc = self.encoder(x)                           # [B, 32, H, W, D]
+        embed = self.embed(label.long())[..., None, None, None]      # [B, 32, 1, 1, 1]
         #embed = embed.repeat(1, 1, enc.shape[2], enc.shape[3])
-        embed = embed.repeat(1, 1, x.shape[2], x.shape[3], x.shape[4])   # [B, 32, H, W]
+        embed = embed.repeat(1, 1, enc.shape[2], enc.shape[3], enc.shape[4])   # [B, 32, H, W]
         enc = torch.cat([enc, embed], 1)            # [B, 64, H, W]
         dec = self.decoder(enc)
         return dec
@@ -84,11 +84,12 @@ class Unet3dPatchDiscriminator(nn.Module):
         self.embed = nn.Embedding(581, 32)
 
 
-    def forward(self, x, lab):
-        x = self.encoder(x)  # [B, 32, H, W]
-        embed = self.embed(lab)[..., None, None, None]
+    def forward(self, X, lab):
+        x = self.encoder(X)  # [B, 32, H, W, D]
+        embed = self.embed(lab.long())[..., None, None, None]
         #print(x.shape, embed.shape)
         #input()
+        #print(x.shape, embed.shape, X.shape, lab.shape)
         embed = embed.repeat(1, 1, x.shape[2], x.shape[3], x.shape[4])   # [B, 32, H, W]
         x = torch.cat([x, embed], 1)
         x = self.fc_modules(x)

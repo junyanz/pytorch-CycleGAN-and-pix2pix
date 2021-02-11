@@ -95,6 +95,24 @@ class Visualizer():
         print('Command: %s' % cmd)
         Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
 
+
+    def display_current_results_3d(self, visuals, epoch, save_result):
+        """Save the results  on disk
+        Parameters:
+            visuals (OrderedDict) - - dictionary of images to display or save
+            epoch (int) - - the current epoch
+            save_result (bool) - - if save the current results to an HTML file
+        """
+        # save images to the disk
+        img_subdir = os.path.join(self.img_dir, '{:05d}'.format(epoch))
+        os.makedirs(img_subdir, exist_ok=True)
+
+        for label, image in visuals.items():
+            image_numpy = image.data.cpu().numpy()
+            with open(os.path.join(img_subdir, label + '.npy'), 'wb') as fi:
+                np.save(fi, image_numpy)
+
+
     def display_current_results(self, visuals, epoch, save_result):
         """Display current results on visdom; save current results to an HTML file.
 
