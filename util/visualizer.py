@@ -107,8 +107,13 @@ class Visualizer():
         img_subdir = os.path.join(self.img_dir, '{:05d}'.format(epoch))
         os.makedirs(img_subdir, exist_ok=True)
 
+        maxB = 16
+
         for label, image in visuals.items():
             image_numpy = image.data.cpu().numpy()
+            B = image_numpy.shape[0]
+            maxB = min(B, maxB)   # If B > maxB, then keep maxB images
+            image_numpy = image_numpy[:maxB]
             with open(os.path.join(img_subdir, label + '.npy'), 'wb') as fi:
                 np.save(fi, image_numpy)
 

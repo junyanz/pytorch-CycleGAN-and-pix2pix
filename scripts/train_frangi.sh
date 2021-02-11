@@ -9,6 +9,7 @@ python train3d.py \
     --model cycle_gan_patch \
     --batch_size 512 \
     --lambda_identity 0.05 \
+    --display_freq 10 \
     --netG unet3d_patch \
     --netD basic3d_patch \
     --input_nc 1  \
