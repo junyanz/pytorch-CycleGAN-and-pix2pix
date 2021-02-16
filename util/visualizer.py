@@ -104,7 +104,7 @@ class Visualizer():
             save_result (bool) - - if save the current results to an HTML file
         """
         # save images to the disk
-        img_subdir = os.path.join(self.img_dir, '{:05d}'.format(epoch))
+        img_subdir = os.path.join(self.img_dir, '{:06d}'.format(epoch))
         os.makedirs(img_subdir, exist_ok=True)
 
         maxB = 16
