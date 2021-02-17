@@ -17,6 +17,7 @@ class Unet3dPatchGenerator(nn.Module):
         super().__init__()
 
         self.add_final = add_final
+        self.patchfloat = patchfloat
         # If continuous values of patch ids (x, y, z)
         if patchfloat:
             embed = []

@@ -10,8 +10,8 @@ python train3d.py \
     --patchfloat 1 \
     --augment 1 \
     --batch_size 500 \
-    --save_latest_freq 40000 \
-    --lambda_identity 0.05 \
+    --save_latest_freq 40 \
+    --lambda_identity 0.4 \
     --display_freq 40 \
     --netG unet3d_patch_float \
     --netD basic3d_patch_float \

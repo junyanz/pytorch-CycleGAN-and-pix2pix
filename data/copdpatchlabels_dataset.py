@@ -13,6 +13,7 @@ from data.base_dataset import BaseDataset, get_transform
 import numpy as np
 import os
 from os import path as osp
+import torch
 import pandas as pd
 from collections import OrderedDict
 from monai.transforms import Compose, RandGaussianNoise, Rand3DElastic, RandAdjustContrast
@@ -66,7 +67,7 @@ class CopdpatchlabelsDataset(BaseDataset):
         # Extra parameters for augmentations and location representation
         self.patchlocations = opt.patchlocations
         self.patchfloat = opt.patchfloat
-        self.augment = augment
+        self.augment = opt.augment
 
         # If augmentations enabled, then use the MONAI transformations
         self.transform_re = Rand3DElastic(mode='bilinear', prob=1.0,
@@ -77,7 +78,7 @@ class CopdpatchlabelsDataset(BaseDataset):
                              rotate_range=(np.pi / 18, np.pi / 18, np.pi / 18),
                              scale_range=(0.1, 0.1, 0.1),
                              padding_mode='border',
-                             device='cuda:0'
+                             #device='cuda:0'
                              )
         self.transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
         self.transform_rac = RandAdjustContrast(prob=0.25)
@@ -143,8 +144,8 @@ class CopdpatchlabelsDataset(BaseDataset):
 
         # convert to x, y, z
         if self.patchfloat:
-            label_A = self.patchlocations[label_A]
-            label_B = self.patchlocations[label_B]
+            label_A = torch.FloatTensor(self.patchlocations[label_A])
+            label_B = torch.FloatTensor(self.patchlocations[label_B])
 
         #path = 'temp{}'.format(index)    # needs to be a string
         #data_A = self.load_patch(imgidx % self.size0, patchidx, 0)
