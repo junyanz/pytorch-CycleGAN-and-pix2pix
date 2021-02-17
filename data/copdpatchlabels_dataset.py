@@ -15,6 +15,7 @@ import os
 from os import path as osp
 import pandas as pd
 from collections import OrderedDict
+from monai.transforms import Compose, RandGaussianNoise, Rand3DElastic, RandAdjustContrast
 # from data.image_folder import make_dataset
 # from PIL import Image
 
@@ -40,6 +41,10 @@ class CopdpatchlabelsDataset(BaseDataset):
         #parser.add_argument('--new_dataset_option', type=float, default=1.0, help='new dataset option')
         #parser.set_defaults(max_dataset_size=10, new_dataset_option=2.0)  # specify dataset-specific default values
         parser.add_argument('--subroot', type=str, required=True,)
+
+        parser.add_argument('--patchlocations', type=str, default='/ocean/projects/asc170022p/rohit33/patch_locations.npy')
+        parser.add_argument('--patchfloat', type=int, default=0, help='Do we use continuous values for patch locations?')
+        parser.add_argument('--augment', type=int, default=0, help='Do we want to augment the dataset? (Using MONAI)')
         return parser
 
 
@@ -57,6 +62,35 @@ class CopdpatchlabelsDataset(BaseDataset):
         # save the option and dataset root
         BaseDataset.__init__(self, opt)
         # Load the file containing patient info
+
+        # Extra parameters for augmentations and location representation
+        self.patchlocations = opt.patchlocations
+        self.patchfloat = opt.patchfloat
+        self.augment = augment
+
+        # If augmentations enabled, then use the MONAI transformations
+        self.transform_re = Rand3DElastic(mode='bilinear', prob=1.0,
+                             sigma_range=(8, 12),
+                             magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
+                             spatial_size=(32, 32, 32),
+                             translate_range=(12, 12, 12),
+                             rotate_range=(np.pi / 18, np.pi / 18, np.pi / 18),
+                             scale_range=(0.1, 0.1, 0.1),
+                             padding_mode='border',
+                             device='cuda:0'
+                             )
+        self.transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
+        self.transform_rac = RandAdjustContrast(prob=0.25)
+
+        # If we want to use x,y,z then load it first
+        if self.patchfloat:
+            self.patchlocations = np.load(self.patchlocations)*1.0
+            mmax = self.patchlocations.max(0)
+            self.patchlocations /= mmax
+            self.patchlocations = 2*self.patchlocations - 1         # [581, 3] of range [-1, 1]
+        else:
+            self.patchlocations = None
+
         subroot = osp.join(self.root, self.opt.subroot)
         lo_files = []
         hi_files = []
@@ -107,6 +141,11 @@ class CopdpatchlabelsDataset(BaseDataset):
         label_A = int(lofile.split('/')[-2])
         label_B = int(hifile.split('/')[-2])
 
+        # convert to x, y, z
+        if self.patchfloat:
+            label_A = self.patchlocations[label_A]
+            label_B = self.patchlocations[label_B]
+
         #path = 'temp{}'.format(index)    # needs to be a string
         #data_A = self.load_patch(imgidx % self.size0, patchidx, 0)
         #data_B = self.load_patch(imgidx % self.size4, patchidx, 4)
@@ -124,10 +163,18 @@ class CopdpatchlabelsDataset(BaseDataset):
             }
 
 
-    def transform_patch(self, patch):
+    def transform_patch(self, Patch):
         '''
         Just scale the patch to normalize it
         '''
+        patch = Patch + 0
+        # MONAI augmentations
+        if self.augment:
+            patch = self.transform_re(patch)
+            patch = self.transform_rgn(patch)
+            patch = self.transform_rac(patch)
+
+        # Normalize it
         m = -1024
         M = 240
         norm = (patch - m)/(M - m)
@@ -145,12 +192,13 @@ class CopdpatchlabelsDataset(BaseDataset):
             self.cache.move_to_end(filename)
 
         patch = self.cache[filename] + 0
-        patch = self.transform_patch(patch)
+        patch = self.transform_patch(patch[None])
 
         # Discard item from cache if its getting too big
         if len(self.cache) > self.opt.cache_capacity:
             self.cache.popitem(last=False)
-        return patch[None]
+
+        return patch
 
 
     def __len__(self):

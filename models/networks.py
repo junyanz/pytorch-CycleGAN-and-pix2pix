@@ -160,6 +160,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = Unet3dGenerator(input_nc, output_nc, norm_layer=norm_layer,)
     elif netG == 'unet3d_patch':
         net = Unet3dPatchGenerator(input_nc, output_nc, norm_layer=norm_layer,)
+    elif netG == 'unet3d_patch_float':
+        net = Unet3dPatchGenerator(input_nc, output_nc, norm_layer=norm_layer, patchfloat=True, add_final=True)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -208,6 +210,8 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
         net = Unet3dDiscriminator(input_nc, norm_layer=norm_layer)
     elif netD == 'basic3d_patch':
         net = Unet3dPatchDiscriminator(input_nc, norm_layer=norm_layer)
+    elif netD == 'basic3d_patch_float':
+        net = Unet3dPatchDiscriminator(input_nc, norm_layer=norm_layer, patchfloat=True)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids)

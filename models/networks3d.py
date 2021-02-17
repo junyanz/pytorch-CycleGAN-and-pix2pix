@@ -20,11 +20,11 @@ class Unet3dPatchGenerator(nn.Module):
         # If continuous values of patch ids (x, y, z)
         if patchfloat:
             embed = []
-            embed.append(nn.Linear(3, 32,))
+            embed.append(nn.Linear(3, 64,))
             embed.append(nn.LeakyReLU())
-            embed.append(nn.Linear(32, 32,))
+            embed.append(nn.Linear(64, 64,))
             embed.append(nn.LeakyReLU())
-            embed.append(nn.Linear(32, 32,))
+            embed.append(nn.Linear(64, 32,))
             embed.append(nn.LeakyReLU())
             embed.append(nn.Linear(32, 32,))
             self.embed = nn.Sequential(*embed)
@@ -104,11 +104,11 @@ class Unet3dPatchDiscriminator(nn.Module):
 
         if patchfloat:
             embed = []
-            embed.append(nn.Linear(3, 32,))
+            embed.append(nn.Linear(3, 64,))
             embed.append(nn.LeakyReLU())
-            embed.append(nn.Linear(32, 32,))
+            embed.append(nn.Linear(64, 64,))
             embed.append(nn.LeakyReLU())
-            embed.append(nn.Linear(32, 32,))
+            embed.append(nn.Linear(64, 32,))
             embed.append(nn.LeakyReLU())
             embed.append(nn.Linear(32, 32,))
             self.embed = nn.Sequential(*embed)
