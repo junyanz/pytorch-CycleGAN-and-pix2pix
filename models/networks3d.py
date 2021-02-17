@@ -13,8 +13,24 @@ class Unet3dPatchGenerator(nn.Module):
     Generator for 3D Unet (adapted from Li et al. Context Matters: Graph-based Self-supervised Representation Learning for Medical Images and modified a bit)
     '''
 
-    def __init__(self, input_nc, output_nc, norm_layer):
+    def __init__(self, input_nc, output_nc, norm_layer, add_final=False, patchfloat=False):
         super().__init__()
+
+        self.add_final = add_final
+        # If continuous values of patch ids (x, y, z)
+        if patchfloat:
+            embed = []
+            embed.append(nn.Linear(3, 32,))
+            embed.append(nn.LeakyReLU())
+            embed.append(nn.Linear(32, 32,))
+            embed.append(nn.LeakyReLU())
+            embed.append(nn.Linear(32, 32,))
+            embed.append(nn.LeakyReLU())
+            embed.append(nn.Linear(32, 32,))
+            self.embed = nn.Sequential(*embed)
+        else:
+            self.embed = nn.Embedding(581, 32)
+
         # Encoder modules
         enc_modules = []
         enc_modules.append(BasicBlock3d(input_nc, 8, 3, 1, norm_layer))
@@ -27,7 +43,6 @@ class Unet3dPatchGenerator(nn.Module):
         enc_modules.append(BasicBlock3d(32, 32, 3, 2, norm_layer)) # 4
         self.encoder = nn.Sequential(*enc_modules)
 
-        self.embed = nn.Embedding(581, 32)
 
         # Decoder modules
         dec_modules = []
@@ -45,11 +60,16 @@ class Unet3dPatchGenerator(nn.Module):
 
     def forward(self, x, label):
         enc = self.encoder(x)                           # [B, 32, H, W, D]
-        embed = self.embed(label.long())[..., None, None, None]      # [B, 32, 1, 1, 1]
+        if self.patchfloat:
+            embed = self.embed(label)[..., None, None, None]   # [B, 32, 1, 1, 1]
+        else:
+            embed = self.embed(label.long())[..., None, None, None]      # [B, 32, 1, 1, 1]
         #embed = embed.repeat(1, 1, enc.shape[2], enc.shape[3])
         embed = embed.repeat(1, 1, enc.shape[2], enc.shape[3], enc.shape[4])   # [B, 32, H, W]
         enc = torch.cat([enc, embed], 1)            # [B, 64, H, W]
         dec = self.decoder(enc)
+        if self.add_final:
+            dec = dec + x
         return dec
 
 
@@ -58,8 +78,9 @@ class Unet3dPatchDiscriminator(nn.Module):
     Discriminator for 3D Unet (adapted from Li et al. Context Matters: Graph-based Self-supervised Representation Learning for Medical Images and modified a bit)
     '''
 
-    def __init__(self, input_nc, norm_layer, output_nc=1):
+    def __init__(self, input_nc, norm_layer, output_nc=1, patchfloat=False):
         super().__init__()
+        self.patchfloat = patchfloat
         # Encoder modules
         enc_modules = []
         enc_modules.append(BasicBlock3d(input_nc, 8, 3, 1, norm_layer))
@@ -81,12 +102,27 @@ class Unet3dPatchDiscriminator(nn.Module):
         fc_modules.append(BasicBlock3d(32, output_nc, 1, 1, None, activ=None))
         self.fc_modules = nn.Sequential(*fc_modules)
 
-        self.embed = nn.Embedding(581, 32)
+        if patchfloat:
+            embed = []
+            embed.append(nn.Linear(3, 32,))
+            embed.append(nn.LeakyReLU())
+            embed.append(nn.Linear(32, 32,))
+            embed.append(nn.LeakyReLU())
+            embed.append(nn.Linear(32, 32,))
+            embed.append(nn.LeakyReLU())
+            embed.append(nn.Linear(32, 32,))
+            self.embed = nn.Sequential(*embed)
+        else:
+            self.embed = nn.Embedding(581, 32)
+
 
 
     def forward(self, X, lab):
         x = self.encoder(X)  # [B, 32, H, W, D]
-        embed = self.embed(lab.long())[..., None, None, None]
+        if self.patchfloat:
+            embed = self.embed(lab)[..., None, None, None]
+        else:
+            embed = self.embed(lab.long())[..., None, None, None]
         #print(x.shape, embed.shape)
         #input()
         #print(x.shape, embed.shape, X.shape, lab.shape)
