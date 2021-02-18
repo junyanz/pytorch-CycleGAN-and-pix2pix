@@ -112,14 +112,15 @@ class ResnetGenerator3d(nn.Module):
         # return self.model(input)
         enc = self.encoder(x)
         B, C, H, W, D = enc.shape
-        if not self.patchfloat:
-            patchloc = patchloc.long()
+        # Get patch location
         embed = self.embed(patchloc)[..., None, None, None]
         embed = embed.repeat(1, 1, H, W, D)
         # Concatenate embedding and encoded information
         enc = torch.cat([enc, embed], 1)
         enc = self.converter(enc)  # merge information
         dec = self.decoder(enc)
+        if self.add_final:
+            dec = dec + x
         return dec
 
 

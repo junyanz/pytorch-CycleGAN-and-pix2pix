@@ -5,6 +5,7 @@ import functools
 from torch.optim import lr_scheduler
 from models.networks3d import Unet3dGenerator, Unet3dDiscriminator
 from models.networks3d import Unet3dPatchGenerator, Unet3dPatchDiscriminator
+from models.networks3d_resnet import ResnetGenerator3d, NLayerDiscriminator3d
 
 ###############################################################################
 # Helper Functions
@@ -162,6 +163,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = Unet3dPatchGenerator(input_nc, output_nc, norm_layer=norm_layer,)
     elif netG == 'unet3d_patch_float':
         net = Unet3dPatchGenerator(input_nc, output_nc, norm_layer=norm_layer, patchfloat=True, add_final=True)
+    elif netG == 'resnet3d_9blocks':
+        net = ResnetGenerator3d(input_nc, output_nc, n_blocks=9)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -212,6 +215,8 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
         net = Unet3dPatchDiscriminator(input_nc, norm_layer=norm_layer)
     elif netD == 'basic3d_patch_float':
         net = Unet3dPatchDiscriminator(input_nc, norm_layer=norm_layer, patchfloat=True)
+    elif netD == 'patchgan_3d':
+        net = NLayerDiscriminator3d(input_nc)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids)

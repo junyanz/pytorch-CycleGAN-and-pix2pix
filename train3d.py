@@ -45,7 +45,7 @@ if __name__ == '__main__':
         model.update_learning_rate()    # update learning rates in the beginning of every epoch.
         for i, data in enumerate(dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
-            if total_iters % opt.print_freq == 0:
+            if (total_iters // opt.batch_size) % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
 
             total_iters += opt.batch_size
@@ -58,7 +58,7 @@ if __name__ == '__main__':
                 model.compute_visuals()
                 visualizer.display_current_results_3d(model.get_current_visuals(), total_iters, save_result)
 
-            if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
+            if (total_iters // opt.batch_size) % opt.print_freq == 0:    # print training losses and save logging information to the disk
                 losses = model.get_current_losses()
                 t_comp = (time.time() - iter_start_time) / opt.batch_size
                 visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
