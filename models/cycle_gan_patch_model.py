@@ -150,11 +150,16 @@ class CycleGANPatchModel(BaseModel):
         # Another fake, which is real images with fake ids
         augidx = realidx + 1 + torch.randint(N-1, size=realidx.shape).to(realidx.device)
         augidx = augidx % N
-        # Use this augmented index with the real images
-        pred_fake_2 = netD(real, augidx)
-        loss_D_fake_2 = self.criterionGAN(pred_fake_2, False)
-        # Average fake losses
-        loss_D_fake = (loss_D_fake_1 + loss_D_fake_2) * 0.5
+
+        # Average fake losses only if location is given as int index
+        if not self.opt.patchfloat:
+            #if len(realidx.shape) == 1:
+            # Use this augmented index with the real images
+            pred_fake_2 = netD(real, augidx)
+            loss_D_fake_2 = self.criterionGAN(pred_fake_2, False)
+            loss_D_fake = (loss_D_fake_1 + loss_D_fake_2) * 0.5
+        else:
+            loss_D_fake = loss_D_fake_1
 
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake) * 0.5

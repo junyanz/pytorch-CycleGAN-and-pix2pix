@@ -165,6 +165,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = Unet3dPatchGenerator(input_nc, output_nc, norm_layer=norm_layer, patchfloat=True, add_final=True)
     elif netG == 'resnet3d_9blocks':
         net = ResnetGenerator3d(input_nc, output_nc, n_blocks=9)
+    elif netG == 'resnet3d_9blocks_noadd':
+        net = ResnetGenerator3d(input_nc, output_nc, n_blocks=9, add_final=False)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids)
