@@ -6,7 +6,7 @@ python train3d.py \
     --dataroot /ocean/projects/asc170022p/rohit33 \
     --dataset_mode copdpatchpartition \
     --gpu_ids 0,1 \
-    --model cycle_gan_patch \
+    --model cycle_gan_partition \
     --patchfloat 1 \
     --augment 1 \
     --batch_size 100 \
