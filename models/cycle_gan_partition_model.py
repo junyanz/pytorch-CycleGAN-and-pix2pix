@@ -79,9 +79,9 @@ class CycleGANPartitionModel(BaseModel):
 
         if self.isTrain:  # define discriminators
             self.netD_A = networks.define_D(opt.output_nc, opt.ndf, opt.netD,
-                                            opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
+                                            opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids, partitions=opt.partitions)
             self.netD_B = networks.define_D(opt.input_nc, opt.ndf, opt.netD,
-                                            opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
+                                            opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids, partitions=opt.partitions)
 
         if self.isTrain:
             if opt.lambda_identity > 0.0:  # only works when input and output images have the same number of channels
@@ -121,7 +121,7 @@ class CycleGANPartitionModel(BaseModel):
         self.fake_A_patchidx = [x.to(self.device)+0 for x in input['B_patchidx' if AtoB else 'A_patchidx']]
         self.fake_B_patchidx = [x.to(self.device)+0 for x in input['A_patchidx' if AtoB else 'B_patchidx']]
 
-        # Modify their values (fakeA come from realB, so their partition is subtracted by 2)
+        # Modify their values (fakeA come from realB, so their partitions is subtracted by 2)
         self.fake_A_patchidx[1] = self.fake_A_patchidx[1] - 2
         self.fake_B_patchidx[1] = self.fake_B_patchidx[1] + 2
 
