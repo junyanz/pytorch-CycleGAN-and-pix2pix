@@ -20,6 +20,6 @@ python train3d.py \
     --output_nc 1 \
     --norm batch3d \
     --subroot emphysemafileindex \
-    --partitions 5 \
-    --name emphysema_resnet9_part5
+    --partitions 10 \
+    --name emphysema_resnet9_part10
 

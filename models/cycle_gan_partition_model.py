@@ -56,8 +56,8 @@ class CycleGANPartitionModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        visual_names_A = ['real_A', 'fake_B', 'rec_A', 'real_A_patchidx']
-        visual_names_B = ['real_B', 'fake_A', 'rec_B', 'real_B_patchidx']
+        visual_names_A = ['real_A', 'fake_B', 'rec_A']
+        visual_names_B = ['real_B', 'fake_A', 'rec_B']
         if self.isTrain and self.opt.lambda_identity > 0.0:  # if identity loss is used, we also visualize idt_B=G_A(B) ad idt_A=G_A(B)
             visual_names_A.append('idt_B')
             visual_names_B.append('idt_A')
