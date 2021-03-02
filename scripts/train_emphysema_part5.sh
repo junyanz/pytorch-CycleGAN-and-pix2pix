@@ -4,13 +4,13 @@ source ~/.bashrc
 conda activate venv
 python train3d.py \
     --dataroot /ocean/projects/asc170022p/rohit33 \
-    --dataset_mode copdpatchlabels \
+    --dataset_mode copdpatchpartition \
     --gpu_ids 0,1 \
-    --model cycle_gan_patch \
+    --model cycle_gan_partition \
     --patchfloat 1 \
     --augment 1 \
     --batch_size 100 \
-    --save_latest_freq 40 \
+    --save_latest_freq 100 \
     --lambda_identity 0.2 \
     --display_freq 40 \
     --pool_size 500 \
@@ -19,11 +19,7 @@ python train3d.py \
     --input_nc 1  \
     --output_nc 1 \
     --norm batch3d \
-    --subroot emphysemapatches \
-    --name copd_emphysema_resnet9
+    --subroot emphysemafileindex \
+    --partitions 5 \
+    --name emphysema_resnet9_part5
 
-#--name copd_emphysema_float
-#--netD basic3d_patch_float \
-#--netG unet3d_patch_float \
-#--batch_size 100 \     batch size 100 for 2 GPUs of 32GB each
-#--netG resnet3d_9blocks \

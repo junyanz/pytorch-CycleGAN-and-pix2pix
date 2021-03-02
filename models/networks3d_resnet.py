@@ -107,8 +107,15 @@ class ResnetGenerator3d(nn.Module):
         self.encoder = nn.Sequential(*encoder)
         self.decoder = nn.Sequential(*decoder)
 
-    def forward(self, x, patchloc):
+
+    def forward(self, x, Patchloc):
         """Standard forward"""
+        # Accomodate if there is partitions information, just ignore it
+        if isinstance(Patchloc, (list, tuple)):
+            patchloc = Patchloc[0]
+        else:
+            patchloc = Patchloc
+
         # return self.model(input)
         enc = self.encoder(x)
         B, C, H, W, D = enc.shape
@@ -189,11 +196,10 @@ class ResnetBlock(nn.Module):
 ## PatchGAN discriminator
 #############################
 
-
 class NLayerDiscriminator3d(nn.Module):
     """Defines a PatchGAN discriminator for 3D which takes patch information"""
 
-    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.InstanceNorm3d, patchfloat=True):
+    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.InstanceNorm3d, patchfloat=True, partitions=None):
         """Construct a PatchGAN discriminator
 
         Parameters:
@@ -239,7 +245,6 @@ class NLayerDiscriminator3d(nn.Module):
         self.model = nn.Sequential(*sequence)
         self.fc = nn.Sequential(*sequence_final)
         # Also load embedding for patches
-
         self.patchfloat = patchfloat
         if not patchfloat:   # int are provided
             self.embed = nn.Embedding(581, embed_size)
@@ -251,16 +256,32 @@ class NLayerDiscriminator3d(nn.Module):
                 embed.append(nn.Linear(embed_size, embed_size))
             self.embed = nn.Sequential(*embed)
 
+        # Load partitions if exists
+        self.partitions = partitions
+        if partitions is not None:
+            self.partembed = nn.Embedding(partitions, embed_size)
 
-    def forward(self, input, patchloc):
+        pass
+
+
+    def forward(self, input, Patchloc):
         """Standard forward."""
+        if self.partitions is not None:    # There exist some partitions
+            patchloc, partloc = Patchloc
+        else:
+            patchloc, partloc = Patchloc, None
+
         enc = self.model(input)   # [B, C, H, W, D]
         B, C, H, W, D = enc.shape
         # If int indices are given, then just use the long tensors for embedding
         if not self.patchfloat:
             patchloc = patchloc.long()
 
-        embed = self.embed(patchloc)[..., None, None, None]  # [B, C2, 1, 1, 1]
+        embed = self.embed(patchloc)[..., None, None, None]  # [B, E, 1, 1, 1]
+        # If part location is not none, just add it
+        if partloc is not None:
+            embed = embed + self.partembed(partloc)[..., None, None, None]  # [B, E, 1, 1, 1]
+
         embed = embed.repeat(1, 1, H, W, D)
         # Concatenate channels along channel
         enc = torch.cat([enc, embed], 1)
@@ -274,12 +295,15 @@ if __name__ == "__main__":
         net = ResnetGenerator3d(1, 1, n_blocks=9)
         print(net.__class__.__name__)
         a = torch.rand(5, 1, 32, 32, 32)
-        out = net(a, torch.randn(5, 3))
+        enc = torch.randn(5, 3)
+        part = torch.randint(5, size=(5,))
+        out = net(a, (enc, part))
         print(out.shape)
     elif testnet == 1:
-        net = NLayerDiscriminator3d(1)
+        net = NLayerDiscriminator3d(1, partitions=5)
         a = torch.rand(5, 1, 32, 32, 32)
         enc = torch.randn(5, 3)
-        out = net(a, enc)
+        part = torch.randint(5, size=(5,))
+        out = net(a, (enc, part))
         print(out.shape)
 

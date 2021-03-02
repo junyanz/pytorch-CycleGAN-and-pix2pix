@@ -1,12 +1,12 @@
 import torch
 import itertools
-from util.image_pool import ImagePool, ImageLabelPool
+from util.image_pool import ImagePool, ImageLabelPool, ImageLabelPartitionPool
 from .base_model import BaseModel
 from . import networks
 
 N = 581
 
-class CycleGANPatchModel(BaseModel):
+class CycleGANPartitionModel(BaseModel):
     """
     This class implements the CycleGAN model, for learning image-to-image translation without paired data.
 
@@ -56,8 +56,8 @@ class CycleGANPatchModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        visual_names_A = ['real_A', 'fake_B', 'rec_A', 'real_A_patchidx']
-        visual_names_B = ['real_B', 'fake_A', 'rec_B', 'real_B_patchidx']
+        visual_names_A = ['real_A', 'fake_B', 'rec_A']
+        visual_names_B = ['real_B', 'fake_A', 'rec_B']
         if self.isTrain and self.opt.lambda_identity > 0.0:  # if identity loss is used, we also visualize idt_B=G_A(B) ad idt_A=G_A(B)
             visual_names_A.append('idt_B')
             visual_names_B.append('idt_A')
@@ -79,16 +79,16 @@ class CycleGANPatchModel(BaseModel):
 
         if self.isTrain:  # define discriminators
             self.netD_A = networks.define_D(opt.output_nc, opt.ndf, opt.netD,
-                                            opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
+                                            opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids, partitions=opt.partitions)
             self.netD_B = networks.define_D(opt.input_nc, opt.ndf, opt.netD,
-                                            opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
+                                            opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids, partitions=opt.partitions)
 
         if self.isTrain:
             if opt.lambda_identity > 0.0:  # only works when input and output images have the same number of channels
                 assert(opt.input_nc == opt.output_nc)
 
-            self.fake_A_pool = ImageLabelPool(opt.pool_size)  # create image buffer to store previously generated images
-            self.fake_B_pool = ImageLabelPool(opt.pool_size)  # create image buffer to store previously generated images
+            self.fake_A_pool = ImageLabelPartitionPool(opt.pool_size)  # create image buffer to store previously generated images
+            self.fake_B_pool = ImageLabelPartitionPool(opt.pool_size)  # create image buffer to store previously generated images
             # define loss functions
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
             self.criterionCycle = torch.nn.L1Loss()
@@ -114,8 +114,16 @@ class CycleGANPatchModel(BaseModel):
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
         # Set patch locations too
-        self.real_A_patchidx = input['A_patchidx' if AtoB else 'B_patchidx'].to(self.device)
-        self.real_B_patchidx = input['B_patchidx' if AtoB else 'A_patchidx'].to(self.device)
+        self.real_A_patchidx = [x.to(self.device) for x in input['A_patchidx' if AtoB else 'B_patchidx']]
+        self.real_B_patchidx = [x.to(self.device) for x in input['B_patchidx' if AtoB else 'A_patchidx']]
+
+        # Also set up fake patchlocations and partitions
+        self.fake_A_patchidx = [x.to(self.device)+0 for x in input['B_patchidx' if AtoB else 'A_patchidx']]
+        self.fake_B_patchidx = [x.to(self.device)+0 for x in input['A_patchidx' if AtoB else 'B_patchidx']]
+
+        # Modify their values (fakeA come from realB, so their partitions is subtracted by 2)
+        self.fake_A_patchidx[1] = self.fake_A_patchidx[1] - 2
+        self.fake_B_patchidx[1] = self.fake_B_patchidx[1] + 2
 
 
     def forward(self):
@@ -124,9 +132,9 @@ class CycleGANPatchModel(BaseModel):
         #print('real b patchidx shape', self.real_B_patchidx.shape)
 
         self.fake_B = self.netG_A(self.real_A, self.real_A_patchidx)  # G_A(A)
-        self.rec_A = self.netG_B(self.fake_B, self.real_A_patchidx)   # G_B(G_A(A))
+        self.rec_A = self.netG_B(self.fake_B, self.fake_B_patchidx)   # G_B(G_A(A))
         self.fake_A = self.netG_B(self.real_B, self.real_B_patchidx)  # G_B(B)
-        self.rec_B = self.netG_A(self.fake_A, self.real_B_patchidx)   # G_A(G_B(B))
+        self.rec_B = self.netG_A(self.fake_A, self.fake_A_patchidx)   # G_A(G_B(B))
 
 
     def backward_D_basic(self, netD, real, fake, realidx, fakeidx,):
@@ -147,17 +155,9 @@ class CycleGANPatchModel(BaseModel):
         pred_fake_1 = netD(fake.detach(), fakeidx)
         loss_D_fake_1 = self.criterionGAN(pred_fake_1, False)
 
-        # Another fake, which is real images with fake ids
-        augidx = realidx + 1 + torch.randint(N-1, size=realidx.shape).to(realidx.device)
-        augidx = augidx % N
-
         # Average fake losses only if location is given as int index
         if not self.opt.patchfloat:
-            #if len(realidx.shape) == 1:
-            # Use this augmented index with the real images
-            pred_fake_2 = netD(real, augidx)
-            loss_D_fake_2 = self.criterionGAN(pred_fake_2, False)
-            loss_D_fake = (loss_D_fake_1 + loss_D_fake_2) * 0.5
+            raise NotImplementedError
         else:
             loss_D_fake = loss_D_fake_1
 
@@ -169,13 +169,13 @@ class CycleGANPatchModel(BaseModel):
 
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
-        fake_B, fake_B_patchidx = self.fake_B_pool.query(self.fake_B, self.real_A_patchidx)
+        fake_B, fake_B_patchidx = self.fake_B_pool.query(self.fake_B, self.fake_B_patchidx)
         self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B, self.real_B_patchidx, fake_B_patchidx)
 
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
-        fake_A, fake_A_patchidx = self.fake_A_pool.query(self.fake_A, self.real_B_patchidx)
+        fake_A, fake_A_patchidx = self.fake_A_pool.query(self.fake_A, self.fake_A_patchidx)
         self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A, self.real_A_patchidx, fake_A_patchidx)
 
 
@@ -198,9 +198,9 @@ class CycleGANPatchModel(BaseModel):
 
         # GAN loss D_A(G_A(A))
         # fake B is generated from real A, so should be trained with real A idx
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B, self.real_A_patchidx), True)
+        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B, self.fake_B_patchidx), True)
         # GAN loss D_B(G_B(B))
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A, self.real_B_patchidx), True)
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A, self.fake_A_patchidx), True)
         # Forward cycle loss || G_B(G_A(A)) - A||
         self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
