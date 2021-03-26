@@ -1,7 +1,7 @@
 """
 Main changes:
 1, allow to use ResNet
-2, allow to only train patch-level network
+2, allow to only train slice-level network
 """
 
 import os
@@ -14,6 +14,7 @@ import time
 import warnings
 import json
 import numpy as np
+from tensorboard_logger import configure, log_value
 
 import torch
 import torch.nn as nn
@@ -25,25 +26,25 @@ import torch.multiprocessing as mp
 import torch.utils.data
 import torch.utils.data.distributed
 
-from tensorboard_logger import configure, log_value
-
-from models.cnn3d import Encoder
-
-from moco.builder_Moco_patch import MoCo as MoCo_Patch
+from moco.builder_MoCo_slice import MoCo as MoCo_Slice
 import moco.loader
-from monai.transforms import Compose, RandGaussianNoise, Rand3DElastic, RandAdjustContrast
+from monai.transforms import Compose, RandGaussianNoise, Rand2DElastic, RandAdjustContrast
+from data.copd_MoCo_slice import COPD_dataset as COPD_dataset_slice
 
-from data.copd_MoCo_patch import COPD_dataset as COPD_dataset_patch
+import models.cnn2d as models
+model_names = sorted(name for name in models.__dict__
+    if name.islower() and not name.startswith("__")
+    and callable(models.__dict__[name]))
 
-parser = argparse.ArgumentParser(description='3D CT Images MoCo Self-Supervised Training Patch-level')
-parser.add_argument('--arch', metavar='ARCH', default='custom')
-parser.add_argument('--workers-patch', default=8, type=int, metavar='N',
-                    help='patch-level number of data loading workers (default: 8)')
+parser = argparse.ArgumentParser(description='2D CT Images MoCo Self-Supervised Training Slice-level')
+parser.add_argument('--arch', metavar='ARCH', default='resnet18')
+parser.add_argument('--workers-slice', default=8, type=int, metavar='N',
+                    help='slice-level number of data loading workers (default: 8)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
-parser.add_argument('--batch-size-patch', default=128, type=int,
+parser.add_argument('--batch-size-slice', default=128, type=int,
                     metavar='N',
-                    help='patch-level mini-batch size (default: 32), this is the total '
+                    help='slice-level mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
 parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
@@ -59,8 +60,8 @@ parser.add_argument('--weight-decay', default=1e-4, type=float,
                     dest='weight_decay')
 parser.add_argument('--print-freq', default=10, type=int,
                     metavar='N', help='print frequency (default: 10)')
-parser.add_argument('--resume-patch', default='', type=str, metavar='PATH',
-                    help='path to latest patch-level checkpoint (default: None)')
+parser.add_argument('--resume-slice', default='', type=str, metavar='PATH',
+                    help='path to latest slice-level checkpoint (default: None)')
 parser.add_argument('--world-size', default=1, type=int,
                     help='number of nodes for distributed training')
 parser.add_argument('--rank', default=0, type=int,
@@ -80,9 +81,9 @@ parser.add_argument('--multiprocessing-distributed', action='store_false',
                          'multi node data parallel training')
 
 # COPD data configs:
-parser.add_argument('--num-patch', default=581, type=int,
-                    help='total number of patches in the atlas image.')
-parser.add_argument('--root-dir', default='/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/patch_data_32_6_reg_mask/',
+parser.add_argument('--num-slice', default=379, type=int,
+                    help='total number of slices in the atlas image.')
+parser.add_argument('--root-dir', default=None,
                     help='root directory of registered images in COPDGene dataset')
 parser.add_argument('--label-name', default=["FEV1pp_utah", "FEV1_FVC_utah", "finalGold"], nargs='+',
                     help='phenotype label names')
@@ -98,23 +99,23 @@ parser.add_argument('--nhw-only', action='store_true',
                     help='only include white people')
 
 # MoCo specific configs:
-parser.add_argument('--moco-dim-patch', default=128, type=int,
+parser.add_argument('--moco-dim-slice', default=128, type=int,
                     help='feature dimension (default: 128)')
-parser.add_argument('--moco-k-patch', default=4096, type=int,
+parser.add_argument('--moco-k-slice', default=4096, type=int,
                     help='queue size; number of negative keys (default: 4098)')
-parser.add_argument('--moco-m-patch', default=0.999, type=float,
+parser.add_argument('--moco-m-slice', default=0.999, type=float,
                     help='moco momentum of updating key encoder (default: 0.999)')
-parser.add_argument('--moco-t-patch', default=0.2, type=float,
+parser.add_argument('--moco-t-slice', default=0.2, type=float,
                     help='softmax temperature (default: 0.2)')
 
 # options for moco v2
-parser.add_argument('--mlp-patch', action='store_false',
+parser.add_argument('--mlp-slice', action='store_false',
                     help='use mlp head')
-parser.add_argument('--cos-patch', action='store_false',
+parser.add_argument('--cos-slice', action='store_false',
                     help='use cosine lr schedule')
 
 # experiment configs
-parser.add_argument('--exp-name', default='debug_patch',
+parser.add_argument('--exp-name', default='debug_slice',
                     help='experiment name')
 
 def main():
@@ -127,7 +128,7 @@ def main():
         os.makedirs(exp_dir, exist_ok=True)
 
     # save configurations to a dictionary
-    with open(os.path.join(exp_dir, 'configs_patch.json'), 'w') as f:
+    with open(os.path.join(exp_dir, 'configs_slice.json'), 'w') as f:
         json.dump(vars(args), f, indent=2)
     f.close()
 
@@ -172,13 +173,8 @@ def main():
 def main_worker(gpu, ngpus_per_node, args):
     args.gpu = gpu
 
-    if gpu == 0:
-        args.gpu = 2
-    if gpu == 1:
-        args.gpu = 3
-
     # suppress printing if not master
-    if args.multiprocessing_distributed and args.gpu != 2:
+    if args.multiprocessing_distributed and args.gpu != 0:
         def print_pass(*args):
             pass
         builtins.print = print_pass
@@ -198,14 +194,13 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.rank == 0:
         configure(os.path.join('./ssl_exp', args.exp_name))
 
-    # create patch-level encoder
-    if args.arch == 'custom':
-        PatchNet = Encoder
+    # create slice-level encoder
+    SliceNet = models.__dict__[args.arch]
 
-    model_patch = MoCo_Patch(
-        PatchNet,
-        args.num_patch, args.moco_dim_patch, args.moco_k_patch, args.moco_m_patch, args.moco_t_patch, args.mlp_patch)
-    print(model_patch)
+    model_slice = MoCo_Slice(
+        SliceNet,
+        args.num_slice, args.moco_dim_slice, args.moco_k_slice, args.moco_m_slice, args.moco_t_slice, args.mlp_slice)
+    print(model_slice)
 
     if args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
@@ -213,13 +208,13 @@ def main_worker(gpu, ngpus_per_node, args):
         # DistributedDataParallel will use all available devices.
         if args.gpu is not None:
             torch.cuda.set_device(args.gpu)
-            model_patch.cuda(args.gpu)
+            model_slice.cuda(args.gpu)
             # When using a single GPU per process and per
             # DistributedDataParallel, we need to divide the batch size
             # ourselves based on the total number of GPUs we have
-            args.batch_size_patch = int(args.batch_size_patch / ngpus_per_node)
-            args.workers_patch = int((args.workers_patch + ngpus_per_node - 1) / ngpus_per_node)
-            model_patch = torch.nn.parallel.DistributedDataParallel(model_patch,
+            args.batch_size_slice = int(args.batch_size_slice / ngpus_per_node)
+            args.workers_slice = int((args.workers_slice + ngpus_per_node - 1) / ngpus_per_node)
+            model_slice = torch.nn.parallel.DistributedDataParallel(model_slice,
                                                                     device_ids=[args.gpu])
         else:
             raise NotImplementedError("GPU number is unknown.")
@@ -230,85 +225,87 @@ def main_worker(gpu, ngpus_per_node, args):
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
 
-    optimizer_patch = torch.optim.SGD(model_patch.parameters(), args.lr,
+    optimizer_slice = torch.optim.SGD(model_slice.parameters(), args.lr,
                                       momentum=args.momentum,
                                       weight_decay=args.weight_decay)
     # save the initial model
-    if not args.resume_patch:
+    if not args.resume_slice:
         if args.multiprocessing_distributed and args.rank % ngpus_per_node == 0:
             save_checkpoint({
                 'epoch': 0,
                 'arch': args.arch,
-                'state_dict': model_patch.state_dict(),
-                'optimizer': optimizer_patch.state_dict(),
+                'state_dict': model_slice.state_dict(),
+                'optimizer': optimizer_slice.state_dict(),
             }, is_best=False,
-                filename=os.path.join(os.path.join('./ssl_exp', args.exp_name), 'checkpoint_patch_init.pth.tar'))
+                filename=os.path.join(os.path.join('./ssl_exp', args.exp_name), 'checkpoint_slice_init.pth.tar'))
 
     # optionally resume from a checkpoint
-    if args.resume_patch:
-        checkpoint = os.path.join('./ssl_exp', args.exp_name, args.resume_patch)
+    if args.resume_slice:
+        checkpoint = os.path.join('./ssl_exp', args.exp_name, args.resume_slice)
         if os.path.isfile(checkpoint):
             print("=> loading checkpoint '{}'".format(checkpoint))
             if args.gpu is None:
-                checkpoint_patch = torch.load(checkpoint)
+                checkpoint_slice = torch.load(checkpoint)
             else:
                 # Map model to be loaded to specified single gpu.
                 loc = 'cuda:{}'.format(args.gpu)
-                checkpoint_patch = torch.load(checkpoint, map_location=loc)
-            args.start_epoch = checkpoint_patch['epoch']
-            model_patch.load_state_dict(checkpoint_patch['state_dict'])
-            optimizer_patch.load_state_dict(checkpoint_patch['optimizer'])
+                checkpoint_slice = torch.load(checkpoint, map_location=loc)
+            args.start_epoch = checkpoint_slice['epoch']
+            model_slice.load_state_dict(checkpoint_slice['state_dict'])
+            optimizer_slice.load_state_dict(checkpoint_slice['optimizer'])
             print("=> loaded checkpoint '{}' (epoch {})"
-                  .format(args.resume_patch, checkpoint_patch['epoch']))
+                  .format(args.resume_slice, checkpoint_slice['epoch']))
         else:
             print("=> no checkpoint found at '{}'".format(checkpoint))
             exit()
 
     # augmentation
-    transform_re = Rand3DElastic(mode='bilinear', prob=1.0,
-                                 sigma_range=(8, 12),
+    transform_re = Rand2DElastic(mode='bilinear', prob=1.0,
+                                 spacing=(1.0, 1.0), # TODO: what is spacing?
+                                 #sigma_range=(8, 12),
                                  magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
-                                 spatial_size=(32, 32, 32),
-                                 translate_range=(12, 12, 12),
-                                 rotate_range=(np.pi / 18, np.pi / 18, np.pi / 18),
-                                 scale_range=(0.1, 0.1, 0.1),
+                                 #spatial_size=(32, 32, 32),
+                                 translate_range=(12, 12), # TODO: what does this do?
+                                 rotate_range=(np.pi / 18, np.pi / 18),
+                                 scale_range=(0.1, 0.1),
                                  padding_mode='border',
-                                 device=torch.device('cuda:' + str(args.gpu)))
+                                 device=torch.device('cuda:' + str(args.gpu))
+                                 )
     transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
     transform_rac = RandAdjustContrast(prob=0.25)
 
     train_transform = Compose([transform_rac, transform_rgn, transform_re])
 
-    train_dataset_patch = COPD_dataset_patch("train", args, moco.loader.TwoCropsTransform(train_transform))
+    train_dataset_slice = COPD_dataset_slice("train", args, moco.loader.TwoCropsTransform(train_transform))
 
 
     if args.distributed:
-        train_sampler_patch = torch.utils.data.distributed.DistributedSampler(train_dataset_patch)
+        train_sampler_slice = torch.utils.data.distributed.DistributedSampler(train_dataset_slice)
     else:
         raise NotImplementedError("Only DistributedDataParallel is supported.")
 
-    train_loader_patch = torch.utils.data.DataLoader(
-        train_dataset_patch, batch_size=args.batch_size_patch, shuffle=(train_sampler_patch is None),
-        num_workers=args.workers_patch, pin_memory=True, sampler=train_sampler_patch, drop_last=True)
+    train_loader_slice = torch.utils.data.DataLoader(
+        train_dataset_slice, batch_size=args.batch_size_slice, shuffle=(train_sampler_slice is None),
+        num_workers=args.workers_slice, pin_memory=True, sampler=train_sampler_slice, drop_last=True)
 
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
-            train_sampler_patch.set_epoch(epoch)
-        adjust_learning_rate(optimizer_patch, epoch, args)
+            train_sampler_slice.set_epoch(epoch)
+        adjust_learning_rate(optimizer_slice, epoch, args)
         # train for one epoch
-        train_patch(train_loader_patch, model_patch, criterion, optimizer_patch, epoch, args)
+        train_slice(train_loader_slice, model_slice, criterion, optimizer_slice, epoch, args)
         # save model for every epoch
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                                                     and args.rank % ngpus_per_node == 0):
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': args.arch,
-                'state_dict': model_patch.state_dict(),
-                'optimizer': optimizer_patch.state_dict(),
+                'state_dict': model_slice.state_dict(),
+                'optimizer': optimizer_slice.state_dict(),
             }, is_best=False, filename=os.path.join(os.path.join('./ssl_exp', args.exp_name),
-                                                    'checkpoint_patch_{:04d}.pth.tar'.format(epoch + 1)))
+                                                    'checkpoint_slice_{:04d}.pth.tar'.format(epoch + 1)))
 
-def train_patch(train_loader, model, criterion, optimizer, epoch, args):
+def train_slice(train_loader, model, criterion, optimizer, epoch, args):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
@@ -323,31 +320,34 @@ def train_patch(train_loader, model, criterion, optimizer, epoch, args):
 
     # switch to train mode
     model.train()
-    #model.module.encoder_q.flag = 0
     end = time.time()
     num_iter_epoch = len(train_loader)
-    num_iter_sub_epoch = num_iter_epoch // args.num_patch
+    num_iter_sub_epoch = num_iter_epoch // args.num_slice
     print("num_iter_sub_epoch:", num_iter_sub_epoch)
 
-    patch_idx = -1
+    slice_idx = -1
     for i, data in enumerate(train_loader, start=0):
         # measure data loading time
         data_time.update(time.time() - end)
         if i % num_iter_sub_epoch == 0:
-            patch_idx += 1
-            if patch_idx == args.num_patch:  # tail issue
+            slice_idx += 1
+            if slice_idx == args.num_slice:  # tail issue
                 break
-            train_loader.dataset.set_patch_idx(patch_idx)
+            train_loader.dataset.set_slice_idx(slice_idx)
 
-        sids, images, patch_loc_idx, adj, labels = data # images
+        sids, images, slice_loc_idx, labels = data
+        # one-hot encoding
+        slice_idx_tensor = torch.zeros_like(slice_loc_idx)
+        torch.add(slice_idx_tensor, slice_idx)
+        slice_one_hot = one_hot_embedding(slice_idx_tensor, args.num_slice)
 
         if args.gpu is not None:
             images[0] = images[0].cuda(args.gpu, non_blocking=True)
             images[1] = images[1].cuda(args.gpu, non_blocking=True)
-            patch_loc_idx = patch_loc_idx.float().cuda(args.gpu, non_blocking=True)
+            slice_loc_idx = slice_one_hot.float().cuda(args.gpu, non_blocking=True)
 
         # compute output
-        output, target = model(patch_idx=patch_idx, im_q=[images[0], patch_loc_idx], im_k=[images[1], patch_loc_idx])
+        output, target = model(slice_idx=slice_idx, im_q=[images[0], slice_loc_idx], im_k=[images[1], slice_loc_idx])
         loss = criterion(output, target)
 
         # acc1/acc5 are (K+1)-way contrast classifier accuracy
@@ -367,13 +367,13 @@ def train_patch(train_loader, model, criterion, optimizer, epoch, args):
         end = time.time()
 
         if (i % args.print_freq == 0) and (i > 0):
-            progress.display_patch(i, patch_idx)
+            progress.display_slice(i, slice_idx)
             if args.rank == 0:
                 step = i + num_iter_epoch * epoch
-                log_value('patch/epoch', epoch, step)
-                log_value('patch/loss', progress.meters[2].avg, step)
-                log_value('patch/acc_1', progress.meters[3].avg, step)
-                log_value('patch/acc_5', progress.meters[4].avg, step)
+                log_value('slice/epoch', epoch, step)
+                log_value('slice/loss', progress.meters[2].avg, step)
+                log_value('slice/acc_1', progress.meters[3].avg, step)
+                log_value('slice/acc_5', progress.meters[4].avg, step)
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
@@ -408,15 +408,15 @@ class AverageMeter(object):
 
 
 class ProgressMeter(object):
-    def __init__(self, num_batches, meters, prefix="", patch_idx=0):
+    def __init__(self, num_batches, meters, prefix="", slice_idx=0):
         self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
         self.meters = meters
         self.prefix = prefix
-        self.patch_idx = patch_idx
+        self.slice_idx = slice_idx
 
-    def display_patch(self, batch, patch_idx):
+    def display_slice(self, batch, slice_idx):
         entries = [self.prefix + self.batch_fmtstr.format(batch)]
-        entries += ["Patch :[{}]".format(patch_idx)]
+        entries += ["slice :[{}]".format(slice_idx)]
         entries += [str(meter) for meter in self.meters]
         print('\t'.join(entries))
 
@@ -429,7 +429,7 @@ class ProgressMeter(object):
 def adjust_learning_rate(optimizer, epoch, args):
     """Decay the learning rate based on schedule"""
     lr = args.lr
-    if args.cos_patch:  # cosine lr schedule
+    if args.cos_slice:  # cosine lr schedule
         lr *= 0.5 * (1. + math.cos(math.pi * epoch / args.epochs))
     else:  # stepwise lr schedule
         for milestone in args.schedule:
@@ -453,6 +453,19 @@ def accuracy(output, target, topk=(1,)):
             correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
+
+def one_hot_embedding(labels, num_classes):
+    """Embedding labels to one-hot form.
+
+    Args:
+      labels: (LongTensor) class labels, sized [N,].
+      num_classes: (int) number of classes.
+
+    Returns:
+      (tensor) encoded labels, sized [N, #classes].
+    """
+    y = torch.eye(num_classes)
+    return y[labels]
 
 if __name__ == '__main__':
     main()
