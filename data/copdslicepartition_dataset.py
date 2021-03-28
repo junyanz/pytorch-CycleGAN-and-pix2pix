@@ -64,6 +64,7 @@ class CopdslicepartitionDataset(BaseDataset):
 
         assert opt.partitions >= 4, 'Should have at least 4 partitions'
         self.partitions = opt.partitions
+        print("Using {} partitions".format(self.partitions))
 
         self.lofiles = []
         self.hifiles = []
@@ -128,7 +129,7 @@ class CopdslicepartitionDataset(BaseDataset):
         data_A = self.pad(self.transform_patch(data_A))
         data_B = self.pad(self.transform_patch(data_B))
 
-        print(loval, hival, np.min(data_A), np.max(data_A), np.min(data_B), np.max(data_B))
+        #print(loval, hival, np.min(data_A), np.max(data_A), np.min(data_B), np.max(data_B))
 
         return {'A': torch.FloatTensor(data_A[None] + 0),
                 'B': torch.FloatTensor(data_B[None] + 0),

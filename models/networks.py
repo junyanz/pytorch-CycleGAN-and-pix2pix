@@ -157,6 +157,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, num_patches=379)
     elif netG == 'resnet_6blocks_2parts':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, num_patches=379)
+    elif netG == 'resnet_6blocks_partition':
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, num_patches=379)
     elif netG == 'unet_128':
         net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
@@ -213,6 +215,8 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
         net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer)
     elif netD == 'basic_2parts':  # PatchGAN with only 2 classes, doesnt need partitions
         net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, num_patches=379)
+    elif netD == 'basic_partition':  # PatchGAN with only 2 classes, doesnt need partitions
+        net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, num_patches=379, partitions=partitions)
     elif netD == 'n_layers':  # more options
         net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
     elif netD == 'pixel':     # classify if each pixel is real or fake

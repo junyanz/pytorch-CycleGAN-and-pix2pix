@@ -4,8 +4,6 @@ from util.image_pool import ImagePool, ImageLabelPool, ImageLabelPartitionPool
 from .base_model import BaseModel
 from . import networks
 
-N = 581
-
 class CycleGANPartitionModel(BaseModel):
     """
     This class implements the CycleGAN model, for learning image-to-image translation without paired data.
@@ -62,6 +60,12 @@ class CycleGANPartitionModel(BaseModel):
             visual_names_A.append('idt_B')
             visual_names_B.append('idt_A')
 
+        # Define N
+        if '3d' in opt.netG:
+            self.N = 581
+        else:
+            self.N = 379
+
         self.visual_names = visual_names_A + visual_names_B  # combine visualizations for A and B
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>.
         if self.isTrain:
@@ -83,6 +87,7 @@ class CycleGANPartitionModel(BaseModel):
             self.netD_B = networks.define_D(opt.input_nc, opt.ndf, opt.netD,
                                             opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids, partitions=opt.partitions)
 
+        self.partitions = opt.partitions
         if self.isTrain:
             if opt.lambda_identity > 0.0:  # only works when input and output images have the same number of channels
                 assert(opt.input_nc == opt.output_nc)
@@ -157,7 +162,26 @@ class CycleGANPartitionModel(BaseModel):
 
         # Average fake losses only if location is given as int index
         if not self.opt.patchfloat:
-            raise NotImplementedError
+            # Another fake, which is real images with fake ids
+            realpatchidx, realpartidx = realidx
+
+            augpatchidx = realpatchidx + 1 + torch.randint(self.N-1, size=realpatchidx.shape).to(realpatchidx.device)
+            augpatchidx = augpatchidx % self.N
+
+            augpartidx = realpartidx + 1 + torch.randint(self.partitions-1, size=realpartidx.shape).to(realpartidx.device)
+            augpartidx = augpartidx % self.partitions
+
+            # Average fake losses only if location is given as int index
+            if not self.opt.patchfloat:
+                #if len(realidx.shape) == 1:
+                # Use this augmented index with the real images
+                pred_fake_2 = netD(real, (augpatchidx, realpartidx))
+                loss_D_fake_2 = self.criterionGAN(pred_fake_2, False)
+
+                pred_fake_3 = netD(real, (realpatchidx, augpartidx))
+                loss_D_fake_3 = self.criterionGAN(pred_fake_3, False)
+
+                loss_D_fake = (loss_D_fake_1 + loss_D_fake_2 + loss_D_fake_3) / 3.0
         else:
             loss_D_fake = loss_D_fake_1
 
