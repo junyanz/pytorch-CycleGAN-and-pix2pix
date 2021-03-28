@@ -7,14 +7,14 @@ conda activate venv
 python train.py \
     --dataroot /ocean/projects/asc170022p/rohit33/COPDslices/ \
     --dataset_mode copdslicepartition \
-    --gpu_ids 0 \
+    --gpu_ids 0,1,2,3,4,5,6,7 \
     --model cycle_gan_partition \
     --patchfloat 0 \
-    --batch_size 10 \
+    --batch_size 80 \
+    --use_nan 0 \
     --num_threads 16 \
-    --save_latest_freq 300 \
-    --lambda_identity 0.2 \
-    --display_freq 300 \
+    --save_latest_freq 150 \
+    --display_freq 150 \
     --lambda_identity 0.5 \
     --pool_size 1000 \
     --netG resnet_6blocks_partition \
