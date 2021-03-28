@@ -102,7 +102,7 @@ class ResnetGenerator3d(nn.Module):
         #model += [ReflectionPad3d(3)]
         #model += [nn.Conv3d(ngf, output_nc, kernel_size=7, padding=0)]
         decoder += [nn.Conv3d(ngf, output_nc, kernel_size=7, padding=3)]
-        decoder += [nn.Tanh()]
+        #decoder += [nn.Tanh()]
 
         self.encoder = nn.Sequential(*encoder)
         self.decoder = nn.Sequential(*decoder)

@@ -11,7 +11,9 @@ python train3d.py \
     --augment 1 \
     --batch_size 100 \
     --save_latest_freq 100 \
-    --lambda_identity 0.2 \
+    --lambda_identity 0.05 \
+    --lambda_A 50 \
+    --lambda_B 50 \
     --display_freq 40 \
     --pool_size 500 \
     --netG resnet3d_9blocks_noadd \
@@ -20,4 +22,4 @@ python train3d.py \
     --output_nc 1 \
     --norm batch3d \
     --subroot frangipatches \
-    --name copd_frangi_resnet9
+    --name copd_frangi_resnet9_lambda50

@@ -4,7 +4,6 @@ from util.image_pool import ImagePool, ImageLabelPool
 from .base_model import BaseModel
 from . import networks
 
-N = 581
 
 class CycleGANPatchModel(BaseModel):
     """
@@ -83,6 +82,12 @@ class CycleGANPatchModel(BaseModel):
             self.netD_B = networks.define_D(opt.input_nc, opt.ndf, opt.netD,
                                             opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
 
+        # Define N
+        if '3d' in opt.netG:
+            N = 581
+        else:
+            N = 379
+
         if self.isTrain:
             if opt.lambda_identity > 0.0:  # only works when input and output images have the same number of channels
                 assert(opt.input_nc == opt.output_nc)
@@ -148,8 +153,8 @@ class CycleGANPatchModel(BaseModel):
         loss_D_fake_1 = self.criterionGAN(pred_fake_1, False)
 
         # Another fake, which is real images with fake ids
-        augidx = realidx + 1 + torch.randint(N-1, size=realidx.shape).to(realidx.device)
-        augidx = augidx % N
+        augidx = realidx + 1 + torch.randint(self.N-1, size=realidx.shape).to(realidx.device)
+        augidx = augidx % self.N
 
         # Average fake losses only if location is given as int index
         if not self.opt.patchfloat:

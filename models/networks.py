@@ -151,6 +151,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
 
     if netG == 'resnet_9blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
+    elif netG == 'resnet_9blocks_2parts':
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, num_patches=379)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
     elif netG == 'unet_128':
@@ -207,6 +209,8 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
 
     if netD == 'basic':  # default PatchGAN classifier
         net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer)
+    elif netD == 'basic_2parts':  # PatchGAN with only 2 classes, doesnt need partitions
+        net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, num_patches=379)
     elif netD == 'n_layers':  # more options
         net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
     elif netD == 'pixel':     # classify if each pixel is real or fake
@@ -339,7 +343,7 @@ class ResnetGenerator(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect', num_patches=0):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -350,6 +354,7 @@ class ResnetGenerator(nn.Module):
             use_dropout (bool)  -- if use dropout layers
             n_blocks (int)      -- the number of ResNet blocks
             padding_type (str)  -- the name of padding layer in conv layers: reflect | replicate | zero
+            num_patches         -- Number of patches/slices to give as conditional input
         """
         assert(n_blocks >= 0)
         super(ResnetGenerator, self).__init__()
@@ -362,6 +367,7 @@ class ResnetGenerator(nn.Module):
                  nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
+        decoder = []
 
         n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
@@ -371,27 +377,59 @@ class ResnetGenerator(nn.Module):
                       nn.ReLU(True)]
 
         mult = 2 ** n_downsampling
-        for i in range(n_blocks):       # add ResNet blocks
 
-            model += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
+        # Use this channel for converter
+        decoder_channels = ngf * mult
+        for i in range(n_blocks):       # add ResNet blocks
+            decoder += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
 
         for i in range(n_downsampling):  # add upsampling layers
             mult = 2 ** (n_downsampling - i)
-            model += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
+            decoder += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
                                          kernel_size=3, stride=2,
                                          padding=1, output_padding=1,
                                          bias=use_bias),
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
-        model += [nn.ReflectionPad2d(3)]
-        model += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
-        model += [nn.Tanh()]
-
+        decoder += [nn.ReflectionPad2d(3)]
+        decoder += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
+        # decoder += [nn.Tanh()]
         self.model = nn.Sequential(*model)
+        self.decoder = nn.Sequential(*decoder)
 
-    def forward(self, input):
+        # Add patch information now
+        self.num_patches = num_patches
+        self.embedding = None
+        self.converter = None
+        if num_patches > 0:
+            self.embedding = nn.Embedding(num_patches, 64)
+            self.converter = nn.Sequential(*[
+                    nn.Conv2d(decoder_channels + 64, decoder_channels, kernel_size=3, stride=1, padding=1, bias=use_bias),
+                    norm_layer(decoder_channels),
+                    nn.LeakyReLU(True),
+                    nn.Conv2d(decoder_channels, decoder_channels, kernel_size=3, stride=1, padding=1, bias=use_bias),
+                    norm_layer(decoder_channels),
+                    nn.LeakyReLU(True),
+                ])
+
+    def forward(self, input, Patchloc=None):
         """Standard forward"""
-        return self.model(input)
+        enc = self.model(input)
+        if self.converter is not None:
+            if isinstance(Patchloc, (list, tuple)):
+                patchloc = Patchloc[0]
+            else:
+                patchloc = Patchloc
+            patchembed = self.embedding(patchloc)[..., None, None]   # [B, C, 1, 1]
+            _, _, H, W = enc.shape
+            patchembed = patchembed.repeat(1, 1, H, W)
+            dec = torch.cat([enc, patchembed], 1)
+            dec = self.converter(dec)
+        else:
+            dec = enc
+
+        out = self.decoder(dec)
+        return out
 
 
 class ResnetBlock(nn.Module):
@@ -559,7 +597,7 @@ class UnetSkipConnectionBlock(nn.Module):
 class NLayerDiscriminator(nn.Module):
     """Defines a PatchGAN discriminator"""
 
-    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d):
+    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d, num_patches=0, partitions=None):
         """Construct a PatchGAN discriminator
 
         Parameters:
@@ -567,6 +605,9 @@ class NLayerDiscriminator(nn.Module):
             ndf (int)       -- the number of filters in the last conv layer
             n_layers (int)  -- the number of conv layers in the discriminator
             norm_layer      -- normalization layer
+
+            num_patches     -- Number of patches (0 means dont use patch information)
+            partitions      -- Total number of partitions (None means dont use them)
         """
         super(NLayerDiscriminator, self).__init__()
         if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters
@@ -574,6 +615,11 @@ class NLayerDiscriminator(nn.Module):
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
 
+        # Extra parameters
+        self.num_patches = num_patches
+        self.partitions = partitions
+
+        toplayers = []
         kw = 4
         padw = 1
         sequence = [nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]
@@ -590,18 +636,67 @@ class NLayerDiscriminator(nn.Module):
 
         nf_mult_prev = nf_mult
         nf_mult = min(2 ** n_layers, 8)
-        sequence += [
+        toplayers += [
             nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias),
             norm_layer(ndf * nf_mult),
             nn.LeakyReLU(0.2, True)
         ]
 
-        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
+        toplayers += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
+
         self.model = nn.Sequential(*sequence)
 
-    def forward(self, input):
+        # Get embeddings
+        self.patch_embed = None
+        self.part_embed = None
+        self.converter = None
+        converter_num = 0
+        if self.num_patches > 0:
+            self.patch_embed = nn.Embedding(self.num_patches, 64)
+            converter_num += 64
+
+        if self.partitions is not None:
+            self.part_embed  = nn.Embedding(self.partitions, 64)
+            converter_num += 64
+
+        # Create a converter for concatenating embedding as well
+        if converter_num > 0:
+            self.converter = nn.Sequential(*[
+                    nn.Conv2d(ndf * nf_mult_prev + converter_num, ndf * nf_mult_prev, kernel_size=3, stride=1, padding=1, bias=use_bias)
+                    norm_layer(ndf * nf_mult_prev),
+                    nn.LeakyReLU(0.2, True),
+                    nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult_prev, kernel_size=3, stride=1, padding=1, bias=use_bias)
+                    norm_layer(ndf * nf_mult_prev),
+                    nn.LeakyReLU(0.2, True),
+                ])
+
+        self.toplayers = nn.Sequential(*toplayers)
+
+
+    def forward(self, input, Patchloc=None):
         """Standard forward."""
-        return self.model(input)
+        #return self.model(input)
+        encoded = self.model(input)
+
+        if Patchloc is None:
+            return self.toplayers(encoded)
+        else:
+            # Get embeddings
+            if self.partitions is not None:
+                patchloc, partloc = Patchloc
+                patchembed = self.patch_embed(patchloc)[..., None, None,]   # [B, C, 1, 1]
+                partembed = self.part_embed(partloc)[..., None, None,]   # [B, C, 1, 1]
+                embed = torch.cat([patchembed, partembed], 1)  # [B, C, 1, 1]
+            else:
+                patchloc, partloc = Patchloc, None
+                embed = self.patch_embed(patchloc)[..., None, None,]   # [B, C, 1, 1]
+            # Once we have embedding, concatenate it to image
+            B, C, H, W = encoded.shape
+            embed = embed.repeat(1, 1, H, W)
+            joint = torch.cat([encoded, embed], 1)
+            mixed = self.converter(joint)
+            return self.toplayers(mixed)
+
 
 
 class PixelDiscriminator(nn.Module):
