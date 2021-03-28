@@ -16,6 +16,7 @@ except:
 import numpy as np
 import os
 from os import path as osp
+import torch
 import pandas as pd
 import math
 from collections import OrderedDict
@@ -41,6 +42,7 @@ class Copdslice2classDataset(BaseDataset):
         #parser.add_argument('--new_dataset_option', type=float, default=1.0, help='new dataset option')
         #parser.set_defaults(max_dataset_size=10, new_dataset_option=2.0)  # specify dataset-specific default values
         parser.add_argument('--use_nan', type=int, default=1, help='Do we use nan values? (If yes, then they are added to both classes)')
+        parser.add_argument('--patchfloat', type=int, default=0, help='Do we use continuous values for patch locations?')
         parser.add_argument('--frac', type=float, default=0.2)
         return parser
 
@@ -120,13 +122,13 @@ class Copdslice2classDataset(BaseDataset):
         data_A = np.load(lofile)
         data_B = np.load(hifile)
 
-        data_A = self.transform_patch(data_A)
-        data_B = self.transform_patch(data_B)
+        data_A = self.pad(self.transform_patch(data_A))
+        data_B = self.pad(self.transform_patch(data_B))
 
-        print(loval, hival, np.min(data_A), np.max(data_A), np.min(data_B), np.max(data_B))
+        #print(loval, hival, np.min(data_A), np.max(data_A), np.min(data_B), np.max(data_B))
 
-        return {'A': data_A,
-                'B': data_B,
+        return {'A': torch.FloatTensor(data_A[None] + 0),
+                'B': torch.FloatTensor(data_B[None] + 0),
 
                 'A_patchidx': loslice,
                 'B_patchidx': hislice,
@@ -136,6 +138,12 @@ class Copdslice2classDataset(BaseDataset):
                 'B_paths': hifile
         }
 
+    def pad(self, img):
+        H, W = img.shape
+        H, W = min(H, 448), min(W, 448)
+        outimg = np.zeros((448, 448)) + img[-1, -1]
+        outimg[:H, :W] = img[:H, :W] + 0
+        return outimg
 
     def transform_patch(self, patch):
         '''
@@ -160,3 +168,4 @@ if __name__ == "__main__":
     for i in range(5):
         J = (ds[np.random.randint(len(ds))])
         print(J['A_paths'], J['B_paths'])
+        print(J['A'].shape, J['B'].shape)

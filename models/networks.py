@@ -151,10 +151,12 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
 
     if netG == 'resnet_9blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
-    elif netG == 'resnet_9blocks_2parts':
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, num_patches=379)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
+    elif netG == 'resnet_9blocks_2parts':
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, num_patches=379)
+    elif netG == 'resnet_6blocks_2parts':
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, num_patches=379)
     elif netG == 'unet_128':
         net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
@@ -385,10 +387,14 @@ class ResnetGenerator(nn.Module):
 
         for i in range(n_downsampling):  # add upsampling layers
             mult = 2 ** (n_downsampling - i)
-            decoder += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
+            decoder += [
+                        nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
                                          kernel_size=3, stride=2,
                                          padding=1, output_padding=1,
                                          bias=use_bias),
+                        #nn.Upsample(scale_factor=2, mode='bilinear'),
+                        #nn.Conv2d(ngf * mult, int(ngf * mult / 2),
+                            #kernel_size=3, stride=1, padding=1, bias=use_bias),
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
         decoder += [nn.ReflectionPad2d(3)]
@@ -662,10 +668,10 @@ class NLayerDiscriminator(nn.Module):
         # Create a converter for concatenating embedding as well
         if converter_num > 0:
             self.converter = nn.Sequential(*[
-                    nn.Conv2d(ndf * nf_mult_prev + converter_num, ndf * nf_mult_prev, kernel_size=3, stride=1, padding=1, bias=use_bias)
+                    nn.Conv2d(ndf * nf_mult_prev + converter_num, ndf * nf_mult_prev, kernel_size=3, stride=1, padding=1, bias=use_bias),
                     norm_layer(ndf * nf_mult_prev),
                     nn.LeakyReLU(0.2, True),
-                    nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult_prev, kernel_size=3, stride=1, padding=1, bias=use_bias)
+                    nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult_prev, kernel_size=3, stride=1, padding=1, bias=use_bias),
                     norm_layer(ndf * nf_mult_prev),
                     nn.LeakyReLU(0.2, True),
                 ])

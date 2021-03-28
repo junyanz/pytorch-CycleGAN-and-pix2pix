@@ -84,9 +84,9 @@ class CycleGANPatchModel(BaseModel):
 
         # Define N
         if '3d' in opt.netG:
-            N = 581
+            self.N = 581
         else:
-            N = 379
+            self.N = 379
 
         if self.isTrain:
             if opt.lambda_identity > 0.0:  # only works when input and output images have the same number of channels
