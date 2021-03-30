@@ -1,5 +1,6 @@
 from torch.utils.data import Dataset
 import numpy as np
+import os
 import glob
 
 def default_transform(x):
@@ -8,6 +9,7 @@ def default_transform(x):
 class COPD_dataset(Dataset):
 
     def __init__(self, stage, args, transforms=default_transform):
+        self.stage = stage
         self.args = args
         self.root_dir = args.root_dir
         self.metric_dict = dict() # initialize metric dictionary
@@ -39,9 +41,8 @@ class COPD_dataset(Dataset):
             self.sid_list.append(item.split('/')[-1][:-10])
         self.sid_list.sort()
         assert len(self.sid_list) == self.patch_data.shape[0]
-        self.patch_loc = np.load(
-            "/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/patch_data_32_6_reg_mask/19676E_INSP_STD_JHU_COPD_BSpline_Iso1_patch_loc.npy")
-        self.patch_loc = self.patch_loc / self.patch_loc.max(0)
+        self.patch_loc = np.load(self.args.root_dir + "19676E_INSP_STD_JHU_COPD_BSpline_Iso1_patch_loc.npy")
+        self.patch_loc = (self.patch_loc / self.patch_loc.max(0)) * 2 - 1  # TODO: normalize position to [-1, 1]
 
         print("Fold: full")
         self.sid_list = np.asarray(self.sid_list)
@@ -52,45 +53,29 @@ class COPD_dataset(Dataset):
         self.patch_idx = idx
         self.patch_data = np.load(self.args.root_dir+"grouped_patch/patch_loc_"+str(idx)+".npy")
 
-    def init_bow_dict(self):
-        bow_dict = dict()
-        FILE = open('/ocean/projects/asc170022p/shared/Data/COPDGene/CuratedFeatures/Nonparametric_SuperVoxel/BOW_histFHOG_largeRange_setting1.csv', 'r')
-        columns = FILE.readline().strip("\n").split(",")
-        for line in FILE.readlines():
-            mylist = line.strip("\n").split(",")
-            key = mylist[-1] # key is the sid
-            bow = list(map(float, mylist[:-1]))
-            bow_dict[key] = np.array(bow)
-        return bow_dict # TODO: total sids = 7292
-
-    def init_lle_dict(self):
-        lle_dict = dict()
-        FILE = open(
-            '/ocean/projects/asc170022p/shared/Data/COPDGene/CuratedFeatures/Nonparametric_SuperVoxel/LLE_histFHOG_largeRange_setting1.csv', 'r')
-        columns = FILE.readline().strip("\n").split(",")
-        for line in FILE.readlines():
-            mylist = line.strip("\n").split(",")
-            key = mylist[-1]  # key is the sid
-            lle = list(map(float, mylist[:-1]))
-            lle_dict[key] = np.array(lle)
-        return lle_dict # TODO: total sids = 7292
-
-
     def __len__(self):
-        return self.sid_list_len*self.args.num_patch
+        if self.stage == 'training':
+            return self.sid_list_len*self.args.num_patch
+        if self.stage == 'testing':
+            return self.sid_list_len
 
     def __getitem__(self, idx):
-        idx = idx % self.sid_list_len
-        img = self.patch_data[idx,:,:,:]
-        img = img + 1024.
-        img = self.transforms(img[None,:,:,:])
-        img[0] = img[0]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
-        img[1] = img[1]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
 
-        patch_loc_idx = self.patch_loc[self.patch_idx,:] # patch location
-        adj = np.array([]) # not needed for patch-level only
+        if self.stage == 'training':
+            idx = idx % self.sid_list_len
+            img = self.patch_data[idx,:,:,:]
+            np.clip(img, -1024, 240) # clip input intensity to [-1024, 240]
+            img = img + 1024.
+            img = self.transforms(img[None,:,:,:])
+            img[0] = img[0]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
+            img[1] = img[1]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
 
-        key = self.sid_list[idx][:6]
-        label = np.asarray(self.metric_dict[key]) # TODO: self.sid_list[idx][:6] extract sid from the first 6 letters
+            patch_loc_idx = self.patch_loc[self.patch_idx,:] # patch location
+            adj = np.array([]) # not needed for patch-level only
 
-        return key, img, patch_loc_idx, adj, label
+            key = self.sid_list[idx][:6]
+            label = np.asarray(self.metric_dict[key])
+            return key, img, patch_loc_idx, adj, label
+
+        if self.stage == 'testing':
+            pass

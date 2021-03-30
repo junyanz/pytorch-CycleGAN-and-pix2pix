@@ -28,7 +28,7 @@ import torch.utils.data.distributed
 
 from moco.builder_MoCo_slice import MoCo as MoCo_Slice
 import moco.loader
-from monai.transforms import Compose, RandGaussianNoise, Rand2DElastic, RandAdjustContrast
+from monai.transforms import Compose, RandGaussianNoise, Rand2DElastic, RandAdjustContrast, RandAffine
 from data.copd_MoCo_slice import COPD_dataset as COPD_dataset_slice
 
 import models.cnn2d as models
@@ -173,8 +173,13 @@ def main():
 def main_worker(gpu, ngpus_per_node, args):
     args.gpu = gpu
 
+    if gpu == 0:
+        args.gpu = 1
+    if gpu == 1:
+        args.gpu = 2
+
     # suppress printing if not master
-    if args.multiprocessing_distributed and args.gpu != 0:
+    if args.multiprocessing_distributed and args.gpu != 1:
         def print_pass(*args):
             pass
         builtins.print = print_pass
@@ -264,17 +269,25 @@ def main_worker(gpu, ngpus_per_node, args):
                                  spacing=(1.0, 1.0), # TODO: what is spacing?
                                  #sigma_range=(8, 12),
                                  magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
-                                 #spatial_size=(32, 32, 32),
+                                 spatial_size=(224, 224),
                                  translate_range=(12, 12), # TODO: what does this do?
                                  rotate_range=(np.pi / 18, np.pi / 18),
                                  scale_range=(0.1, 0.1),
                                  padding_mode='border',
                                  device=torch.device('cuda:' + str(args.gpu))
                                  )
+
+    transform_ra = RandAffine(mode='bilinear', prob=1.0,
+                              spatial_size=(224, 224),
+                              translate_range=(12, 12),
+                              rotate_range=(np.pi / 18, np.pi / 18),
+                              scale_range=(0.1, 0.1),
+                              padding_mode='border')
+
     transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
     transform_rac = RandAdjustContrast(prob=0.25)
 
-    train_transform = Compose([transform_rac, transform_rgn, transform_re])
+    train_transform = Compose([transform_rac, transform_rgn, transform_ra])
 
     train_dataset_slice = COPD_dataset_slice("train", args, moco.loader.TwoCropsTransform(train_transform))
 

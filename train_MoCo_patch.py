@@ -1,9 +1,3 @@
-"""
-Main changes:
-1, allow to use ResNet
-2, allow to only train patch-level network
-"""
-
 import os
 import argparse
 import builtins
@@ -24,21 +18,21 @@ import torch.optim
 import torch.multiprocessing as mp
 import torch.utils.data
 import torch.utils.data.distributed
-
 from tensorboard_logger import configure, log_value
 
-from models.cnn3d import Encoder
 
+from models.cnn3d import Encoder as PatchNet
+import moco.loader as MoCo_Loader
 from moco.builder_Moco_patch import MoCo as MoCo_Patch
-import moco.loader
-from monai.transforms import Compose, RandGaussianNoise, Rand3DElastic, RandAdjustContrast
-
 from data.copd_MoCo_patch import COPD_dataset as COPD_dataset_patch
 
-parser = argparse.ArgumentParser(description='3D CT Images MoCo Self-Supervised Training Patch-level')
+from monai.transforms import Compose, ScaleIntensity, RandGaussianNoise, RandAffine, Rand3DElastic, RandAdjustContrast
+
+
+parser = argparse.ArgumentParser(description='3D CT Images Self-Supervised Training Patch-level')
 parser.add_argument('--arch', metavar='ARCH', default='custom')
 parser.add_argument('--workers-patch', default=8, type=int, metavar='N',
-                    help='patch-level number of data loading workers (default: 8)')
+                    help='patch-level number of data loading workers (default: 0)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--batch-size-patch', default=128, type=int,
@@ -46,7 +40,7 @@ parser.add_argument('--batch-size-patch', default=128, type=int,
                     help='patch-level mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -78,12 +72,16 @@ parser.add_argument('--multiprocessing-distributed', action='store_false',
                          'N processes per node, which has N GPUs. This is the '
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
+parser.add_argument('--npgus-per-node', default=2, type=int,
+                    help='number of gpus per node.')
 
-# COPD data configs:
+# image data configs:
+parser.add_argument('--stage', default='training', type=str,
+                    help='stage: training or testing')
 parser.add_argument('--num-patch', default=581, type=int,
                     help='total number of patches in the atlas image.')
 parser.add_argument('--root-dir', default='/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/patch_data_32_6_reg_mask/',
-                    help='root directory of registered images in COPDGene dataset')
+                    help='root directory of registered images in COPD dataset')
 parser.add_argument('--label-name', default=["FEV1pp_utah", "FEV1_FVC_utah", "finalGold"], nargs='+',
                     help='phenotype label names')
 parser.add_argument('--label-name-set2', default=["Exacerbation_Frequency", "MMRCDyspneaScor"], nargs='+',
@@ -92,12 +90,14 @@ parser.add_argument('--visual-score', default=["Emph_Severity", "Emph_Paraseptal
                     help='phenotype label names')
 parser.add_argument('--P2-Pheno', default=["Exacerbation_Frequency_P2"], nargs='+',
                     help='phenotype label names')
-parser.add_argument('--fold', default=0, type=int,
-                    help='fold index of cross validation')
 parser.add_argument('--nhw-only', action='store_true',
                     help='only include white people')
+parser.add_argument('--fold', default=0, type=int,
+                    help='fold index of cross validation')
 
 # MoCo specific configs:
+parser.add_argument('--rep-dim-patch', default=128, type=int,
+                    help='feature dimension (default: 512)')
 parser.add_argument('--moco-dim-patch', default=128, type=int,
                     help='feature dimension (default: 128)')
 parser.add_argument('--moco-k-patch', default=4096, type=int,
@@ -114,8 +114,11 @@ parser.add_argument('--cos-patch', action='store_false',
                     help='use cosine lr schedule')
 
 # experiment configs
-parser.add_argument('--exp-name', default='debug_patch',
+parser.add_argument('--transform-type', default='affine', type=str,
+                    help='image transformation type, affine or elastic (default: elastic)')
+parser.add_argument('--exp-name', default='debug_patch', type=str,
                     help='experiment name')
+
 
 def main():
     # read configurations
@@ -136,14 +139,7 @@ def main():
         torch.manual_seed(args.seed)
         torch.cuda.manual_seed_all(args.seed)
         torch.backends.cudnn.benchmark = True
-        """
-        cudnn.deterministic = True
-        warnings.warn('You have chosen to seed training. '
-                      'This will turn on the CUDNN deterministic setting, '
-                      'which can slow down your training considerably! '
-                      'You may see unexpected behavior when restarting '
-                      'from checkpoints.')
-        """
+        #cudnn.deterministic = True
 
     if args.gpu is not None:
         warnings.warn('You have chosen a specific GPU. This will completely '
@@ -156,7 +152,7 @@ def main():
     print("Distributed:", args.distributed)
 
     #ngpus_per_node = torch.cuda.device_count()
-    ngpus_per_node = 2
+    ngpus_per_node = args.npgus_per_node
     if args.multiprocessing_distributed:
         # Since we have ngpus_per_node processes per node, the total world_size
         # needs to be adjusted accordingly
@@ -172,13 +168,8 @@ def main():
 def main_worker(gpu, ngpus_per_node, args):
     args.gpu = gpu
 
-    if gpu == 0:
-        args.gpu = 2
-    if gpu == 1:
-        args.gpu = 3
-
     # suppress printing if not master
-    if args.multiprocessing_distributed and args.gpu != 2:
+    if args.multiprocessing_distributed and args.gpu != 0:
         def print_pass(*args):
             pass
         builtins.print = print_pass
@@ -199,12 +190,9 @@ def main_worker(gpu, ngpus_per_node, args):
         configure(os.path.join('./ssl_exp', args.exp_name))
 
     # create patch-level encoder
-    if args.arch == 'custom':
-        PatchNet = Encoder
-
     model_patch = MoCo_Patch(
         PatchNet,
-        args.num_patch, args.moco_dim_patch, args.moco_k_patch, args.moco_m_patch, args.moco_t_patch, args.mlp_patch)
+        args.num_patch, args.rep_dim_patch, args.moco_dim_patch, args.moco_k_patch, args.moco_m_patch, args.moco_t_patch, args.mlp_patch)
     print(model_patch)
 
     if args.distributed:
@@ -265,6 +253,13 @@ def main_worker(gpu, ngpus_per_node, args):
             exit()
 
     # augmentation
+    transform_ra = RandAffine(mode='bilinear', prob=1.0,
+                              spatial_size=(32, 32, 32),
+                              translate_range=(12, 12, 12),
+                              rotate_range=(np.pi / 18, np.pi / 18, np.pi / 18),
+                              scale_range=(0.1, 0.1, 0.1),
+                              padding_mode='border')
+
     transform_re = Rand3DElastic(mode='bilinear', prob=1.0,
                                  sigma_range=(8, 12),
                                  magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
@@ -272,14 +267,17 @@ def main_worker(gpu, ngpus_per_node, args):
                                  translate_range=(12, 12, 12),
                                  rotate_range=(np.pi / 18, np.pi / 18, np.pi / 18),
                                  scale_range=(0.1, 0.1, 0.1),
-                                 padding_mode='border',
-                                 device=torch.device('cuda:' + str(args.gpu)))
+                                 padding_mode='border')
+
     transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
     transform_rac = RandAdjustContrast(prob=0.25)
 
-    train_transform = Compose([transform_rac, transform_rgn, transform_re])
+    if args.transform_type == 'affine':
+        train_transforms = Compose([transform_rac, transform_rgn, transform_ra])
+    if args.transform_type == 'elastic':
+        train_transforms = Compose([transform_rac, transform_rgn, transform_re])
 
-    train_dataset_patch = COPD_dataset_patch("train", args, moco.loader.TwoCropsTransform(train_transform))
+    train_dataset_patch = COPD_dataset_patch('training', args, MoCo_Loader.TwoCropsTransform(train_transforms))
 
 
     if args.distributed:
@@ -315,15 +313,13 @@ def train_patch(train_loader, model, criterion, optimizer, epoch, args):
     top1 = AverageMeter('Acc@1', ':6.2f')
     top5 = AverageMeter('Acc@5', ':6.2f')
 
-    dataset_len = train_loader.dataset.sid_list_len
     progress = ProgressMeter(
         len(train_loader),
         [batch_time, data_time, losses, top1, top5],
-        prefix="Epoch: [{}]".format(epoch))
+        prefix="Epoch: [{}]".format(epoch + 1))
 
     # switch to train mode
     model.train()
-    #model.module.encoder_q.flag = 0
     end = time.time()
     num_iter_epoch = len(train_loader)
     num_iter_sub_epoch = num_iter_epoch // args.num_patch
@@ -339,7 +335,7 @@ def train_patch(train_loader, model, criterion, optimizer, epoch, args):
                 break
             train_loader.dataset.set_patch_idx(patch_idx)
 
-        sids, images, patch_loc_idx, adj, labels = data # images
+        pid, images, patch_loc_idx, adj, label = data
 
         if args.gpu is not None:
             images[0] = images[0].cuda(args.gpu, non_blocking=True)

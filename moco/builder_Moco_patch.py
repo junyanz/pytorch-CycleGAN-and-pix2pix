@@ -2,13 +2,12 @@
 import torch
 import torch.nn as nn
 
-
 class MoCo(nn.Module):
     """
     Build a MoCo model with: a query encoder, a key encoder, and a queue
     https://arxiv.org/abs/1911.05722
     """
-    def __init__(self, base_encoder, num_patch, dim, K, m, T, mlp):
+    def __init__(self, base_encoder, num_patch, rep_dim, moco_dim, K, m, T, mlp):
         """
         dim: feature dimension (default: 128)
         K: queue size; number of negative keys (default: 65536)
@@ -20,12 +19,12 @@ class MoCo(nn.Module):
         self.K = K
         self.m = m
         self.T = T
-        self.num_locs = num_patch # TODO: add the new dimension of number of locations
+        self.num_locs = num_patch # add the new dimension of number of locations
 
         # create the encoders
         # num_classes is the output fc dimension
-        self.encoder_q = base_encoder(num_classes=dim)
-        self.encoder_k = base_encoder(num_classes=dim)
+        self.encoder_q = base_encoder(rep_dim, moco_dim)
+        self.encoder_k = base_encoder(rep_dim, moco_dim)
 
         if mlp:  # hack: brute-force replacement
             dim_mlp = self.encoder_q.fc.weight.shape[1]
@@ -37,10 +36,10 @@ class MoCo(nn.Module):
             param_k.requires_grad = False  # not update by gradient
 
         # create the queue
-        self.register_buffer("queue", torch.randn(dim, K, self.num_locs)) #TODO: the queue should be the size of (dim of reps) * (number of negative pairs) * (number of total locations)
-        self.queue = nn.functional.normalize(self.queue, dim=0) # TODO: normalize patch representation
+        self.register_buffer("queue", torch.randn(moco_dim, K, self.num_locs)) # the queue should be the size of (dim of reps) * (number of negative pairs) * (number of total locations)
+        self.queue = nn.functional.normalize(self.queue, dim=0) # normalize patch representation
 
-        self.register_buffer("queue_ptr", torch.zeros(self.num_locs, dtype=torch.long)) # TODO: set pointer in buffer to 1 for each path location
+        self.register_buffer("queue_ptr", torch.zeros(self.num_locs, dtype=torch.long)) # set pointer in buffer to 1 for each path location
 
     @torch.no_grad()
     def _momentum_update_key_encoder(self):
@@ -122,7 +121,7 @@ class MoCo(nn.Module):
             logits, targets
         """
         # compute query features
-        q = self.encoder_q(im_q[0], im_q[1])  # queries: NxC # TODO: encoder needs to take both pathces and their locations as inputs
+        q = self.encoder_q(im_q[0], im_q[1])  # queries: NxC, encoder needs to take both pathces and their locations as inputs
         q = nn.functional.normalize(q, dim=1)
 
         # compute key features
@@ -143,8 +142,7 @@ class MoCo(nn.Module):
         # positive logits: Nx1
         l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
         # negative logits: NxK
-        # TODO: compute negative logits for each path in the batch conditioned on their locations
-        negs = self.queue[:,:,patch_idx].clone().detach()
+        negs = self.queue[:,:,patch_idx].clone().detach() # compute negative logits for each path in the batch conditioned on their locations
         l_neg = torch.einsum('nc,ck->nk', [q, negs])
 
         # logits: Nx(1+K)
@@ -157,7 +155,7 @@ class MoCo(nn.Module):
         labels = torch.zeros(logits.shape[0], dtype=torch.long).cuda()
 
         # dequeue and enqueue
-        self._dequeue_and_enqueue(k, patch_idx) # TODO: consider location for each patch in the batch
+        self._dequeue_and_enqueue(k, patch_idx) # consider location for each patch in the batch
 
         return logits, labels
 

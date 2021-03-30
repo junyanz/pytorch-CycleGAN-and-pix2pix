@@ -3,9 +3,10 @@ import torch.nn as nn
 
 class Encoder(nn.Module):
 
-    def __init__(self, num_classes=128):
+    def __init__(self, rep_dim, moco_dim):
         super(Encoder, self).__init__()
-        self.num_classes = num_classes
+        self.rep_dim = rep_dim
+        self.moco_dim = moco_dim
         self.conv1 = nn.Conv3d(1, 8, kernel_size=3, stride=1, padding=1)
         self.bn1 = nn.BatchNorm3d(8)
         self.act = nn.ELU()
@@ -16,10 +17,10 @@ class Encoder(nn.Module):
         self.downsample3 = self._make_layer(32, 64) #[N,64,2,2,2]
         self.conv3 = nn.Conv3d(64, 128, kernel_size=3, stride=1, padding=1)
         self.bn3 = nn.BatchNorm3d(128)
-        self.conv4 = nn.Conv3d(128, num_classes, kernel_size=3, stride=2, padding=1)
-        self.bn4 = nn.BatchNorm3d(num_classes)
-        self.cfc = nn.Sequential(nn.Linear(num_classes+3, num_classes), nn.ELU())
-        self.fc = nn.Linear(num_classes, num_classes)
+        self.conv4 = nn.Conv3d(128, rep_dim, kernel_size=3, stride=2, padding=1)
+        self.bn4 = nn.BatchNorm3d(rep_dim)
+        self.cfc = nn.Sequential(nn.Linear(rep_dim+3, rep_dim), nn.ELU())
+        self.fc = nn.Linear(rep_dim, moco_dim)
 
     def _make_layer(self, in_channels, out_channels):
         return nn.Sequential(nn.Conv3d(in_channels, out_channels, kernel_size=3, padding=1),
@@ -48,7 +49,7 @@ class Encoder(nn.Module):
         x = self.conv4(x)
         x = self.bn4(x)
         x = self.act(x)
-        x = torch.cat([x.view(-1, self.num_classes), loc], 1)
+        x = torch.cat([x.view(-1, self.rep_dim), loc], 1)
         x = self.cfc(x)
         x = self.fc(x)
         return x
