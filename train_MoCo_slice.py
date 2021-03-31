@@ -38,7 +38,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='2D CT Images MoCo Self-Supervised Training Slice-level')
 parser.add_argument('--arch', metavar='ARCH', default='resnet18')
-parser.add_argument('--workers-slice', default=8, type=int, metavar='N',
+parser.add_argument('--workers-slice', default=0, type=int, metavar='N',
                     help='slice-level number of data loading workers (default: 8)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -47,7 +47,7 @@ parser.add_argument('--batch-size-slice', default=128, type=int,
                     help='slice-level mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -79,6 +79,8 @@ parser.add_argument('--multiprocessing-distributed', action='store_false',
                          'N processes per node, which has N GPUs. This is the '
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
+parser.add_argument('--npgus-per-node', default=2, type=int,
+                    help='number of gpus per node.')
 
 # COPD data configs:
 parser.add_argument('--num-slice', default=379, type=int,
@@ -99,6 +101,8 @@ parser.add_argument('--nhw-only', action='store_true',
                     help='only include white people')
 
 # MoCo specific configs:
+parser.add_argument('--rep-dim-slice', default=512, type=int,
+                    help='feature dimension (default: 512)')
 parser.add_argument('--moco-dim-slice', default=128, type=int,
                     help='feature dimension (default: 128)')
 parser.add_argument('--moco-k-slice', default=4096, type=int,
@@ -115,6 +119,10 @@ parser.add_argument('--cos-slice', action='store_false',
                     help='use cosine lr schedule')
 
 # experiment configs
+parser.add_argument('--transform-type', default='affine', type=str,
+                    help='image transformation type, affine or elastic (default: affine)')
+parser.add_argument('--slice-size', default=224, type=int,
+                    help='slice H, W, original size = 447 (default: 447)')
 parser.add_argument('--exp-name', default='debug_slice',
                     help='experiment name')
 
@@ -157,7 +165,7 @@ def main():
     print("Distributed:", args.distributed)
 
     #ngpus_per_node = torch.cuda.device_count()
-    ngpus_per_node = 2
+    ngpus_per_node = args.npgus_per_node
     if args.multiprocessing_distributed:
         # Since we have ngpus_per_node processes per node, the total world_size
         # needs to be adjusted accordingly
@@ -173,13 +181,8 @@ def main():
 def main_worker(gpu, ngpus_per_node, args):
     args.gpu = gpu
 
-    if gpu == 0:
-        args.gpu = 1
-    if gpu == 1:
-        args.gpu = 2
-
     # suppress printing if not master
-    if args.multiprocessing_distributed and args.gpu != 1:
+    if args.multiprocessing_distributed and args.gpu != 0:
         def print_pass(*args):
             pass
         builtins.print = print_pass
@@ -204,7 +207,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     model_slice = MoCo_Slice(
         SliceNet,
-        args.num_slice, args.moco_dim_slice, args.moco_k_slice, args.moco_m_slice, args.moco_t_slice, args.mlp_slice)
+        args.num_slice, args.rep_dim_slice, args.moco_dim_slice, args.moco_k_slice, args.moco_m_slice, args.moco_t_slice, args.mlp_slice)
     print(model_slice)
 
     if args.distributed:
@@ -269,16 +272,15 @@ def main_worker(gpu, ngpus_per_node, args):
                                  spacing=(1.0, 1.0), # TODO: what is spacing?
                                  #sigma_range=(8, 12),
                                  magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
-                                 spatial_size=(224, 224),
+                                 spatial_size=(args.slice_size, args.slice_size),
                                  translate_range=(12, 12), # TODO: what does this do?
                                  rotate_range=(np.pi / 18, np.pi / 18),
                                  scale_range=(0.1, 0.1),
-                                 padding_mode='border',
-                                 device=torch.device('cuda:' + str(args.gpu))
+                                 padding_mode='border'
                                  )
 
     transform_ra = RandAffine(mode='bilinear', prob=1.0,
-                              spatial_size=(224, 224),
+                              spatial_size=(args.slice_size, args.slice_size),
                               translate_range=(12, 12),
                               rotate_range=(np.pi / 18, np.pi / 18),
                               scale_range=(0.1, 0.1),
@@ -287,7 +289,10 @@ def main_worker(gpu, ngpus_per_node, args):
     transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
     transform_rac = RandAdjustContrast(prob=0.25)
 
-    train_transform = Compose([transform_rac, transform_rgn, transform_ra])
+    if args.transform_type == 'affine':
+        train_transform = Compose([transform_rac, transform_rgn, transform_ra])
+    if args.transform_type == 'elastic':
+        train_transform = Compose([transform_rac, transform_rgn, transform_re])
 
     train_dataset_slice = COPD_dataset_slice("train", args, moco.loader.TwoCropsTransform(train_transform))
 
@@ -329,7 +334,7 @@ def train_slice(train_loader, model, criterion, optimizer, epoch, args):
     progress = ProgressMeter(
         len(train_loader),
         [batch_time, data_time, losses, top1, top5],
-        prefix="Epoch: [{}]".format(epoch))
+        prefix="Epoch: [{}]".format(epoch + 1))
 
     # switch to train mode
     model.train()
@@ -352,12 +357,12 @@ def train_slice(train_loader, model, criterion, optimizer, epoch, args):
         # one-hot encoding
         slice_idx_tensor = torch.zeros_like(slice_loc_idx)
         torch.add(slice_idx_tensor, slice_idx)
-        slice_one_hot = one_hot_embedding(slice_idx_tensor, args.num_slice)
+        #slice_one_hot = one_hot_embedding(slice_idx_tensor, args.num_slice)
 
         if args.gpu is not None:
             images[0] = images[0].cuda(args.gpu, non_blocking=True)
             images[1] = images[1].cuda(args.gpu, non_blocking=True)
-            slice_loc_idx = slice_one_hot.float().cuda(args.gpu, non_blocking=True)
+            slice_loc_idx = slice_idx_tensor.long().cuda(args.gpu, non_blocking=True)
 
         # compute output
         output, target = model(slice_idx=slice_idx, im_q=[images[0], slice_loc_idx], im_k=[images[1], slice_loc_idx])

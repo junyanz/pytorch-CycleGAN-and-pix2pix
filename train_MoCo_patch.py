@@ -96,7 +96,7 @@ parser.add_argument('--fold', default=0, type=int,
                     help='fold index of cross validation')
 
 # MoCo specific configs:
-parser.add_argument('--rep-dim-patch', default=128, type=int,
+parser.add_argument('--rep-dim-patch', default=512, type=int,
                     help='feature dimension (default: 512)')
 parser.add_argument('--moco-dim-patch', default=128, type=int,
                     help='feature dimension (default: 128)')
@@ -115,7 +115,7 @@ parser.add_argument('--cos-patch', action='store_false',
 
 # experiment configs
 parser.add_argument('--transform-type', default='affine', type=str,
-                    help='image transformation type, affine or elastic (default: elastic)')
+                    help='image transformation type, affine or elastic (default: affine)')
 parser.add_argument('--exp-name', default='debug_patch', type=str,
                     help='experiment name')
 

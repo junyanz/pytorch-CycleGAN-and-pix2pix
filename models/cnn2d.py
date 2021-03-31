@@ -147,6 +147,7 @@ class ResNet(nn.Module):
         self,
         block: Type[Union[BasicBlock, Bottleneck]],
         layers: List[int],
+        rep_dim: int = 128,
         num_classes: int = 1000,
         zero_init_residual: bool = False,
         groups: int = 1,
@@ -158,6 +159,7 @@ class ResNet(nn.Module):
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
+        self.rep_dim = rep_dim
         self.num_classes = num_classes
         self.inplanes = 64
         self.dilation = 1
@@ -183,8 +185,9 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
                                        dilate=replace_stride_with_dilation[2])
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.cfc = nn.Sequential(nn.Linear(512 * block.expansion + 379, 512 * block.expansion), nn.ELU()) # mix slice one-hot embedding
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
+        self.emb = nn.Embedding(379, 64)
+        self.cfc = nn.Sequential(nn.Linear(512 * block.expansion + 64, rep_dim), nn.ELU()) # mix slice one-hot embedding
+        self.fc = nn.Linear(rep_dim, num_classes)
 
 
         for m in self.modules():
@@ -245,7 +248,7 @@ class ResNet(nn.Module):
         x = torch.flatten(x, 1)
 
         # mix slice one-hot embedding
-        x = torch.cat([x, loc], 1)
+        x = torch.cat([x, self.emb(loc)], 1)
         x = self.cfc(x)
 
         x = self.fc(x)

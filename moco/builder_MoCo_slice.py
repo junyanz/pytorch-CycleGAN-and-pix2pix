@@ -8,7 +8,7 @@ class MoCo(nn.Module):
     Build a MoCo model with: a query encoder, a key encoder, and a queue
     https://arxiv.org/abs/1911.05722
     """
-    def __init__(self, base_encoder, num_slice, dim, K, m, T, mlp):
+    def __init__(self, base_encoder, num_slice, rep_dim, moco_dim, K, m, T, mlp):
         """
         dim: feature dimension (default: 128)
         K: queue size; number of negative keys (default: 65536)
@@ -24,8 +24,8 @@ class MoCo(nn.Module):
 
         # create the encoders
         # num_classes is the output fc dimension
-        self.encoder_q = base_encoder(num_classes=dim)
-        self.encoder_k = base_encoder(num_classes=dim)
+        self.encoder_q = base_encoder(rep_dim=rep_dim, num_classes=moco_dim)
+        self.encoder_k = base_encoder(rep_dim=rep_dim, num_classes=moco_dim)
 
         if mlp:  # hack: brute-force replacement
             dim_mlp = self.encoder_q.fc.weight.shape[1]
@@ -37,7 +37,7 @@ class MoCo(nn.Module):
             param_k.requires_grad = False  # not update by gradient
 
         # create the queue
-        self.register_buffer("queue", torch.randn(dim, K, self.num_locs)) #TODO: the queue should be the size of (dim of reps) * (number of negative pairs) * (number of total locations)
+        self.register_buffer("queue", torch.randn(moco_dim, K, self.num_locs)) #TODO: the queue should be the size of (dim of reps) * (number of negative pairs) * (number of total locations)
         self.queue = nn.functional.normalize(self.queue, dim=0) # TODO: normalize slice representation
 
         self.register_buffer("queue_ptr", torch.zeros(self.num_locs, dtype=torch.long)) # TODO: set pointer in buffer to 1 for each path location

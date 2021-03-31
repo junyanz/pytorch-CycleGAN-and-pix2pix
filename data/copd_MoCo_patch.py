@@ -64,7 +64,7 @@ class COPD_dataset(Dataset):
         if self.stage == 'training':
             idx = idx % self.sid_list_len
             img = self.patch_data[idx,:,:,:]
-            np.clip(img, -1024, 240) # clip input intensity to [-1024, 240]
+            img = np.clip(img, -1024, 240) # clip input intensity to [-1024, 240]
             img = img + 1024.
             img = self.transforms(img[None,:,:,:])
             img[0] = img[0]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
