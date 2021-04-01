@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 LOG_DIR="./logs/ssl_exp"
-EXPERIMENT="moco_slice_affine"
+EXPERIMENT="moco_slice_affine_447"
 
 mkdir -p ${LOG_DIR}
 
@@ -9,16 +9,16 @@ python train_MoCo_slice.py \
   --exp-name=${EXPERIMENT} \
   --world-size=1 \
   --rank=0 \
-  --dist-url='tcp://localhost:10001' \
+  --dist-url='tcp://localhost:10005' \
   --dist-backend='nccl' \
-  --npgus-per-node=2 \
-  --workers-slice=8 \
+  --npgus-per-node=4 \
+  --workers-slice=16 \
   --epochs=10 \
   --start-epoch=0 \
   --resume='' \
   --print-freq=10 \
   --seed=0 \
-  --num-slice=581 \
+  --num-slice=379 \
   --batch-size=128 \
   --lr=0.01 \
   --rep-dim-slice=512 \
@@ -27,4 +27,4 @@ python train_MoCo_slice.py \
   --moco-m-slice=0.999 \
   --moco-t-slice=0.2 \
   --transform-type='affine' \
-  --slice-size=224 >> ${LOG_DIR}/${EXPERIMENT}.log 2>&1
+  --slice-size=447 >> ${LOG_DIR}/${EXPERIMENT}.log 2>&1

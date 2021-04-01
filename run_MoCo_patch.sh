@@ -11,8 +11,8 @@ python train_MoCo_patch.py \
   --rank=0 \
   --dist-url='tcp://localhost:10001' \
   --dist-backend='nccl' \
-  --npgus-per-node=2 \
-  --workers-patch=8 \
+  --npgus-per-node=4 \
+  --workers-patch=16 \
   --epochs=10 \
   --start-epoch=0 \
   --resume='' \

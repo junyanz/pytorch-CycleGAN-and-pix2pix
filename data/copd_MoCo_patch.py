@@ -1,7 +1,8 @@
 from torch.utils.data import Dataset
 import numpy as np
-import os
 import glob
+
+DATA_DIR = "/ocean/projects/asc170022p/shared/Data/COPDGene/ClinicalData/"
 
 def default_transform(x):
     return x
@@ -17,22 +18,70 @@ class COPD_dataset(Dataset):
         self.patch_idx = 0
         self.patch_data = np.load(self.args.root_dir+"grouped_patch/patch_loc_"+str(self.patch_idx)+".npy")
 
-        FILE = open("/ocean/projects/asc170022p/shared/Data/COPDGene/ClinicalData/phase 1 Final 10K/phase 1 Pheno/Final10000_Phase1_Rev_28oct16.txt", "r")
-        mylist = FILE.readline().strip("\n").split("\t")
-        metric_idx = [mylist.index(label) for label in self.args.label_name]
-        race_idx = mylist.index("race")
-        for line in FILE.readlines():
-            mylist = line.strip("\n").split("\t")
-            tmp = [mylist[idx] for idx in metric_idx]
-            if "" in tmp:
-                continue
-            if self.args.nhw_only and mylist[race_idx] != "1":
-                continue
-            metric_list = []
-            for i in range(len(metric_idx)):
-                metric_list.append(float(tmp[i]))
-            self.metric_dict[mylist[0]] = metric_list
-        FILE.close()
+        if stage == 'training':
+            FILE = open(DATA_DIR + "phase 1 Final 10K/phase 1 Pheno/Final10000_Phase1_Rev_28oct16.txt", "r")
+            mylist = FILE.readline().strip("\n").split("\t")
+            metric_idx = [mylist.index(label) for label in self.args.label_name]
+            race_idx = mylist.index("race")
+            for line in FILE.readlines():
+                mylist = line.strip("\n").split("\t")
+                tmp = [mylist[idx] for idx in metric_idx]
+                if "" in tmp:
+                    continue
+                if self.args.nhw_only and mylist[race_idx] != "1":
+                    continue
+                metric_list = []
+                for i in range(len(metric_idx)):
+                    metric_list.append(float(tmp[i]))
+                self.metric_dict[mylist[0]] = metric_list
+            FILE.close()
+
+        if stage == 'testing':
+            self.label_name = self.args.label_name + self.args.label_name_set2
+            FILE = open(DATA_DIR + "phase 1 Final 10K/phase 1 Pheno/Final10000_Phase1_Rev_28oct16.txt", "r")
+            mylist = FILE.readline().strip("\n").split("\t")
+            metric_idx = [mylist.index(label) for label in self.label_name]
+            for line in FILE.readlines():
+                mylist = line.strip("\n").split("\t")
+                tmp = [mylist[idx] for idx in metric_idx]
+                if "" in tmp[:3]:
+                    continue
+                metric_list = []
+                for i in range(len(metric_idx)):
+                    if tmp[i] == "":
+                        metric_list.append(-1024)
+                    else:
+                        metric_list.append(float(tmp[i]))
+                self.metric_dict[mylist[0]] = metric_list + [-1024, -1024, -1024]
+            FILE = open(DATA_DIR + "CT scan datasets/CT visual scoring/COPDGene_CT_Visual_20JUL17.txt", "r")
+            mylist = FILE.readline().strip("\n").split("\t")
+            metric_idx = [mylist.index(label) for label in self.args.visual_score]
+            for line in FILE.readlines():
+                mylist = line.strip("\n").split("\t")
+                if mylist[0] not in self.metric_dict:
+                    continue
+                tmp = [mylist[idx] for idx in metric_idx]
+                metric_list = []
+                for i in range(len(metric_idx)):
+                    metric_list.append(float(tmp[i]))
+                self.metric_dict[mylist[0]][
+                -len(self.args.visual_score) - len(self.args.P2_Pheno):-len(self.args.P2_Pheno)] = metric_list
+            FILE.close()
+            FILE = open(
+                DATA_DIR + 'P1-P2 First 5K Long Data/Subject-flattened- one row per subject/First5000_P1P2_Pheno_Flat24sep16.txt',
+                'r')
+            mylist = FILE.readline().strip("\n").split("\t")
+            metric_idx = [mylist.index(label) for label in self.args.P2_Pheno]
+            for line in FILE.readlines():
+                mylist = line.strip("\n").split("\t")
+                if mylist[0] not in self.metric_dict:
+                    continue
+                tmp = [mylist[idx] for idx in metric_idx]
+                metric_list = []
+                for i in range(len(metric_idx)):
+                    metric_list.append(float(tmp[i]))
+                self.metric_dict[mylist[0]][-len(self.args.P2_Pheno):] = metric_list
+            FILE.close()
 
         self.sid_list = []
         for item in glob.glob(self.args.root_dir+"patch/"+"*_patch.npy"):
@@ -78,4 +127,17 @@ class COPD_dataset(Dataset):
             return key, img, patch_loc_idx, adj, label
 
         if self.stage == 'testing':
-            pass
+            sid = self.sid_list[idx]
+            img = np.load(self.root_dir + "patch/" + sid + "_patch.npy")
+            img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
+            img = img + 1024.
+            img = self.transforms(img)
+            img = img[:, None, :, :, :] / 632. - 1  # Normalize to [-1,1], 632=(1024+240)/2
+
+            key = self.sid_list[idx][:6]
+            label = np.asarray(self.metric_dict[key])  # extract sid from the first 6 letters
+
+            #adj = np.load(self.root_dir + "adj/" + sid + "_adj.npy")
+            #adj = (adj > 0.13).astype(np.int)
+            adj = np.array([])  # not needed for patch-level only
+            return sid, img, self.patch_loc.copy(), adj, label
