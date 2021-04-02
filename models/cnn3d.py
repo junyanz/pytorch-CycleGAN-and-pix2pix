@@ -48,7 +48,7 @@ class Encoder(nn.Module):
         x = self.act(x)
         x = self.conv4(x)
         x = self.bn4(x)
-        x = self.act(x)
+        x = self.act(x) # x: 64 * 512 * 1 * 1 * 1
         x = torch.cat([x.view(-1, self.rep_dim), loc], 1)
         x = self.cfc(x)
         x = self.fc(x)

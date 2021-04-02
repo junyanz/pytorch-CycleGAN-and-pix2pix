@@ -404,3 +404,67 @@ def wide_resnet101_2(pretrained: bool = False, progress: bool = True, **kwargs: 
     kwargs['width_per_group'] = 64 * 2
     return _resnet('wide_resnet101_2', Bottleneck, [3, 4, 23, 3],
                    pretrained, progress, **kwargs)
+
+
+class Encoder(nn.Module):
+
+    def __init__(self, rep_dim, num_classes):
+        super(Encoder, self).__init__()
+        self.rep_dim = rep_dim
+        self.moco_dim = num_classes
+        self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(8)
+        self.act = nn.ELU()
+        self.conv2 = nn.Conv2d(8, 8, kernel_size=3, stride=2, padding=1)
+        self.bn2 = nn.BatchNorm2d(8)
+        self.downsample1 = self._make_layer(8, 16)
+        self.downsample2 = self._make_layer(16, 32)
+        self.downsample3 = self._make_layer(32, 64) #[N,64,2,2,2]
+        self.downsample4 = self._make_layer(64, 128)
+        self.downsample5 = self._make_layer(128, 256)
+        self.downsample6 = self._make_layer(256, 512) #[N,64,2,2,2]
+        self.conv3 = nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1)
+        self.bn3 = nn.BatchNorm2d(1024)
+        self.conv4 = nn.Conv2d(1024, rep_dim, kernel_size=3, stride=2, padding=1)
+        self.bn4 = nn.BatchNorm2d(rep_dim)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.emb = nn.Embedding(379, 64)
+        self.cfc = nn.Sequential(nn.Linear(rep_dim + 64, rep_dim), nn.ELU()) # mix slice one-hot embedding
+        self.fc = nn.Linear(rep_dim, num_classes)
+
+    def _make_layer(self, in_channels, out_channels):
+        return nn.Sequential(nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+                             nn.BatchNorm2d(out_channels),
+                             nn.ELU(inplace=True),
+                             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+                             nn.BatchNorm2d(out_channels),
+                             nn.ELU(inplace=True),
+                             nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=2, padding=1),
+                             nn.BatchNorm2d(out_channels),
+                             nn.ELU(inplace=True))
+
+    def forward(self, x, loc):
+        x = self.conv1(x) # input: 64 * 1 * 447 * 447 output: 64 * 8 * 447 * 447
+        x = self.bn1(x)
+        x = self.act(x)
+        x = self.conv2(x) # input: 64 * 8 * 447 * 447 output: 64 * 8 * 224 * 224
+        x = self.bn2(x)
+        x = self.act(x)
+        x = self.downsample1(x) # output : 64 * 16 * 112 * 112
+        x = self.downsample2(x) # output : 64 * 32 * 56 * 56
+        x = self.downsample3(x) # output : 64 * 64 * 28 * 28
+        x = self.downsample4(x)  # output : 64 * 128 * 14 * 14
+        x = self.downsample5(x)  # output : 64 * 256 * 7 * 7
+        x = self.downsample6(x)  # output : 64 * 512 * 4 * 4
+        x = self.conv3(x) # output: 64 * 1024 * 4 * 4
+        x = self.bn3(x)
+        x = self.act(x)
+        x = self.conv4(x) # output: 64 * 2048 * 2 * 2
+        x = self.bn4(x)
+        x = self.act(x)
+        x = self.avgpool(x) # output: 64 * 2048 * 1 * 1
+        x = torch.flatten(x, 1)
+        x = torch.cat([x, self.emb(loc)], 1)
+        x = self.cfc(x)
+        x = self.fc(x)
+        return x

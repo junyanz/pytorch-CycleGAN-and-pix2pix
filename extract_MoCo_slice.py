@@ -17,7 +17,7 @@ model_names = sorted(name for name in models.__dict__
     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='Extract 2D Slice Representations')
-parser.add_argument('--exp-name', default='./ssl_exp/moco_slice_elastic_224')
+parser.add_argument('--exp-name', default='./ssl_exp/moco_slice_affine_447')
 parser.add_argument('--checkpoint-slice', default='checkpoint_slice_0001.pth.tar')
 parser.add_argument('--batch-size', type=int, default=1)
 parser.add_argument('--slice-batch', type=int, default=128)
@@ -44,8 +44,8 @@ def main():
     main_worker(args)
 
 def main_worker(args):
-    args.gpu = 7
-    torch.cuda.set_device(args.gpu)
+    #args.gpu = 2
+    #torch.cuda.set_device(args.gpu)
 
     # create slice-level encoder
     SliceNet = models.__dict__[args.arch]

@@ -37,7 +37,7 @@ model_names = sorted(name for name in models.__dict__
     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='2D CT Images MoCo Self-Supervised Training Slice-level')
-parser.add_argument('--arch', metavar='ARCH', default='resnet18')
+parser.add_argument('--arch', metavar='ARCH', default='custom')
 parser.add_argument('--workers-slice', default=8, type=int, metavar='N',
                     help='slice-level number of data loading workers (default: 8)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
@@ -47,11 +47,11 @@ parser.add_argument('--batch-size-slice', default=128, type=int,
                     help='slice-level mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.3, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--schedule', default=[120, 160], nargs='*', type=int,
+parser.add_argument('--schedule', default=[0.6, 0.8], nargs='*', type=int,
                     help='learning rate schedule (when to drop lr by 10x)')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum of SGD solver')
@@ -101,9 +101,9 @@ parser.add_argument('--nhw-only', action='store_true',
                     help='only include white people')
 
 # MoCo specific configs:
-parser.add_argument('--rep-dim-slice', default=512, type=int,
+parser.add_argument('--rep-dim-slice', default=2048, type=int,
                     help='feature dimension (default: 512)')
-parser.add_argument('--moco-dim-slice', default=128, type=int,
+parser.add_argument('--moco-dim-slice', default=512, type=int,
                     help='feature dimension (default: 128)')
 parser.add_argument('--moco-k-slice', default=4096, type=int,
                     help='queue size; number of negative keys (default: 4098)')
@@ -115,13 +115,13 @@ parser.add_argument('--moco-t-slice', default=0.2, type=float,
 # options for moco v2
 parser.add_argument('--mlp-slice', action='store_false',
                     help='use mlp head')
-parser.add_argument('--cos-slice', action='store_false',
+parser.add_argument('--cos-slice', action='store_true',
                     help='use cosine lr schedule')
 
 # experiment configs
 parser.add_argument('--transform-type', default='affine', type=str,
                     help='image transformation type, affine or elastic (default: affine)')
-parser.add_argument('--slice-size', default=224, type=int,
+parser.add_argument('--slice-size', default=447, type=int,
                     help='slice H, W, original size = 447 (default: 447)')
 parser.add_argument('--exp-name', default='debug_slice',
                     help='experiment name')
@@ -181,8 +181,13 @@ def main():
 def main_worker(gpu, ngpus_per_node, args):
     args.gpu = gpu
 
+    #if gpu == 0:
+    #    args.gpu = 2
+    #if gpu == 1:
+    #    args.gpu = 3
+
     # suppress printing if not master
-    if args.multiprocessing_distributed and args.gpu != 0:
+    if args.multiprocessing_distributed and args.gpu != 2:
         def print_pass(*args):
             pass
         builtins.print = print_pass
@@ -203,7 +208,10 @@ def main_worker(gpu, ngpus_per_node, args):
         configure(os.path.join('./ssl_exp', args.exp_name))
 
     # create slice-level encoder
-    SliceNet = models.__dict__[args.arch]
+    if args.arch == 'custom':
+        SliceNet = models.Encoder
+    else:
+        SliceNet = models.__dict__[args.arch]
 
     model_slice = MoCo_Slice(
         SliceNet,
@@ -294,7 +302,7 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.transform_type == 'elastic':
         train_transform = Compose([transform_rac, transform_rgn, transform_re])
 
-    train_dataset_slice = COPD_dataset_slice("train", args, moco.loader.TwoCropsTransform(train_transform))
+    train_dataset_slice = COPD_dataset_slice("training", args, moco.loader.TwoCropsTransform(train_transform))
 
 
     if args.distributed:
@@ -451,7 +459,7 @@ def adjust_learning_rate(optimizer, epoch, args):
         lr *= 0.5 * (1. + math.cos(math.pi * epoch / args.epochs))
     else:  # stepwise lr schedule
         for milestone in args.schedule:
-            lr *= 0.1 if epoch >= milestone else 1.
+            lr *= 0.1 if (epoch + 1) >= (milestone * args.epochs) else 1.
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
