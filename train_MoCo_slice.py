@@ -38,7 +38,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='2D CT Images MoCo Self-Supervised Training Slice-level')
 parser.add_argument('--arch', metavar='ARCH', default='custom')
-parser.add_argument('--workers-slice', default=8, type=int, metavar='N',
+parser.add_argument('--workers-slice', default=0, type=int, metavar='N',
                     help='slice-level number of data loading workers (default: 8)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -47,7 +47,7 @@ parser.add_argument('--batch-size-slice', default=128, type=int,
                     help='slice-level mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--lr', '--learning-rate', default=0.3, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -101,9 +101,9 @@ parser.add_argument('--nhw-only', action='store_true',
                     help='only include white people')
 
 # MoCo specific configs:
-parser.add_argument('--rep-dim-slice', default=2048, type=int,
+parser.add_argument('--rep-dim-slice', default=512, type=int,
                     help='feature dimension (default: 512)')
-parser.add_argument('--moco-dim-slice', default=512, type=int,
+parser.add_argument('--moco-dim-slice', default=128, type=int,
                     help='feature dimension (default: 128)')
 parser.add_argument('--moco-k-slice', default=4096, type=int,
                     help='queue size; number of negative keys (default: 4098)')
@@ -121,10 +121,12 @@ parser.add_argument('--cos-slice', action='store_true',
 # experiment configs
 parser.add_argument('--transform-type', default='affine', type=str,
                     help='image transformation type, affine or elastic (default: affine)')
-parser.add_argument('--slice-size', default=447, type=int,
+parser.add_argument('--slice-size', default=112, type=int,
                     help='slice H, W, original size = 447 (default: 447)')
-parser.add_argument('--exp-name', default='debug_slice',
+parser.add_argument('--exp-name', default='moco_slice_affine_112',
                     help='experiment name')
+
+LUNG_SEG = np.load('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/atlas_lung_mask_pct.npy')
 
 def main():
     # read configurations
@@ -181,13 +183,13 @@ def main():
 def main_worker(gpu, ngpus_per_node, args):
     args.gpu = gpu
 
-    #if gpu == 0:
-    #    args.gpu = 2
-    #if gpu == 1:
-    #    args.gpu = 3
+    if gpu == 0:
+        args.gpu = 4
+    if gpu == 1:
+        args.gpu = 5
 
     # suppress printing if not master
-    if args.multiprocessing_distributed and args.gpu != 2:
+    if args.multiprocessing_distributed and args.gpu != 4:
         def print_pass(*args):
             pass
         builtins.print = print_pass
@@ -277,11 +279,11 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # augmentation
     transform_re = Rand2DElastic(mode='bilinear', prob=1.0,
-                                 spacing=(1.0, 1.0), # TODO: what is spacing?
+                                 spacing=(1.0, 1.0),
                                  #sigma_range=(8, 12),
                                  magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
                                  spatial_size=(args.slice_size, args.slice_size),
-                                 translate_range=(12, 12), # TODO: what does this do?
+                                 translate_range=(12, 12),
                                  rotate_range=(np.pi / 18, np.pi / 18),
                                  scale_range=(0.1, 0.1),
                                  padding_mode='border'
@@ -306,7 +308,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
 
     if args.distributed:
-        train_sampler_slice = torch.utils.data.distributed.DistributedSampler(train_dataset_slice)
+        train_sampler_slice = torch.utils.data.distributed.DistributedSampler(train_dataset_slice, shuffle=False) # unable random shuffle to ensure loop through all subjects
     else:
         raise NotImplementedError("Only DistributedDataParallel is supported.")
 
@@ -338,7 +340,6 @@ def train_slice(train_loader, model, criterion, optimizer, epoch, args):
     top1 = AverageMeter('Acc@1', ':6.2f')
     top5 = AverageMeter('Acc@5', ':6.2f')
 
-    dataset_len = train_loader.dataset.sid_list_len
     progress = ProgressMeter(
         len(train_loader),
         [batch_time, data_time, losses, top1, top5],
@@ -357,6 +358,8 @@ def train_slice(train_loader, model, criterion, optimizer, epoch, args):
         data_time.update(time.time() - end)
         if i % num_iter_sub_epoch == 0:
             slice_idx += 1
+            #if LUNG_SEG[slice_idx] < 0.1: # if lung segmentation is too small, continue to next slice
+            #    continue
             if slice_idx == args.num_slice:  # tail issue
                 break
             train_loader.dataset.set_slice_idx(slice_idx)

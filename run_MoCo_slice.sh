@@ -20,7 +20,7 @@ python train_MoCo_slice.py \
   --seed=0 \
   --num-slice=379 \
   --batch-size=128 \
-  --lr=0.3 \
+  --lr=0.03 \
   --rep-dim-slice=512 \
   --moco-dim-slice=128 \
   --moco-k-slice=4096 \

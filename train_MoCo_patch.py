@@ -26,12 +26,12 @@ import moco.loader as MoCo_Loader
 from moco.builder_Moco_patch import MoCo as MoCo_Patch
 from data.copd_MoCo_patch import COPD_dataset as COPD_dataset_patch
 
-from monai.transforms import Compose, ScaleIntensity, RandGaussianNoise, RandAffine, Rand3DElastic, RandAdjustContrast
+from monai.transforms import Compose, RandGaussianNoise, RandAffine, Rand3DElastic, RandAdjustContrast
 
 
 parser = argparse.ArgumentParser(description='3D CT Images Self-Supervised Training Patch-level')
 parser.add_argument('--arch', metavar='ARCH', default='custom')
-parser.add_argument('--workers-patch', default=8, type=int, metavar='N',
+parser.add_argument('--workers-patch', default=0, type=int, metavar='N',
                     help='patch-level number of data loading workers (default: 0)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -281,7 +281,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
 
     if args.distributed:
-        train_sampler_patch = torch.utils.data.distributed.DistributedSampler(train_dataset_patch)
+        train_sampler_patch = torch.utils.data.distributed.DistributedSampler(train_dataset_patch, shuffle=False) # unable shuffle to ensure loop through all subjects
     else:
         raise NotImplementedError("Only DistributedDataParallel is supported.")
 

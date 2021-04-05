@@ -111,8 +111,8 @@ class COPD_dataset(Dataset):
 
     def __getitem__(self, idx):
         if self.stage == 'training':
-            idx = idx % self.sid_list_len
-            img = self.slice_data[idx,:,:]
+            idx = idx % self.sid_list_len #TODO: this could result duplicates, e.g., idx = 1, idx = self.sid_list_len + 1
+            img = self.slice_data[idx,:,:] # self.slice_data.shape = 9201 * 447 * 447
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
             img = img + 1024.
             img = self.transforms(img[None,:,:])
@@ -125,12 +125,14 @@ class COPD_dataset(Dataset):
 
         if self.stage == 'testing':
             sid = self.sid_list[idx]
+
+            # load subject-level images (nifti format)
             #img = nibabel.load('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/image_transformed/' + sid + ".nii.gz")
             #img = img.get_data()  # img: W * H * D
             #img = np.swapaxes(img, 0, 2) # img: D * W * H
             img = sitk.ReadImage('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/image_transformed/' + sid + ".nii.gz")
             img = sitk.GetArrayFromImage(img)
-            # read nifti file
+
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
             img = img + 1024.
             img = self.transforms(img)
