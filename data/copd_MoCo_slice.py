@@ -1,5 +1,6 @@
 from torch.utils.data import Dataset
 import numpy as np
+import pandas as pd
 import glob
 import nibabel
 import SimpleITK as sitk
@@ -19,7 +20,12 @@ class COPD_dataset(Dataset):
         self.transforms = transforms
         self.slice_idx = 0
         self.slice_data = np.load('/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/slice_data_reg_mask/slice_'+str(self.slice_idx)+".npy") # 9201 * 447 * 447
+        self.mask_data = np.load('/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/slice_mask_reg_mask/slice_' + str(self.slice_idx)+'.npz')['arr_0']
 
+        # lung mask selection criteria
+        self.slice_mask_summary = pd.read_csv('/ocean/projects/asc170022p/yuke/PythonProject/pytorch-CycleGAN-and-pix2pix/copd_slice_lung_mask_summary.csv')
+        sel_idx = self.slice_mask_summary['p50_prop'] > args.mask_threshold
+        self.sel_slices = self.slice_mask_summary[sel_idx]['slice'].tolist()
 
         if stage == 'training':
             FILE = open(DATA_DIR + "phase 1 Final 10K/phase 1 Pheno/Final10000_Phase1_Rev_28oct16.txt", "r")
@@ -101,11 +107,13 @@ class COPD_dataset(Dataset):
 
     def set_slice_idx(self, idx):
         self.slice_idx = idx
-        self.slice_data = np.load('/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/slice_data_reg_mask/slice_'+str(self.slice_idx)+".npy")
+        self.slice_data = np.load('/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/slice_data_reg_mask/slice_'+str(self.slice_idx)+'.npy')
+        self.mask_data = np.load('/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/slice_mask_reg_mask/slice_' + str(self.slice_idx)+'.npz')['arr_0']
 
     def __len__(self):
         if self.stage == 'training':
-            return self.sid_list_len*self.args.num_slice
+            #return self.sid_list_len*self.args.num_slice
+            return self.sid_list_len * len(self.sel_slices) # number subjects * num of selected slices
         if self.stage == 'testing':
             return self.sid_list_len
 
@@ -113,7 +121,11 @@ class COPD_dataset(Dataset):
         if self.stage == 'training':
             idx = idx % self.sid_list_len #TODO: this could result duplicates, e.g., idx = 1, idx = self.sid_list_len + 1
             img = self.slice_data[idx,:,:] # self.slice_data.shape = 9201 * 447 * 447
+            mask = self.mask_data[idx,:,:] # binary lung mask 9201 * 447 * 447
+
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
+            img[mask] = -1024 # set region outside lung mask = -1024
+
             img = img + 1024.
             img = self.transforms(img[None,:,:])
             img[0] = img[0]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2

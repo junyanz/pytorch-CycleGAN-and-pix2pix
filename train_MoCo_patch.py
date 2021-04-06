@@ -31,7 +31,7 @@ from monai.transforms import Compose, RandGaussianNoise, RandAffine, Rand3DElast
 
 parser = argparse.ArgumentParser(description='3D CT Images Self-Supervised Training Patch-level')
 parser.add_argument('--arch', metavar='ARCH', default='custom')
-parser.add_argument('--workers-patch', default=0, type=int, metavar='N',
+parser.add_argument('--workers-patch', default=8, type=int, metavar='N',
                     help='patch-level number of data loading workers (default: 0)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')

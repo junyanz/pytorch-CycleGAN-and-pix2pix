@@ -37,12 +37,12 @@ model_names = sorted(name for name in models.__dict__
     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='2D CT Images MoCo Self-Supervised Training Slice-level')
-parser.add_argument('--arch', metavar='ARCH', default='custom')
-parser.add_argument('--workers-slice', default=0, type=int, metavar='N',
+parser.add_argument('--arch', metavar='ARCH', default='resnet18')
+parser.add_argument('--workers-slice', default=8, type=int, metavar='N',
                     help='slice-level number of data loading workers (default: 8)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
-parser.add_argument('--batch-size-slice', default=128, type=int,
+parser.add_argument('--batch-size-slice', default=512, type=int,
                     metavar='N',
                     help='slice-level mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
@@ -58,7 +58,7 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
 parser.add_argument('--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
-parser.add_argument('--print-freq', default=10, type=int,
+parser.add_argument('--print-freq', default=5, type=int,
                     metavar='N', help='print frequency (default: 10)')
 parser.add_argument('--resume-slice', default='', type=str, metavar='PATH',
                     help='path to latest slice-level checkpoint (default: None)')
@@ -121,9 +121,11 @@ parser.add_argument('--cos-slice', action='store_true',
 # experiment configs
 parser.add_argument('--transform-type', default='affine', type=str,
                     help='image transformation type, affine or elastic (default: affine)')
-parser.add_argument('--slice-size', default=112, type=int,
+parser.add_argument('--slice-size', default=224, type=int,
                     help='slice H, W, original size = 447 (default: 447)')
-parser.add_argument('--exp-name', default='moco_slice_affine_112',
+parser.add_argument('--mask-threshold', default=0.05, type=float,
+                    help='lung mask threshold.')
+parser.add_argument('--exp-name', default='moco_slice_affine_224_resnet18_mask',
                     help='experiment name')
 
 LUNG_SEG = np.load('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/atlas_lung_mask_pct.npy')
@@ -183,13 +185,13 @@ def main():
 def main_worker(gpu, ngpus_per_node, args):
     args.gpu = gpu
 
-    if gpu == 0:
-        args.gpu = 4
-    if gpu == 1:
-        args.gpu = 5
+    #if gpu == 0:
+    #    args.gpu = 4
+    #if gpu == 1:
+    #    args.gpu = 5
 
     # suppress printing if not master
-    if args.multiprocessing_distributed and args.gpu != 4:
+    if args.multiprocessing_distributed and args.gpu != 0:
         def print_pass(*args):
             pass
         builtins.print = print_pass
@@ -305,7 +307,7 @@ def main_worker(gpu, ngpus_per_node, args):
         train_transform = Compose([transform_rac, transform_rgn, transform_re])
 
     train_dataset_slice = COPD_dataset_slice("training", args, moco.loader.TwoCropsTransform(train_transform))
-
+    args.num_sel_slices = len(train_dataset_slice.sel_slices)
 
     if args.distributed:
         train_sampler_slice = torch.utils.data.distributed.DistributedSampler(train_dataset_slice, shuffle=False) # unable random shuffle to ensure loop through all subjects
@@ -349,18 +351,31 @@ def train_slice(train_loader, model, criterion, optimizer, epoch, args):
     model.train()
     end = time.time()
     num_iter_epoch = len(train_loader)
-    num_iter_sub_epoch = num_iter_epoch // args.num_slice
+    #num_iter_sub_epoch = num_iter_epoch // args.num_slice
+    num_iter_sub_epoch = num_iter_epoch // args.num_sel_slices
     print("num_iter_sub_epoch:", num_iter_sub_epoch)
 
-    slice_idx = -1
+    #slice_idx = -1
+    # if epoch is even, loop slices from [low -> high]
+    # if epoch is odd, loop slices reversely from [high -> low]
+    # this helps to stabilize the negative pools
+    if epoch % 2 == 0:
+        sel_slices = train_loader.dataset.sel_slices
+    if epoch % 2 == 1:
+        sel_slices = train_loader.dataset.sel_slices
+        sel_slices = sel_slices[::-1] # reverse
+
+    j = -1
     for i, data in enumerate(train_loader, start=0):
         # measure data loading time
         data_time.update(time.time() - end)
         if i % num_iter_sub_epoch == 0:
-            slice_idx += 1
-            #if LUNG_SEG[slice_idx] < 0.1: # if lung segmentation is too small, continue to next slice
-            #    continue
-            if slice_idx == args.num_slice:  # tail issue
+            #slice_idx += 1
+            #if slice_idx == args.num_slice:  # tail issue
+            #    break
+            j += 1
+            slice_idx = sel_slices[j]
+            if j == args.num_sel_slices:
                 break
             train_loader.dataset.set_slice_idx(slice_idx)
 
