@@ -124,9 +124,8 @@ class COPD_dataset(Dataset):
             img = self.slice_data[idx,:,:] # self.slice_data.shape = 9201 * 447 * 447
             mask = self.mask_data[idx,:,:] # binary lung mask 9201 * 447 * 447
 
+            img[~mask] = -1024
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
-            img[mask] = -1024 # set region outside lung mask = -1024
-
             img = img + 1024.
             img = self.transforms(img[None,:,:])
             img[0] = img[0]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
@@ -145,6 +144,12 @@ class COPD_dataset(Dataset):
             #img = np.swapaxes(img, 0, 2) # img: D * W * H
             img = sitk.ReadImage('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/image_transformed/' + sid + ".nii.gz")
             img = sitk.GetArrayFromImage(img)
+
+            mask = sitk.ReadImage('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/unet_mask_transformed/' + sid + '_Affine.nii.gz')
+            mask = sitk.GetArrayFromImage(mask)
+
+            img = np.where(mask, img, -1024)  # set region outside lung mask (False) = -1024
+            img = img[self.sel_slices] # remove slices < 5% lung mask
 
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
             img = img + 1024.

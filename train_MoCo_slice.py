@@ -106,7 +106,7 @@ parser.add_argument('--rep-dim-slice', default=512, type=int,
 parser.add_argument('--moco-dim-slice', default=128, type=int,
                     help='feature dimension (default: 128)')
 parser.add_argument('--moco-k-slice', default=4096, type=int,
-                    help='queue size; number of negative keys (default: 4098)')
+                    help='queue size; number of negative keys (default: 4096)')
 parser.add_argument('--moco-m-slice', default=0.999, type=float,
                     help='moco momentum of updating key encoder (default: 0.999)')
 parser.add_argument('--moco-t-slice', default=0.2, type=float,
@@ -125,7 +125,7 @@ parser.add_argument('--slice-size', default=224, type=int,
                     help='slice H, W, original size = 447 (default: 447)')
 parser.add_argument('--mask-threshold', default=0.05, type=float,
                     help='lung mask threshold.')
-parser.add_argument('--exp-name', default='moco_slice_affine_224_512_128_mask',
+parser.add_argument('--exp-name', default='debug_slice',
                     help='experiment name')
 
 LUNG_SEG = np.load('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/atlas_lung_mask_pct.npy')
@@ -319,12 +319,20 @@ def main_worker(gpu, ngpus_per_node, args):
         train_dataset_slice, batch_size=args.batch_size_slice, shuffle=(train_sampler_slice is None),
         num_workers=args.workers_slice, pin_memory=True, sampler=train_sampler_slice, drop_last=True)
 
+    # define AverageMeter
+    batch_time = AverageMeter('Time', ':6.3f')
+    data_time = AverageMeter('Data', ':6.3f')
+    losses = AverageMeter('Loss', ':.4e')
+    top1 = AverageMeter('Acc@1', ':6.2f')
+    top5 = AverageMeter('Acc@5', ':6.2f')
+    AvgMeter_lst = [batch_time, data_time, losses, top1, top5]
+
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_sampler_slice.set_epoch(epoch)
         adjust_learning_rate(optimizer_slice, epoch, args)
         # train for one epoch
-        train_slice(train_loader_slice, model_slice, criterion, optimizer_slice, epoch, args)
+        train_slice(train_loader_slice, model_slice, criterion, optimizer_slice, epoch, args, AvgMeter_lst)
         # save model for every epoch
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                                                     and args.rank % ngpus_per_node == 0):
@@ -336,12 +344,9 @@ def main_worker(gpu, ngpus_per_node, args):
             }, is_best=False, filename=os.path.join(os.path.join('./ssl_exp', args.exp_name),
                                                     'checkpoint_slice_{:04d}.pth.tar'.format(epoch + 1)))
 
-def train_slice(train_loader, model, criterion, optimizer, epoch, args):
-    batch_time = AverageMeter('Time', ':6.3f')
-    data_time = AverageMeter('Data', ':6.3f')
-    losses = AverageMeter('Loss', ':.4e')
-    top1 = AverageMeter('Acc@1', ':6.2f')
-    top5 = AverageMeter('Acc@5', ':6.2f')
+def train_slice(train_loader, model, criterion, optimizer, epoch, args, AvgMeter_lst):
+
+    [batch_time, data_time, losses, top1, top5] = AvgMeter_lst
 
     progress = ProgressMeter(
         len(train_loader),

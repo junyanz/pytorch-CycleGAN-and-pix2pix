@@ -78,8 +78,8 @@ def main_worker(args):
         test_dataset_slice, batch_size=1, shuffle=False,
         num_workers=4, drop_last=False)
     args.label_name = args.label_name + args.label_name_set2
-
-    # train dataset
+    args.num_slice = len(test_dataset_slice.sel_slices)
+    # test dataset
     sid_lst = []
     pred_arr = np.empty((len(test_dataset_slice), args.num_slice, args.rep_dim_slice))
     feature_arr = np.empty((len(test_dataset_slice), len(args.label_name) + len(args.visual_score) + len(args.P2_Pheno)))
