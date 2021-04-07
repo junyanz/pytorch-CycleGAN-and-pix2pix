@@ -38,7 +38,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='2D CT Images MoCo Self-Supervised Training Slice-level')
 parser.add_argument('--arch', metavar='ARCH', default='resnet18')
-parser.add_argument('--workers-slice', default=8, type=int, metavar='N',
+parser.add_argument('--workers-slice', default=10, type=int, metavar='N',
                     help='slice-level number of data loading workers (default: 8)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -47,7 +47,7 @@ parser.add_argument('--batch-size-slice', default=512, type=int,
                     help='slice-level mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -66,7 +66,7 @@ parser.add_argument('--world-size', default=1, type=int,
                     help='number of nodes for distributed training')
 parser.add_argument('--rank', default=0, type=int,
                     help='node rank for distributed training')
-parser.add_argument('--dist-url', default='tcp://localhost:10001', type=str,
+parser.add_argument('--dist-url', default='tcp://localhost:10002', type=str,
                     help='url used to set up distributed training')
 parser.add_argument('--dist-backend', default='nccl', type=str,
                     help='distributed backend')
@@ -125,7 +125,7 @@ parser.add_argument('--slice-size', default=224, type=int,
                     help='slice H, W, original size = 447 (default: 447)')
 parser.add_argument('--mask-threshold', default=0.05, type=float,
                     help='lung mask threshold.')
-parser.add_argument('--exp-name', default='moco_slice_affine_224_resnet18_mask',
+parser.add_argument('--exp-name', default='moco_slice_affine_224_512_128_mask',
                     help='experiment name')
 
 LUNG_SEG = np.load('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/atlas_lung_mask_pct.npy')
@@ -221,6 +221,7 @@ def main_worker(gpu, ngpus_per_node, args):
         SliceNet,
         args.num_slice, args.rep_dim_slice, args.moco_dim_slice, args.moco_k_slice, args.moco_m_slice, args.moco_t_slice, args.mlp_slice)
     print(model_slice)
+    print('Number of parameters: ' + str(count_parameters(model_slice)))
 
     if args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
@@ -374,15 +375,15 @@ def train_slice(train_loader, model, criterion, optimizer, epoch, args):
             #if slice_idx == args.num_slice:  # tail issue
             #    break
             j += 1
-            slice_idx = sel_slices[j]
             if j == args.num_sel_slices:
                 break
+            slice_idx = sel_slices[j]
             train_loader.dataset.set_slice_idx(slice_idx)
 
         sids, images, slice_loc_idx, labels = data
         # one-hot encoding
         slice_idx_tensor = torch.zeros_like(slice_loc_idx)
-        torch.add(slice_idx_tensor, slice_idx)
+        slice_idx_tensor = torch.add(slice_idx_tensor, slice_idx)
         #slice_one_hot = one_hot_embedding(slice_idx_tensor, args.num_slice)
 
         if args.gpu is not None:
@@ -510,6 +511,10 @@ def one_hot_embedding(labels, num_classes):
     """
     y = torch.eye(num_classes)
     return y[labels]
+
+def count_parameters(model):
+    params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return params/1000000
 
 if __name__ == '__main__':
     main()

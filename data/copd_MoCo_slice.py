@@ -112,8 +112,9 @@ class COPD_dataset(Dataset):
 
     def __len__(self):
         if self.stage == 'training':
-            #return self.sid_list_len*self.args.num_slice
-            return self.sid_list_len * len(self.sel_slices) # number subjects * num of selected slices
+            # make sure the total samples is an int * batch size
+            n = len(self.sid_list) // (self.args.batch_size_slice * self.args.npgus_per_node)
+            return n * self.args.npgus_per_node * self.args.batch_size_slice * len(self.sel_slices)
         if self.stage == 'testing':
             return self.sid_list_len
 
