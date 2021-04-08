@@ -2,13 +2,17 @@ from torch.utils.data import Dataset
 import numpy as np
 import pandas as pd
 import glob
-import nibabel
 import SimpleITK as sitk
+import random
+from monai.transforms import RandAffine
 
 DATA_DIR = "/ocean/projects/asc170022p/shared/Data/COPDGene/ClinicalData/"
 
-def default_transform(x):
-    return x
+def default_transform(x, args):
+    transform_ra = RandAffine(mode='bilinear', prob=1.0,
+                              spatial_size=(args.slice_size, args.slice_size),
+                              padding_mode='border')
+    return transform_ra(x)
 
 class COPD_dataset(Dataset):
 
@@ -27,16 +31,21 @@ class COPD_dataset(Dataset):
         sel_idx = self.slice_mask_summary['p50_prop'] > args.mask_threshold
         self.sel_slices = self.slice_mask_summary[sel_idx]['slice'].tolist()
 
+        # random seed
+        random.seed(args.seed)
+
         if stage == 'training':
             FILE = open(DATA_DIR + "phase 1 Final 10K/phase 1 Pheno/Final10000_Phase1_Rev_28oct16.txt", "r")
             mylist = FILE.readline().strip("\n").split("\t")
             metric_idx = [mylist.index(label) for label in self.args.label_name]
+            sid_set = set()
             race_idx = mylist.index("race")
             for line in FILE.readlines():
                 mylist = line.strip("\n").split("\t")
                 tmp = [mylist[idx] for idx in metric_idx]
                 if "" in tmp:
                     continue
+                sid_set.add(mylist[0])
                 if self.args.nhw_only and mylist[race_idx] != "1":
                     continue
                 metric_list = []
@@ -100,6 +109,11 @@ class COPD_dataset(Dataset):
         self.sid_list.sort()
         assert len(self.sid_list) == self.slice_data.shape[0]
 
+        if args.sample_prop < 1.0:
+            self.sid_idx = random.sample(range(0, len(self.sid_list)), int(len(self.sid_list) * args.sample_prop))
+            self.sid_idx.sort()
+            self.sid_list = list(self.sid_list[i] for i in self.sid_idx) # select sampled sids
+
         print("Fold: full")
         self.sid_list = np.asarray(self.sid_list)
         self.sid_list_len = len(self.sid_list)
@@ -109,6 +123,9 @@ class COPD_dataset(Dataset):
         self.slice_idx = idx
         self.slice_data = np.load('/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/slice_data_reg_mask/slice_'+str(self.slice_idx)+'.npy')
         self.mask_data = np.load('/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/slice_mask_reg_mask/slice_' + str(self.slice_idx)+'.npz')['arr_0']
+        if self.args.sample_prop < 1.0: # select sampled sids
+            self.slice_data = self.slice_data[self.sid_idx]
+            self.mask_data = self.mask_data[self.sid_idx]
 
     def __len__(self):
         if self.stage == 'training':
@@ -124,7 +141,9 @@ class COPD_dataset(Dataset):
             img = self.slice_data[idx,:,:] # self.slice_data.shape = 9201 * 447 * 447
             mask = self.mask_data[idx,:,:] # binary lung mask 9201 * 447 * 447
 
-            img[~mask] = -1024
+            if self.args.mask_imputation:
+                img[~mask] = -1024 # set region outside lung mask (False) = -1024
+
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
             img = img + 1024.
             img = self.transforms(img[None,:,:])
@@ -148,12 +167,14 @@ class COPD_dataset(Dataset):
             mask = sitk.ReadImage('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/unet_mask_transformed/' + sid + '_Affine.nii.gz')
             mask = sitk.GetArrayFromImage(mask)
 
-            img = np.where(mask, img, -1024)  # set region outside lung mask (False) = -1024
-            img = img[self.sel_slices] # remove slices < 5% lung mask
+            if self.args.mask_imputation:
+                img = np.where(mask != 0, img, -1024)  # set region outside lung mask (False) = -1024
+            img = img[self.sel_slices]
 
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
             img = img + 1024.
-            img = self.transforms(img)
+            img = self.transforms(img, self.args)
+
             img = img[:, None, :, :] / 632. - 1  # Normalize to [-1,1], 632=(1024+240)/2
 
             key = self.sid_list[idx][:6]

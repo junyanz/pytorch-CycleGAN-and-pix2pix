@@ -17,8 +17,8 @@ model_names = sorted(name for name in models.__dict__
     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='Extract 2D Slice Representations')
-parser.add_argument('--exp-name', default='./ssl_exp/moco_slice_affine_224_512_128_mask')
-parser.add_argument('--checkpoint-slice', default='checkpoint_slice_0002.pth.tar')
+parser.add_argument('--exp-name', default='./ssl_exp/moco_slice_resnet18_224_512_128_mask_small')
+parser.add_argument('--checkpoint-slice', default='checkpoint_slice_0001.pth.tar')
 parser.add_argument('--batch-size', type=int, default=1)
 parser.add_argument('--slice-batch', type=int, default=128)
 
@@ -44,11 +44,12 @@ def main():
     main_worker(args)
 
 def main_worker(args):
-    args.gpu = 1
+    args.gpu = 0
     torch.cuda.set_device(args.gpu)
+    loc = 'cuda:{}'.format(args.gpu)
 
     # create slice-level encoder
-    if args.arch == 'custome':
+    if args.arch == 'custom':
         SliceNet = models.Encoder
     else:
         SliceNet = models.__dict__[args.arch]
@@ -56,7 +57,7 @@ def main_worker(args):
 
     # remove the last FC layer
     model_slice.fc = torch.nn.Sequential()
-    state_dict = torch.load(args.checkpoint)['state_dict']
+    state_dict = torch.load(args.checkpoint, map_location=loc)['state_dict']
 
     for k in list(state_dict.keys()):
         # retain only encoder_q
@@ -78,7 +79,8 @@ def main_worker(args):
         test_dataset_slice, batch_size=1, shuffle=False,
         num_workers=4, drop_last=False)
     args.label_name = args.label_name + args.label_name_set2
-    args.num_slice = len(test_dataset_slice.sel_slices)
+    args.num_slice = len(test_dataset_slice.sel_slices) # update number of slices to selected number of slices
+
     # test dataset
     sid_lst = []
     pred_arr = np.empty((len(test_dataset_slice), args.num_slice, args.rep_dim_slice))
