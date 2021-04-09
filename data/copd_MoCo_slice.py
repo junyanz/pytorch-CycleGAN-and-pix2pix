@@ -71,6 +71,8 @@ class COPD_dataset(Dataset):
                     else:
                         metric_list.append(float(tmp[i]))
                 self.metric_dict[mylist[0]] = metric_list + [-1024, -1024, -1024]
+            FILE.close()
+
             FILE = open(DATA_DIR + "CT scan datasets/CT visual scoring/COPDGene_CT_Visual_20JUL17.txt", "r")
             mylist = FILE.readline().strip("\n").split("\t")
             metric_idx = [mylist.index(label) for label in self.args.visual_score]
@@ -85,6 +87,7 @@ class COPD_dataset(Dataset):
                 self.metric_dict[mylist[0]][
                 -len(self.args.visual_score) - len(self.args.P2_Pheno):-len(self.args.P2_Pheno)] = metric_list
             FILE.close()
+
             FILE = open(
                 DATA_DIR + 'P1-P2 First 5K Long Data/Subject-flattened- one row per subject/First5000_P1P2_Pheno_Flat24sep16.txt',
                 'r')
@@ -184,6 +187,7 @@ class COPD_dataset(Dataset):
             #adj = (adj > 0.13).astype(np.int)
             adj = np.array([])  # not needed for patch-level only
 
-            slice_seq = np.arange(img.shape[0])
+            # return selected slice index
+            slice_seq = np.array(self.sel_slices)
             return sid, img, slice_seq, adj, label
 

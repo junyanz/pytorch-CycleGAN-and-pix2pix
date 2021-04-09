@@ -38,7 +38,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='2D CT Images MoCo Self-Supervised Training Slice-level')
 parser.add_argument('--arch', metavar='ARCH', default='resnet18')
-parser.add_argument('--workers-slice', default=20, type=int, metavar='N',
+parser.add_argument('--workers-slice', default=0, type=int, metavar='N',
                     help='slice-level number of data loading workers (default: 8)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -47,7 +47,7 @@ parser.add_argument('--batch-size-slice', default=128, type=int,
                     help='slice-level mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -66,7 +66,7 @@ parser.add_argument('--world-size', default=1, type=int,
                     help='number of nodes for distributed training')
 parser.add_argument('--rank', default=0, type=int,
                     help='node rank for distributed training')
-parser.add_argument('--dist-url', default='tcp://localhost:10002', type=str,
+parser.add_argument('--dist-url', default='tcp://localhost:10001', type=str,
                     help='url used to set up distributed training')
 parser.add_argument('--dist-backend', default='nccl', type=str,
                     help='distributed backend')
@@ -79,7 +79,7 @@ parser.add_argument('--multiprocessing-distributed', action='store_false',
                          'N processes per node, which has N GPUs. This is the '
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
-parser.add_argument('--npgus-per-node', default=4, type=int,
+parser.add_argument('--npgus-per-node', default=2, type=int,
                     help='number of gpus per node.')
 
 # COPD data configs:
@@ -123,13 +123,13 @@ parser.add_argument('--transform-type', default='affine', type=str,
                     help='image transformation type, affine or elastic (default: affine)')
 parser.add_argument('--slice-size', default=224, type=int,
                     help='slice H, W, original size = 447 (default: 447)')
-parser.add_argument('--mask-threshold', default=-1.0, type=float,
+parser.add_argument('--mask-threshold', default=0.1, type=float,
                     help='lung mask threshold.')
 parser.add_argument('--mask-imputation', action='store_true',
                     help='whether imputating region outside lung mask to -1024.')
 parser.add_argument('--sample-prop', default=0.1, type=float,
                     help='proportion of sids randomly sampled for training. default=1.0')
-parser.add_argument('--exp-name', default='moco_slice_resnet18_224_512_128_nomask_small',
+parser.add_argument('--exp-name', default='debug_slice',
                     help='experiment name')
 
 LUNG_SEG = np.load('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/atlas_lung_mask_pct.npy')
@@ -188,11 +188,6 @@ def main():
 
 def main_worker(gpu, ngpus_per_node, args):
     args.gpu = gpu
-
-    #if gpu == 0:
-    #    args.gpu = 2
-    #if gpu == 1:
-    #    args.gpu = 4
 
     # suppress printing if not master
     if args.multiprocessing_distributed and args.gpu != 0:

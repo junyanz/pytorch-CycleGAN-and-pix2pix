@@ -185,8 +185,8 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
                                        dilate=replace_stride_with_dilation[2])
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.emb = nn.Embedding(379, 64)
-        self.cfc = nn.Sequential(nn.Linear(512 * block.expansion + 64, rep_dim), nn.ELU()) # mix slice one-hot embedding
+        self.emb = nn.Embedding(379, 3)
+        self.cfc = nn.Sequential(nn.Linear(512 * block.expansion + 3, rep_dim), nn.ELU()) # mix slice one-hot embedding
         self.fc = nn.Linear(rep_dim, num_classes)
 
 
