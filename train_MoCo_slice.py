@@ -28,7 +28,7 @@ import torch.utils.data.distributed
 
 from moco.builder_MoCo_slice import MoCo as MoCo_Slice
 import moco.loader
-from monai.transforms import Compose, RandGaussianNoise, Rand2DElastic, RandAdjustContrast, RandAffine
+from monai.transforms import Compose, RandGaussianNoise, Rand2DElastic, RandAdjustContrast, RandAffine, Resize, RandFlip
 from data.copd_MoCo_slice import COPD_dataset as COPD_dataset_slice
 
 import models.cnn2d as models
@@ -58,7 +58,7 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
 parser.add_argument('--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
-parser.add_argument('--print-freq', default=5, type=int,
+parser.add_argument('--print-freq', default=1, type=int,
                     metavar='N', help='print frequency (default: 10)')
 parser.add_argument('--resume-slice', default='', type=str, metavar='PATH',
                     help='path to latest slice-level checkpoint (default: None)')
@@ -70,7 +70,7 @@ parser.add_argument('--dist-url', default='tcp://localhost:10001', type=str,
                     help='url used to set up distributed training')
 parser.add_argument('--dist-backend', default='nccl', type=str,
                     help='distributed backend')
-parser.add_argument('--seed', default=0, type=int,
+parser.add_argument('--seed', default=1, type=int,
                     help='seed for initializing training. ')
 parser.add_argument('--gpu', default=None, type=int,
                     help='GPU id to use.')
@@ -129,10 +129,8 @@ parser.add_argument('--mask-imputation', action='store_true',
                     help='whether imputating region outside lung mask to -1024.')
 parser.add_argument('--sample-prop', default=0.1, type=float,
                     help='proportion of sids randomly sampled for training. default=1.0')
-parser.add_argument('--exp-name', default='debug_slice',
+parser.add_argument('--exp-name', default='moco_slice_resnet18_aug1_nomask_small10p',
                     help='experiment name')
-
-LUNG_SEG = np.load('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/atlas_lung_mask_pct.npy')
 
 def main():
     # read configurations
@@ -280,31 +278,36 @@ def main_worker(gpu, ngpus_per_node, args):
             exit()
 
     # augmentation
+    transform_resize = Resize(spatial_size=(args.slice_size, args.slice_size), mode='bilinear', align_corners=False)
+
+    transform_flip_ax0 = RandFlip(spatial_axis=0, prob=0.2)
+    transform_flip_ax1 = RandFlip(spatial_axis=1, prob=0.2)
+
     transform_re = Rand2DElastic(mode='bilinear', prob=1.0,
                                  spacing=(1.0, 1.0),
                                  #sigma_range=(8, 12),
                                  magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
-                                 spatial_size=(args.slice_size, args.slice_size),
-                                 translate_range=(12, 12),
-                                 rotate_range=(np.pi / 18, np.pi / 18),
+                                 #spatial_size=(args.slice_size, args.slice_size),
+                                 translate_range=(14, 14),
+                                 rotate_range=(np.pi / 12, np.pi / 12),
                                  scale_range=(0.1, 0.1),
                                  padding_mode='border'
                                  )
 
     transform_ra = RandAffine(mode='bilinear', prob=1.0,
-                              spatial_size=(args.slice_size, args.slice_size),
-                              translate_range=(12, 12),
-                              rotate_range=(np.pi / 18, np.pi / 18),
+                              #spatial_size=(args.slice_size, args.slice_size),
+                              translate_range=(14, 14),
+                              rotate_range=(np.pi / 12, np.pi / 12),
                               scale_range=(0.1, 0.1),
                               padding_mode='border')
 
     transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
-    transform_rac = RandAdjustContrast(prob=0.25)
+    transform_rac = RandAdjustContrast(prob=0.0)
 
     if args.transform_type == 'affine':
-        train_transform = Compose([transform_rac, transform_rgn, transform_ra])
+        train_transform = Compose([transform_resize, transform_flip_ax0, transform_flip_ax1, transform_rac, transform_rgn, transform_ra])
     if args.transform_type == 'elastic':
-        train_transform = Compose([transform_rac, transform_rgn, transform_re])
+        train_transform = Compose([transform_resize, transform_flip_ax0, transform_flip_ax1, transform_rac, transform_rgn, transform_re])
 
     train_dataset_slice = COPD_dataset_slice("training", args, moco.loader.TwoCropsTransform(train_transform))
     args.num_sel_slices = len(train_dataset_slice.sel_slices)

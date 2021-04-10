@@ -1,4 +1,5 @@
 from torch.utils.data import Dataset
+import os
 import numpy as np
 import pandas as pd
 import glob
@@ -30,9 +31,6 @@ class COPD_dataset(Dataset):
         self.slice_mask_summary = pd.read_csv('/ocean/projects/asc170022p/yuke/PythonProject/pytorch-CycleGAN-and-pix2pix/copd_slice_lung_mask_summary.csv')
         sel_idx = self.slice_mask_summary['p50_prop'] > args.mask_threshold
         self.sel_slices = self.slice_mask_summary[sel_idx]['slice'].tolist()
-
-        # random seed
-        random.seed(args.seed)
 
         if stage == 'training':
             FILE = open(DATA_DIR + "phase 1 Final 10K/phase 1 Pheno/Final10000_Phase1_Rev_28oct16.txt", "r")
@@ -113,9 +111,12 @@ class COPD_dataset(Dataset):
         assert len(self.sid_list) == self.slice_data.shape[0]
 
         if args.sample_prop < 1.0:
+            # random seed
+            random.seed(args.seed)
             self.sid_idx = random.sample(range(0, len(self.sid_list)), int(len(self.sid_list) * args.sample_prop))
             self.sid_idx.sort()
             self.sid_list = list(self.sid_list[i] for i in self.sid_idx) # select sampled sids
+        np.save(os.path.join('./ssl_exp', args.exp_name, 'sid_list.npy'), self.sid_list)
 
         print("Fold: full")
         self.sid_list = np.asarray(self.sid_list)
@@ -146,6 +147,8 @@ class COPD_dataset(Dataset):
 
             if self.args.mask_imputation:
                 img[~mask] = -1024 # set region outside lung mask (False) = -1024
+                if np.random.uniform(0,1,1) < 0.25: # with 25% adding random noise to lung mask region only
+                    img[~mask] = img[~mask] + np.random.normal(0, 50, img.shape)[~mask]
 
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
             img = img + 1024.
