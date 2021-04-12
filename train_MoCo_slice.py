@@ -127,7 +127,7 @@ parser.add_argument('--mask-threshold', default=0.05, type=float,
                     help='lung mask threshold.')
 parser.add_argument('--mask-imputation', action='store_true',
                     help='whether imputating region outside lung mask to -1024. default: no lung mask imputation')
-parser.add_argument('--sample-prop', default=1.0, type=float,
+parser.add_argument('--sample-prop', default=0.1, type=float,
                     help='proportion of sids randomly sampled for training. default=1.0')
 parser.add_argument('--exp-name', default='debug_slice',
                     help='experiment name')

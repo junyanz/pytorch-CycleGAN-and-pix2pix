@@ -110,13 +110,44 @@ class COPD_dataset(Dataset):
         self.sid_list.sort()
         assert len(self.sid_list) == self.slice_data.shape[0]
 
+        # outliers
+        self.outliers = [
+                '25369H_INSP_STD_NJC_COPD_Reg_19676E',
+                '22169K_INSP_STD_TXS_COPD_Reg_19676E',
+                '15320X_INSP_STD_TEM_COPD_Reg_19676E',
+                '22225U_INSP_STD_NJC_COPD_Reg_19676E',
+                '17369L_INSP_STD_COL_COPD_Reg_19676E',
+                '19642N_INSP_STD_NJC_COPD_Reg_19676E',
+                '22652N_INSP_STD_JHU_COPD_Reg_19676E',
+                '18597D_INSP_STD_TEM_COPD_Reg_19676E',
+                '18489A_INSP_STD_UIA_COPD_Reg_19676E',
+                '18677B_INSP_STD_HAR_COPD_Reg_19676E',
+                '14457T_INSP_STD_NJC_COPD_Reg_19676E',
+                '23116U_INSP_STD_UIA_COPD_Reg_19676E',
+                '23163D_INSP_STD_FAL_COPD_Reg_19676E',
+                '23372M_INSP_STD_UIA_COPD_Reg_19676E',
+                '24634V_INSP_STD_UIA_COPD_Reg_19676E',
+                '23761X_INSP_STD_UIA_COPD_Reg_19676E',
+                '11500F_INSP_STD_HAR_COPD_Reg_19676E'
+               ]
+        idx_o = []
+        for sid in self.sid_list:
+            if sid in self.outliers:
+                idx_o.append(True)
+            else:
+                idx_o.append(False)
+        self.idx_o = np.array(idx_o)
+
+        # remove outliers
+        self.sid_list = np.asarray(self.sid_list)
+        self.sid_list = self.sid_list[~self.idx_o]
+
         if args.sample_prop < 1.0:
             # random seed
             random.seed(args.seed)
             self.sid_idx = random.sample(range(0, len(self.sid_list)), int(len(self.sid_list) * args.sample_prop))
             self.sid_idx.sort()
             self.sid_list = list(self.sid_list[i] for i in self.sid_idx) # select sampled sids
-        self.sid_list = np.asarray(self.sid_list)
 
         if stage == 'training':
             np.save(os.path.join('./ssl_exp', args.exp_name, 'sid_list.npy'), self.sid_list)
@@ -132,6 +163,11 @@ class COPD_dataset(Dataset):
         self.slice_idx = idx
         self.slice_data = np.load('/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/slice_data_reg_mask/slice_'+str(self.slice_idx)+'.npy')
         self.mask_data = np.load('/ocean/projects/asc170022p/lisun/copd/gnn_shared/data/slice_mask_reg_mask/slice_' + str(self.slice_idx)+'.npz')['arr_0']
+
+        # remove outliers
+        self.slice_data = self.slice_data[~self.idx_o]
+        self.mask_data = self.mask_data[~self.idx_o]
+
         if self.args.sample_prop < 1.0: # select sampled sids
             self.slice_data = self.slice_data[self.sid_idx]
             self.mask_data = self.mask_data[self.sid_idx]
