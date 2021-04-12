@@ -38,7 +38,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='2D CT Images MoCo Self-Supervised Training Slice-level')
 parser.add_argument('--arch', metavar='ARCH', default='resnet18')
-parser.add_argument('--workers-slice', default=0, type=int, metavar='N',
+parser.add_argument('--workers-slice', default=10, type=int, metavar='N',
                     help='slice-level number of data loading workers (default: 8)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -58,7 +58,7 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
 parser.add_argument('--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
-parser.add_argument('--print-freq', default=1, type=int,
+parser.add_argument('--print-freq', default=10, type=int,
                     metavar='N', help='print frequency (default: 10)')
 parser.add_argument('--resume-slice', default='', type=str, metavar='PATH',
                     help='path to latest slice-level checkpoint (default: None)')
@@ -115,7 +115,7 @@ parser.add_argument('--moco-t-slice', default=0.2, type=float,
 # options for moco v2
 parser.add_argument('--mlp-slice', action='store_false',
                     help='use mlp head')
-parser.add_argument('--cos-slice', action='store_true',
+parser.add_argument('--cos-slice', action='store_false',
                     help='use cosine lr schedule')
 
 # experiment configs
@@ -123,13 +123,13 @@ parser.add_argument('--transform-type', default='affine', type=str,
                     help='image transformation type, affine or elastic (default: affine)')
 parser.add_argument('--slice-size', default=224, type=int,
                     help='slice H, W, original size = 447 (default: 447)')
-parser.add_argument('--mask-threshold', default=0.1, type=float,
+parser.add_argument('--mask-threshold', default=0.05, type=float,
                     help='lung mask threshold.')
 parser.add_argument('--mask-imputation', action='store_true',
-                    help='whether imputating region outside lung mask to -1024.')
-parser.add_argument('--sample-prop', default=0.1, type=float,
+                    help='whether imputating region outside lung mask to -1024. default: no lung mask imputation')
+parser.add_argument('--sample-prop', default=1.0, type=float,
                     help='proportion of sids randomly sampled for training. default=1.0')
-parser.add_argument('--exp-name', default='moco_slice_resnet18_aug1_nomask_small10p',
+parser.add_argument('--exp-name', default='debug_slice',
                     help='experiment name')
 
 def main():

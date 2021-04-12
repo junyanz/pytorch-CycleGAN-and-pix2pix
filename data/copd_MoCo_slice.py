@@ -116,10 +116,15 @@ class COPD_dataset(Dataset):
             self.sid_idx = random.sample(range(0, len(self.sid_list)), int(len(self.sid_list) * args.sample_prop))
             self.sid_idx.sort()
             self.sid_list = list(self.sid_list[i] for i in self.sid_idx) # select sampled sids
-        np.save(os.path.join('./ssl_exp', args.exp_name, 'sid_list.npy'), self.sid_list)
+        self.sid_list = np.asarray(self.sid_list)
+
+        if stage == 'training':
+            np.save(os.path.join('./ssl_exp', args.exp_name, 'sid_list.npy'), self.sid_list)
+        if stage == 'testing':
+            sid_list = np.load(os.path.join('./ssl_exp', args.exp_name, 'sid_list.npy'))
+            assert (sid_list == self.sid_list).sum() == len(sid_list) # check if the sid lists are consistent
 
         print("Fold: full")
-        self.sid_list = np.asarray(self.sid_list)
         self.sid_list_len = len(self.sid_list)
         print(stage+" dataset size:", self.sid_list_len)
 
