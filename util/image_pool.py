@@ -93,8 +93,8 @@ class ImageLabelPool():
 
         # Get back images and labels
         for image, label in zip(images, labels):
-            image = torch.unsqueeze(image.data, 0)
-            label = torch.unsqueeze(label.data, 0)
+            image = (torch.unsqueeze(image.data, 0) + 0).detach()
+            label = (torch.unsqueeze(label.data, 0) + 0).detach()
 
             if self.num_imgs < self.pool_size:   # if the buffer is not full; keep inserting current images to the buffer
                 self.num_imgs = self.num_imgs + 1
@@ -164,9 +164,9 @@ class ImageLabelPartitionPool():
         patchids, partitions = labels
         for image, label, part in zip(images, patchids, partitions):
             # Keep image, label, and partition
-            image = torch.unsqueeze(image.data, 0)
-            label = torch.unsqueeze(label.data, 0)
-            part = torch.unsqueeze(part.data, 0)
+            image = (torch.unsqueeze(image.data, 0) + 0).detach()
+            label = (torch.unsqueeze(label.data, 0) + 0).detach()
+            part = (torch.unsqueeze(part.data, 0) + 0).detach()
 
             if self.num_imgs < self.pool_size:   # if the buffer is not full; keep inserting current images to the buffer
                 self.num_imgs = self.num_imgs + 1

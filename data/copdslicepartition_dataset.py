@@ -123,8 +123,21 @@ class CopdslicepartitionDataset(BaseDataset):
         lofile = os.path.join(self.slicesdir, '{}_{}.npy'.format(lofile, str(loslice)))
         hifile = os.path.join(self.slicesdir, '{}_{}.npy'.format(hifile, str(hislice)))
 
-        data_A = np.load(lofile)
-        data_B = np.load(hifile)
+        try:
+            data_A = np.load(lofile)
+        except:
+            try:
+                data_A = np.load(lofile, allow_pickle=True)
+            except:
+                return self.__getitem__(np.random.randint(len(self)))
+
+        try:
+            data_B = np.load(hifile)
+        except:
+            try:
+                data_B = np.load(hifile, allow_pickle=True)
+            except:
+                return self.__getitem__(np.random.randint(len(self)))
 
         data_A = self.pad(self.transform_patch(data_A))
         data_B = self.pad(self.transform_patch(data_B))
@@ -157,6 +170,8 @@ class CopdslicepartitionDataset(BaseDataset):
         M = 240
         norm = (patch - m)/(M - m)
         norm = 2*norm - 1
+
+        norm = np.clip(norm, -1, 1)
         return norm
 
     def __len__(self):

@@ -13,7 +13,7 @@ python train.py \
     --batch_size 50 \
     --num_threads 16 \
     --save_latest_freq 150 \
-    --lambda_identity 0.5 \
+    --lambda_identity 1 \
     --display_freq 150 \
     --pool_size 1000 \
     --netG resnet_6blocks_2parts \
@@ -22,7 +22,7 @@ python train.py \
     --input_nc 1  \
     --output_nc 1 \
     --norm batch \
-    --name copd_emphysema_slice_resnet9_2parts
+    --name copd_emphysema_slice_resnet9_2parts_lambda1
 
 #--name copd_emphysema_float
 #--netD basic3d_patch_float \

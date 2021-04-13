@@ -10,7 +10,7 @@ python train.py \
     --gpu_ids 0,1,2,3,4,5,6,7 \
     --model cycle_gan_partition \
     --patchfloat 0 \
-    --batch_size 80 \
+    --batch_size 50 \
     --use_nan 0 \
     --num_threads 16 \
     --save_latest_freq 150 \

@@ -153,12 +153,16 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
-    elif netG == 'resnet_9blocks_2parts':
+    elif netG == 'resnet_9blocks_2parts':   # 9-blocked Resnet 2D
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, num_patches=379)
-    elif netG == 'resnet_6blocks_2parts':
+    elif netG == 'resnet_6blocks_2parts':   # 6-blocked Resnet 2D
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, num_patches=379)
+    elif netG == 'resnet_6blocks_2parts_noslice':  # 6-blocked Resnet without using slice information
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, num_patches=0)
     elif netG == 'resnet_6blocks_partition':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, num_patches=379)
+    elif netG == 'resnet_6blocks_partition_noslice':
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, num_patches=0)
     elif netG == 'unet_128':
         net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
@@ -215,8 +219,12 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
         net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer)
     elif netD == 'basic_2parts':  # PatchGAN with only 2 classes, doesnt need partitions
         net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, num_patches=379)
+    elif netD == 'basic_2parts_noslice':  # PatchGAN with only 2 classes, doesnt need partitions
+        net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, num_patches=0)
     elif netD == 'basic_partition':  # PatchGAN with only 2 classes, doesnt need partitions
         net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, num_patches=379, partitions=partitions)
+    elif netD == 'basic_partition_noslice':  # PatchGAN with only 2 classes, doesnt need partitions
+        net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, num_patches=0, partitions=partitions)
     elif netD == 'n_layers':  # more options
         net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
     elif netD == 'pixel':     # classify if each pixel is real or fake
@@ -403,7 +411,7 @@ class ResnetGenerator(nn.Module):
                       nn.ReLU(True)]
         decoder += [nn.ReflectionPad2d(3)]
         decoder += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
-        # decoder += [nn.Tanh()]
+        decoder += [nn.Tanh()]
         self.model = nn.Sequential(*model)
         self.decoder = nn.Sequential(*decoder)
 
@@ -664,10 +672,12 @@ class NLayerDiscriminator(nn.Module):
         if self.num_patches > 0:
             self.patch_embed = nn.Embedding(self.num_patches, 64)
             converter_num += 64
+            print("DISCRIMINATOR: Using patch information.")
 
         if self.partitions is not None:
             self.part_embed  = nn.Embedding(self.partitions, 64)
             converter_num += 64
+            print("DISCRIMINATOR: Using partition information.")
 
         # Create a converter for concatenating embedding as well
         if converter_num > 0:
@@ -694,17 +704,28 @@ class NLayerDiscriminator(nn.Module):
             # Get embeddings
             if self.partitions is not None:
                 patchloc, partloc = Patchloc
-                patchembed = self.patch_embed(patchloc)[..., None, None,]   # [B, C, 1, 1]
                 partembed = self.part_embed(partloc)[..., None, None,]   # [B, C, 1, 1]
-                embed = torch.cat([patchembed, partembed], 1)  # [B, C, 1, 1]
+                # Patch may not be present, check
+                if self.patch_embed is not None:
+                    patchembed = self.patch_embed(patchloc)[..., None, None,]   # [B, C, 1, 1]
+                    embed = torch.cat([patchembed, partembed], 1)  # [B, C, 1, 1]
+                else:
+                    embed = partembed
             else:
                 patchloc, partloc = Patchloc, None
-                embed = self.patch_embed(patchloc)[..., None, None,]   # [B, C, 1, 1]
+                if self.patch_embed is not None:
+                    embed = self.patch_embed(patchloc)[..., None, None,]   # [B, C, 1, 1]
+                else:
+                    embed = None
             # Once we have embedding, concatenate it to image
             B, C, H, W = encoded.shape
-            embed = embed.repeat(1, 1, H, W)
-            joint = torch.cat([encoded, embed], 1)
-            mixed = self.converter(joint)
+            if self.converter is not None:
+                embed = embed.repeat(1, 1, H, W)
+                joint = torch.cat([encoded, embed], 1)
+                mixed = self.converter(joint)
+            else:
+                mixed = encoded
+
             return self.toplayers(mixed)
 
 

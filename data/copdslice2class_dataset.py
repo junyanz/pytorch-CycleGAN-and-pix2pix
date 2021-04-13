@@ -41,7 +41,7 @@ class Copdslice2classDataset(BaseDataset):
         """
         #parser.add_argument('--new_dataset_option', type=float, default=1.0, help='new dataset option')
         #parser.set_defaults(max_dataset_size=10, new_dataset_option=2.0)  # specify dataset-specific default values
-        parser.add_argument('--use_nan', type=int, default=1, help='Do we use nan values? (If yes, then they are added to both classes)')
+        parser.add_argument('--use_nan', type=int, default=0, help='Do we use nan values? (If yes, then they are added to both classes)')
         parser.add_argument('--patchfloat', type=int, default=0, help='Do we use continuous values for patch locations?')
         parser.add_argument('--frac', type=float, default=0.2)
         return parser
@@ -153,6 +153,8 @@ class Copdslice2classDataset(BaseDataset):
         M = 240
         norm = (patch - m)/(M - m)
         norm = 2*norm - 1
+
+        norm = np.clip(norm, -1, 1)
         return norm
 
     def __len__(self):
