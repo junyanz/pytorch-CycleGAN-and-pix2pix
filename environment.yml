@@ -6,6 +6,7 @@ dependencies:
 - python=3.6
 - pytorch=1.4.0
 - scipy
+- pip
 - pip:
   - dominate==2.4.0
   - torchvision==0.5.0
