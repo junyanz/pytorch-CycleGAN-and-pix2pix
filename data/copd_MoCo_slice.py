@@ -5,15 +5,12 @@ import pandas as pd
 import glob
 import SimpleITK as sitk
 import random
-from monai.transforms import RandAffine
+from monai.transforms import Resize, RandAffine
 
 DATA_DIR = "/ocean/projects/asc170022p/shared/Data/COPDGene/ClinicalData/"
 
-def default_transform(x, args):
-    transform_ra = RandAffine(mode='bilinear', prob=1.0,
-                              spatial_size=(args.slice_size, args.slice_size),
-                              padding_mode='border')
-    return transform_ra(x)
+def default_transform(x):
+    return x
 
 class COPD_dataset(Dataset):
 
@@ -110,7 +107,7 @@ class COPD_dataset(Dataset):
         self.sid_list.sort()
         assert len(self.sid_list) == self.slice_data.shape[0]
 
-        # outliers
+        # handel outliers
         self.outliers = [
                 '25369H_INSP_STD_NJC_COPD_Reg_19676E',
                 '22169K_INSP_STD_TXS_COPD_Reg_19676E',
@@ -137,11 +134,11 @@ class COPD_dataset(Dataset):
             else:
                 idx_o.append(False)
         self.idx_o = np.array(idx_o)
-
         # remove outliers
         self.sid_list = np.asarray(self.sid_list)
         self.sid_list = self.sid_list[~self.idx_o]
 
+        # handel sub-sample
         if args.sample_prop < 1.0:
             # random seed
             random.seed(args.seed)
@@ -186,42 +183,59 @@ class COPD_dataset(Dataset):
             img = self.slice_data[idx,:,:] # self.slice_data.shape = 9201 * 447 * 447
             mask = self.mask_data[idx,:,:] # binary lung mask 9201 * 447 * 447
 
-            if self.args.mask_imputation:
-                img[~mask] = -1024 # set region outside lung mask (False) = -1024
-                if np.random.uniform(0,1,1) < 0.25: # with 25% adding random noise to lung mask region only
-                    img[~mask] = img[~mask] + np.random.normal(0, 50, img.shape)[~mask]
-
+            # preprocess input image
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
             img = img + 1024.
-            img = self.transforms(img[None,:,:])
-            img[0] = img[0]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
-            img[1] = img[1]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
+            img_lst = self.transforms(img[None, :, :]) # return the augmented anchor img and its positive pair
+
+            # set region outside lung mask (False) = -1024
+            if self.args.mask_imputation:
+                img_lst[0][~mask] = -1024
+                img_lst[1][~mask] = -1024
+
+            # resize the input image
+            transform_resize = Resize(spatial_size=(self.args.slice_size, self.args.slice_size), mode='bilinear',
+                                      align_corners=False)
+            img_lst[0] = transform_resize(img_lst[0])
+            img_lst[1] = transform_resize(img_lst[1])
+
+            # normalize pixel values
+            img_lst[0] = img_lst[0]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
+            img_lst[1] = img_lst[1]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
 
             key = self.sid_list[idx][:6]
             label = np.asarray(self.metric_dict[key]) # TODO: self.sid_list[idx][:6] extract sid from the first 6 letters
-            return key, img, idx, label
+            return key, img_lst, mask, idx, label
 
         if self.stage == 'testing':
             sid = self.sid_list[idx]
 
             # load subject-level images (nifti format)
-            #img = nibabel.load('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/image_transformed/' + sid + ".nii.gz")
-            #img = img.get_data()  # img: W * H * D
-            #img = np.swapaxes(img, 0, 2) # img: D * W * H
             img = sitk.ReadImage('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/image_transformed/' + sid + ".nii.gz")
             img = sitk.GetArrayFromImage(img)
 
             mask = sitk.ReadImage('/ocean/projects/asc170022p/lisun/registration/INSP2Atlas/unet_mask_transformed/' + sid + '_Affine.nii.gz')
             mask = sitk.GetArrayFromImage(mask)
 
-            if self.args.mask_imputation:
-                img = np.where(mask != 0, img, -1024)  # set region outside lung mask (False) = -1024
+            # select slices with lung mask region
             img = img[self.sel_slices]
+            mask = mask[self.sel_slices]
 
+            # preprocess input image
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
             img = img + 1024.
-            img = self.transforms(img, self.args)
+            img = self.transforms(img)
 
+            # set region outside lung mask (False) = -1024
+            if self.args.mask_imputation:
+                img = np.where(mask != 0, img, -1024)
+
+            # resize the input image
+            transform_resize = Resize(spatial_size=(self.args.slice_size, self.args.slice_size), mode='bilinear',
+                                      align_corners=False)
+            img = transform_resize(img)
+
+            # normalize pixel values
             img = img[:, None, :, :] / 632. - 1  # Normalize to [-1,1], 632=(1024+240)/2
 
             key = self.sid_list[idx][:6]
@@ -233,5 +247,5 @@ class COPD_dataset(Dataset):
 
             # return selected slice index
             slice_seq = np.array(self.sel_slices)
-            return sid, img, slice_seq, adj, label
+            return sid, img, mask, slice_seq, adj, label
 

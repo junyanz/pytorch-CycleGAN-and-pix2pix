@@ -119,8 +119,8 @@ parser.add_argument('--cos-slice', action='store_false',
                     help='use cosine lr schedule')
 
 # experiment configs
-parser.add_argument('--transform-type', default='affine', type=str,
-                    help='image transformation type, affine or elastic (default: affine)')
+parser.add_argument('--augmentation', default='fa',
+                    help='initials of augmentation including: (f)lip, (a)ffine, (e)lastic, (g)uassian, (c)ontrast.')
 parser.add_argument('--slice-size', default=224, type=int,
                     help='slice H, W, original size = 447 (default: 447)')
 parser.add_argument('--mask-threshold', default=0.05, type=float,
@@ -277,37 +277,8 @@ def main_worker(gpu, ngpus_per_node, args):
             print("=> no checkpoint found at '{}'".format(checkpoint))
             exit()
 
-    # augmentation
-    transform_resize = Resize(spatial_size=(args.slice_size, args.slice_size), mode='bilinear', align_corners=False)
-
-    transform_flip_ax0 = RandFlip(spatial_axis=0, prob=0.2)
-    transform_flip_ax1 = RandFlip(spatial_axis=1, prob=0.2)
-
-    transform_re = Rand2DElastic(mode='bilinear', prob=1.0,
-                                 spacing=(1.0, 1.0),
-                                 #sigma_range=(8, 12),
-                                 magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
-                                 #spatial_size=(args.slice_size, args.slice_size),
-                                 translate_range=(14, 14),
-                                 rotate_range=(np.pi / 12, np.pi / 12),
-                                 scale_range=(0.1, 0.1),
-                                 padding_mode='border'
-                                 )
-
-    transform_ra = RandAffine(mode='bilinear', prob=1.0,
-                              #spatial_size=(args.slice_size, args.slice_size),
-                              translate_range=(14, 14),
-                              rotate_range=(np.pi / 12, np.pi / 12),
-                              scale_range=(0.1, 0.1),
-                              padding_mode='border')
-
-    transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
-    transform_rac = RandAdjustContrast(prob=0.0)
-
-    if args.transform_type == 'affine':
-        train_transform = Compose([transform_resize, transform_flip_ax0, transform_flip_ax1, transform_rac, transform_rgn, transform_ra])
-    if args.transform_type == 'elastic':
-        train_transform = Compose([transform_resize, transform_flip_ax0, transform_flip_ax1, transform_rac, transform_rgn, transform_re])
+    # define augmentation
+    train_transform = define_augmentation(args)
 
     train_dataset_slice = COPD_dataset_slice("training", args, moco.loader.TwoCropsTransform(train_transform))
     args.num_sel_slices = len(train_dataset_slice.sel_slices)
@@ -387,7 +358,7 @@ def train_slice(train_loader, model, criterion, optimizer, epoch, args, AvgMeter
             slice_idx = sel_slices[j]
             train_loader.dataset.set_slice_idx(slice_idx)
 
-        sids, images, slice_loc_idx, labels = data
+        sids, images, mask, slice_loc_idx, labels = data
         # one-hot encoding
         slice_idx_tensor = torch.zeros_like(slice_loc_idx)
         slice_idx_tensor = torch.add(slice_idx_tensor, slice_idx)
@@ -426,6 +397,49 @@ def train_slice(train_loader, model, criterion, optimizer, epoch, args, AvgMeter
                 log_value('slice/loss', progress.meters[2].avg, step)
                 log_value('slice/acc_1', progress.meters[3].avg, step)
                 log_value('slice/acc_5', progress.meters[4].avg, step)
+
+
+def define_augmentation(args):
+    """augmentations applied to the input image"""
+
+    # augmentation dictionary
+    aug_dict = {}
+
+    # random flip the input image
+    transform_flip_ax0 = RandFlip(spatial_axis=0, prob=0.2)
+    transform_flip_ax1 = RandFlip(spatial_axis=1, prob=0.2)
+    aug_dict['f'] = [transform_flip_ax0, transform_flip_ax1]
+
+    # random 2D elastic transformation
+    transform_re = Rand2DElastic(mode='bilinear', prob=1.0,
+                                 spacing=(1.0, 1.0),
+                                 magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
+                                 translate_range=(14, 14),
+                                 rotate_range=(np.pi / 12, np.pi / 12),
+                                 scale_range=(0.1, 0.1),
+                                 padding_mode='border'
+                                 )
+    aug_dict['e'] = [transform_re]
+
+    # random affine transformation
+    transform_ra = RandAffine(mode='bilinear', prob=1.0,
+                              translate_range=(14, 14),
+                              rotate_range=(np.pi / 12, np.pi / 12),
+                              scale_range=(0.1, 0.1),
+                              padding_mode='border')
+    aug_dict['a'] = [transform_ra]
+
+    transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
+    aug_dict['g'] = [transform_rgn]
+
+    transform_rac = RandAdjustContrast(prob=0.0)
+    aug_dict['c'] = [transform_rac]
+
+    keys = [char for char in args.augmentation]
+    augs = []
+    for k in keys:
+        augs = augs + aug_dict[k]
+    return Compose(augs)
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):

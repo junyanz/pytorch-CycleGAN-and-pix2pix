@@ -17,7 +17,7 @@ model_names = sorted(name for name in models.__dict__
     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='Extract 2D Slice Representations')
-parser.add_argument('--exp-name', default='./ssl_exp/moco_slice_resnet18_aug1_nomask_full')
+parser.add_argument('--exp-name', default='./ssl_exp/moco_slice_resnet18_lungmask')
 parser.add_argument('--checkpoint-slice', default='checkpoint_slice_0010.pth.tar')
 parser.add_argument('--batch-size', type=int, default=1)
 parser.add_argument('--slice-batch', type=int, default=128)
@@ -91,7 +91,7 @@ def main_worker(args):
                   dynamic_ncols=True,
                   disable=False)
     for i, batch in enumerate(iterator):
-        sid, images, slice_loc_idx, adj, labels = batch
+        sid, images, mask, slice_loc_idx, adj, labels = batch
         sid_lst.append(sid[0])
         images = images[0].float().cuda()
         slice_loc_idx = slice_loc_idx.squeeze().long().cuda()
