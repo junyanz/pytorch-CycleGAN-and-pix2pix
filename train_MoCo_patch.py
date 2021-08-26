@@ -114,6 +114,8 @@ parser.add_argument('--cos-patch', action='store_false',
                     help='use cosine lr schedule')
 
 # experiment configs
+parser.add_argument('--augmentation', default='agc',
+                    help='initials of augmentation including: (f)lip, (a)ffine, (e)lastic, (g)uassian, (c)ontrast.')
 parser.add_argument('--transform-type', default='affine', type=str,
                     help='image transformation type, affine or elastic (default: affine)')
 parser.add_argument('--exp-name', default='debug_patch', type=str,
@@ -252,33 +254,10 @@ def main_worker(gpu, ngpus_per_node, args):
             print("=> no checkpoint found at '{}'".format(checkpoint))
             exit()
 
-    # augmentation
-    transform_ra = RandAffine(mode='bilinear', prob=1.0,
-                              spatial_size=(32, 32, 32),
-                              translate_range=(12, 12, 12),
-                              rotate_range=(np.pi / 18, np.pi / 18, np.pi / 18),
-                              scale_range=(0.1, 0.1, 0.1),
-                              padding_mode='border')
+    # define augmentation
+    train_transform = define_augmentation(args)
 
-    transform_re = Rand3DElastic(mode='bilinear', prob=1.0,
-                                 sigma_range=(8, 12),
-                                 magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
-                                 spatial_size=(32, 32, 32),
-                                 translate_range=(12, 12, 12),
-                                 rotate_range=(np.pi / 18, np.pi / 18, np.pi / 18),
-                                 scale_range=(0.1, 0.1, 0.1),
-                                 padding_mode='border')
-
-    transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
-    transform_rac = RandAdjustContrast(prob=0.25)
-
-    if args.transform_type == 'affine':
-        train_transforms = Compose([transform_rac, transform_rgn, transform_ra])
-    if args.transform_type == 'elastic':
-        train_transforms = Compose([transform_rac, transform_rgn, transform_re])
-
-    train_dataset_patch = COPD_dataset_patch('training', args, MoCo_Loader.TwoCropsTransform(train_transforms))
-
+    train_dataset_patch = COPD_dataset_patch('training', args, MoCo_Loader.TwoCropsTransform(train_transform))
 
     if args.distributed:
         train_sampler_patch = torch.utils.data.distributed.DistributedSampler(train_dataset_patch, shuffle=False) # unable shuffle to ensure loop through all subjects
@@ -371,6 +350,42 @@ def train_patch(train_loader, model, criterion, optimizer, epoch, args):
                 log_value('patch/acc_1', progress.meters[3].avg, step)
                 log_value('patch/acc_5', progress.meters[4].avg, step)
 
+def define_augmentation(args):
+    """augmentations applied to the input image"""
+
+    # augmentation dictionary
+    aug_dict = {}
+
+    # augmentation
+    transform_ra = RandAffine(mode='bilinear', prob=1.0,
+                              spatial_size=(32, 32, 32),
+                              translate_range=(12, 12, 12),
+                              rotate_range=(np.pi / 18, np.pi / 18, np.pi / 18),
+                              scale_range=(0.1, 0.1, 0.1),
+                              padding_mode='border')
+    aug_dict['a'] = [transform_ra]
+
+    transform_re = Rand3DElastic(mode='bilinear', prob=1.0,
+                                 sigma_range=(8, 12),
+                                 magnitude_range=(0, 1024 + 240),  # [-1024, 240] -> [0, 1024+240]
+                                 spatial_size=(32, 32, 32),
+                                 translate_range=(12, 12, 12),
+                                 rotate_range=(np.pi / 18, np.pi / 18, np.pi / 18),
+                                 scale_range=(0.1, 0.1, 0.1),
+                                 padding_mode='border')
+    aug_dict['e'] = [transform_re]
+
+    transform_rgn = RandGaussianNoise(prob=0.25, mean=0.0, std=50)
+    aug_dict['g'] = [transform_rgn]
+
+    transform_rac = RandAdjustContrast(prob=0.25)
+    aug_dict['c'] = [transform_rac]
+
+    keys = [char for char in args.augmentation]
+    augs = []
+    for k in keys:
+        augs = augs + aug_dict[k]
+    return Compose(augs)
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
