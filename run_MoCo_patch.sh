@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 LOG_DIR="./logs/ssl_exp"
-EXPERIMENT="moco_patch_affine"
+EXPERIMENT="moco_patch_a"
 
 mkdir -p ${LOG_DIR}
 
@@ -12,7 +12,7 @@ python train_MoCo_patch.py \
   --dist-url='tcp://localhost:10001' \
   --dist-backend='nccl' \
   --npgus-per-node=4 \
-  --workers-patch=16 \
+  --workers-patch=20 \
   --epochs=10 \
   --start-epoch=0 \
   --resume='' \
@@ -26,4 +26,4 @@ python train_MoCo_patch.py \
   --moco-k-patch=4096 \
   --moco-m-patch=0.999 \
   --moco-t-patch=0.2 \
-  --transform-type='affine' >> ${LOG_DIR}/${EXPERIMENT}.log 2>&1
+  --augmentation='a' >> ${LOG_DIR}/${EXPERIMENT}.log 2>&1

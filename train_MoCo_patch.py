@@ -116,8 +116,6 @@ parser.add_argument('--cos-patch', action='store_false',
 # experiment configs
 parser.add_argument('--augmentation', default='agc',
                     help='initials of augmentation including: (f)lip, (a)ffine, (e)lastic, (g)uassian, (c)ontrast.')
-parser.add_argument('--transform-type', default='affine', type=str,
-                    help='image transformation type, affine or elastic (default: affine)')
 parser.add_argument('--exp-name', default='debug_patch', type=str,
                     help='experiment name')
 
