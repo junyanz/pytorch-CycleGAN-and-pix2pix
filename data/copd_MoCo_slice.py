@@ -190,8 +190,8 @@ class COPD_dataset(Dataset):
 
             # set region outside lung mask (False) = -1024
             if self.args.mask_imputation:
-                img_lst[0][~mask] = -1024
-                img_lst[1][~mask] = -1024
+                img_lst[0][0, :, :][~mask] = -1024
+                img_lst[1][0, :, :][~mask] = -1024
 
             # resize the input image
             transform_resize = Resize(spatial_size=(self.args.slice_size, self.args.slice_size), mode='bilinear',
