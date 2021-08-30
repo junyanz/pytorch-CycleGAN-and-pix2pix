@@ -183,21 +183,19 @@ class COPD_dataset(Dataset):
             img = self.slice_data[idx,:,:] # self.slice_data.shape = 9201 * 447 * 447
             mask = self.mask_data[idx,:,:] # binary lung mask 9201 * 447 * 447
 
-            # preprocess input image
-            img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
-            img = img + 1024.
-            img_lst = self.transforms(img[None, :, :]) # return the augmented anchor img and its positive pair
-
             # set region outside lung mask (False) = -1024
             if self.args.mask_imputation:
-                img_lst[0][0, :, :][~mask] = -1024
-                img_lst[1][0, :, :][~mask] = -1024
+                img[~mask] = -1024
 
             # resize the input image
             transform_resize = Resize(spatial_size=(self.args.slice_size, self.args.slice_size), mode='bilinear',
                                       align_corners=False)
-            img_lst[0] = transform_resize(img_lst[0])
-            img_lst[1] = transform_resize(img_lst[1])
+            img = transform_resize(img)
+
+            # preprocess input image
+            img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
+            img = img + 1024.
+            img_lst = self.transforms(img[None, :, :]) # return the augmented anchor img and its positive pair
 
             # normalize pixel values
             img_lst[0] = img_lst[0]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
@@ -221,11 +219,6 @@ class COPD_dataset(Dataset):
             img = img[self.sel_slices]
             mask = mask[self.sel_slices]
 
-            # preprocess input image
-            img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
-            img = img + 1024.
-            img = self.transforms(img)
-
             # set region outside lung mask (False) = -1024
             if self.args.mask_imputation:
                 img = np.where(mask != 0, img, -1024)
@@ -234,6 +227,11 @@ class COPD_dataset(Dataset):
             transform_resize = Resize(spatial_size=(self.args.slice_size, self.args.slice_size), mode='bilinear',
                                       align_corners=False)
             img = transform_resize(img)
+
+            # preprocess input image
+            img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
+            img = img + 1024.
+            img = self.transforms(img)
 
             # normalize pixel values
             img = img[:, None, :, :] / 632. - 1  # Normalize to [-1,1], 632=(1024+240)/2

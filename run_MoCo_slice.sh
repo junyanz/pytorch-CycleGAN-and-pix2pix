@@ -22,7 +22,7 @@ python train_MoCo_slice.py \
   --batch-size=512 \
   --lr=0.01 \
   --rep-dim-slice=512 \
-  --moco-dim-slice=256 \
+  --moco-dim-slice=128 \
   --moco-k-slice=4096 \
   --moco-m-slice=0.999 \
   --moco-t-slice=0.2 \

@@ -13,8 +13,8 @@ from models.cnn3d import Encoder as PatchNet
 from data.copd_MoCo_patch import COPD_dataset as COPD_dataset_patch
 
 parser = argparse.ArgumentParser(description='Extract 3D Images Representations')
-parser.add_argument('--exp-name', default='./ssl_exp/moco_patch_elastic')
-parser.add_argument('--checkpoint-patch', default='checkpoint_patch_0002.pth.tar')
+parser.add_argument('--exp-name', default='./ssl_exp/moco_patch_agc')
+parser.add_argument('--checkpoint-patch', default='checkpoint_patch_0010.pth.tar')
 parser.add_argument('--batch-size', type=int, default=1)
 
 
