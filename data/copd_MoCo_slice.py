@@ -190,12 +190,12 @@ class COPD_dataset(Dataset):
             # resize the input image
             transform_resize = Resize(spatial_size=(self.args.slice_size, self.args.slice_size), mode='bilinear',
                                       align_corners=False)
-            img = transform_resize(img)
+            img = transform_resize(img[None, :, :])
 
             # preprocess input image
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
             img = img + 1024.
-            img_lst = self.transforms(img[None, :, :]) # return the augmented anchor img and its positive pair
+            img_lst = self.transforms(img) # return the augmented anchor img and its positive pair
 
             # normalize pixel values
             img_lst[0] = img_lst[0]/632.-1 # Normalize to [-1,1], 632=(1024+240)/2
@@ -226,7 +226,7 @@ class COPD_dataset(Dataset):
             # resize the input image
             transform_resize = Resize(spatial_size=(self.args.slice_size, self.args.slice_size), mode='bilinear',
                                       align_corners=False)
-            img = transform_resize(img)
+            img = transform_resize(img[None, :, :])
 
             # preprocess input image
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
