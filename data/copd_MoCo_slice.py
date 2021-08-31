@@ -226,7 +226,7 @@ class COPD_dataset(Dataset):
             # resize the input image
             transform_resize = Resize(spatial_size=(self.args.slice_size, self.args.slice_size), mode='bilinear',
                                       align_corners=False)
-            img = transform_resize(img[None, :, :])
+            img = transform_resize(img)
 
             # preprocess input image
             img = np.clip(img, -1024, 240)  # clip input intensity to [-1024, 240]
