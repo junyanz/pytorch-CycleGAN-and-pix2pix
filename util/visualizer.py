@@ -6,6 +6,7 @@ import time
 from . import util, html
 from subprocess import Popen, PIPE
 
+import wandb
 
 if sys.version_info[0] == 2:
     VisdomExceptionBase = Exception
@@ -70,6 +71,7 @@ class Visualizer():
             import visdom
             self.ncols = opt.display_ncols
             self.vis = visdom.Visdom(server=opt.display_server, port=opt.display_port, env=opt.display_env)
+            self.wandb_run = wandb.init(project=opt.project, name=opt.name, config=opt) if not wandb.run else wandb.run
             if not self.vis.check_connection():
                 self.create_visdom_connections()
 
@@ -152,6 +154,17 @@ class Visualizer():
                         idx += 1
                 except VisdomExceptionBase:
                     self.create_visdom_connections()
+            
+            columns = [key for key, _ in visuals.items()]
+            result_table = wandb.Table(columns=columns)
+            table_row = []
+            for label, image in visuals.items():
+                image_numpy = util.tensor2im(image)
+                table_row.append(wandb.Image(image_numpy))
+                self.wandb_run.log({label: wandb.Image(image_numpy)})
+            result_table.add_data(*table_row)
+            self.wandb_run.log({"Result": result_table})
+            
 
         if self.use_html and (save_result or not self.saved):  # save images to an HTML file if they haven't been saved.
             self.saved = True
@@ -200,6 +213,7 @@ class Visualizer():
                 win=self.display_id)
         except VisdomExceptionBase:
             self.create_visdom_connections()
+        self.wandb_run.log(losses)
 
     # losses: same format as |losses| of plot_current_losses
     def print_current_losses(self, epoch, iters, losses, t_comp, t_data):
