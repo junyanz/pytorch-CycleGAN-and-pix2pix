@@ -17,8 +17,8 @@ model_names = sorted(name for name in models.__dict__
     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='Extract 2D Slice Representations')
-parser.add_argument('--exp-name', default='./ssl_exp/moco_slice_resnet18_lungmask_fa')
-parser.add_argument('--checkpoint-slice', default='checkpoint_slice_0005.pth.tar')
+parser.add_argument('--exp-name', default='./ssl_exp/moco_slice_resnet18_lungmask_fagc')
+parser.add_argument('--checkpoint-slice', default='checkpoint_slice_0010.pth.tar')
 parser.add_argument('--batch-size', type=int, default=1)
 parser.add_argument('--slice-batch', type=int, default=128)
 
