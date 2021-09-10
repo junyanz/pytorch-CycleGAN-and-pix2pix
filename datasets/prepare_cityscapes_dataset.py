@@ -11,7 +11,7 @@ The processed images will be placed at --output_dir.
 
 Example usage:
 
-python prepare_cityscapes_dataset.py --gitFine_dir ./gtFine/ --leftImg8bit_dir ./leftImg8bit --output_dir ./datasets/cityscapes/
+python prepare_cityscapes_dataset.py --gtFine_dir ./gtFine/ --leftImg8bit_dir ./leftImg8bit --output_dir ./datasets/cityscapes/
 """
 
 def load_resized_img(path):
