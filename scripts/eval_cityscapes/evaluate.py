@@ -44,6 +44,7 @@ def main():
         im_file = args.result_dir + '/' + idx + '_leftImg8bit.png'
         im = np.array(Image.open(im_file))
         im = scipy.misc.imresize(im, (label.shape[1], label.shape[2]))
+        # im = np.array(Image.fromarray(im).resize((label.shape[1], label.shape[2])))  # Note: scipy.misc.imresize is deprecated, but we still use it for reproducibility. 
         out = segrun(net, CS.preprocess(im))
         hist_perframe += fast_hist(label.flatten(), out.flatten(), n_cl)
         if args.save_output_images > 0:
