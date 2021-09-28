@@ -1,5 +1,5 @@
 ## Frequently Asked Questions
-Before you post a new question, please first look at the following Q & A and existing GitHub issues. You may also want to read [Training/Test tips](docs/tips.md) for more suggestions.
+Before you post a new question, please first look at the following Q & A and existing GitHub issues. You may also want to read [Training/Test tips](tips.md) for more suggestions.
 
 #### Connection Error:HTTPConnectionPool ([#230](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/230), [#24](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/24), [#38](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/38))
 Similar error messages include “Failed to establish a new connection/Connection refused”.
