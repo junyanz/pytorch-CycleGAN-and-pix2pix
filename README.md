@@ -112,6 +112,7 @@ cd pytorch-CycleGAN-and-pix2pix
 bash ./datasets/download_cyclegan_dataset.sh maps
 ```
 - To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097.
+- To log training progress and test images to W&B dashboard, set the `--use_wandb` flag with train and test script
 - Train a model:
 ```bash
 #!./scripts/train_cyclegan.sh
@@ -131,6 +132,7 @@ python test.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
 bash ./datasets/download_pix2pix_dataset.sh facades
 ```
 - To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097.
+- To log training progress and test images to W&B dashboard, set the `--use_wandb` flag with train and test script
 - Train a model:
 ```bash
 #!./scripts/train_pix2pix.sh
