@@ -49,7 +49,7 @@ if __name__ == '__main__':
     # initialize logger
     if opt.use_wandb:
         wandb_run = wandb.init(project='CycleGAN&pix2pix', name=opt.name, config=opt) if not wandb.run else wandb.run
-        wandb_run._label(repo='CycleGAN&pix2pix')
+        wandb_run._label(repo='CycleGAN-and-pix2pix')
 
     # create a website
     web_dir = os.path.join(opt.results_dir, opt.name, '{}_{}'.format(opt.phase, opt.epoch))  # define the website directory
