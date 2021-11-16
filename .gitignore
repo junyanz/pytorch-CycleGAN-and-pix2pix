@@ -41,3 +41,10 @@ test/.coverage
 test/data/legacy_serialized.pt
 *~
 .idea
+
+one_off_tests
+datasets
+env
+imgs
+results
+results2
