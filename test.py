@@ -32,7 +32,12 @@ from data import create_dataset
 from models import create_model
 from util.visualizer import save_images
 from util import html
-import wandb
+
+try:
+    import wandb
+except ImportError:
+    print('warning: wandb not found')
+
 
 if __name__ == '__main__':
     opt = TestOptions().parse()  # get test options
@@ -45,7 +50,7 @@ if __name__ == '__main__':
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
-    
+
     # initialize logger
     if opt.use_wandb:
         wandb_run = wandb.init(project='CycleGAN-and-pix2pix', name=opt.name, config=opt) if not wandb.run else wandb.run

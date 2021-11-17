@@ -6,7 +6,11 @@ import time
 from . import util, html
 from subprocess import Popen, PIPE
 
-import wandb
+
+try:
+    import wandb
+except ImportError:
+    print('warning: wandb not found')
 
 if sys.version_info[0] == 2:
     VisdomExceptionBase = Exception
@@ -79,7 +83,7 @@ class Visualizer():
             self.vis = visdom.Visdom(server=opt.display_server, port=opt.display_port, env=opt.display_env)
             if not self.vis.check_connection():
                 self.create_visdom_connections()
-                
+
         if self.use_wandb:
             self.wandb_run = wandb.init(project='CycleGAN-and-pix2pix', name=opt.name, config=opt) if not wandb.run else wandb.run
             self.wandb_run._label(repo='CycleGAN-and-pix2pix')
@@ -163,7 +167,7 @@ class Visualizer():
                         idx += 1
                 except VisdomExceptionBase:
                     self.create_visdom_connections()
-                    
+
             if self.use_wandb:
                 columns = [key for key, _ in visuals.items()]
                 columns.insert(0,'epoch')
@@ -180,7 +184,7 @@ class Visualizer():
                     self.current_epoch = epoch
                     result_table.add_data(*table_row)
                     self.wandb_run.log({"Result": result_table})
-            
+
 
         if self.use_html and (save_result or not self.saved):  # save images to an HTML file if they haven't been saved.
             self.saved = True
