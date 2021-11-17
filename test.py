@@ -36,7 +36,7 @@ from util import html
 try:
     import wandb
 except ImportError:
-    print('warning: wandb not found')
+    print('Warning: wandb package cannot be found. The option "--use_wandb" will result in error.')
 
 
 if __name__ == '__main__':
