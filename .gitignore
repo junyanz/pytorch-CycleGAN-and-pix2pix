@@ -50,3 +50,4 @@ results
 results2
 frontend/cyclegan_images
 cyclegan_streamlit_image.tar.gz
+cyclegan_checkpoints.tar.gz
