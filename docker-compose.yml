@@ -1,0 +1,6 @@
+services:
+  streamlit_app:
+    build: .
+    restart: always
+    ports:
+    - 8082:80

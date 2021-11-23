@@ -48,3 +48,5 @@ env
 imgs
 results
 results2
+frontend/cyclegan_images
+cyclegan_streamlit_image.tar.gz
