@@ -49,7 +49,8 @@ class AvScenariosDataset(BaseDataset):
             self.dataset = pickle.loads(fid.read())
         # get the image paths of your dataset;
         # define the default transform function. You can use <base_dataset.get_transform>; You can also define your custom transform function
-        self.transform = get_transform(opt)
+        # self.transform = get_transform(opt)
+        self.transform = []
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.
@@ -65,11 +66,11 @@ class AvScenariosDataset(BaseDataset):
         Step 3: convert your data to a PyTorch tensor. You can use helpder functions such as self.transform. e.g., data = self.transform(image)
         Step 4: return a data point as a dictionary.
         """
-        path = 'temp'    # needs to be a string
-        data_A = None    # needs to be a tensor
-        data_B = None    # needs to be a tensor
-        return {'data_A': data_A, 'data_B': data_B, 'path': path}
+        agents_feat = self.dataset['agents_feat'][index]
+        map_feat = self.dataset['map_feat'][index]
+
+        return {'agents_feat': agents_feat, 'map_feat': map_feat}
 
     def __len__(self):
-        """Return the total number of images."""
-        return len(self.image_paths)
+        """Return the total number of scenes."""
+        return len(self.dataset['map_feat'])
