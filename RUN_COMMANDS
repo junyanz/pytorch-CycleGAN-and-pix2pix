@@ -3,8 +3,10 @@
 $ python -m visdom.server
 
 ** To run training:
-# python -m train.py --dataroot datasets/av_scenarios_data/l5kit_train_full.pkl --name facades_pix2pix --model pix2pix --direction BtoA -
+# python -m train.py --dataroot datasets/av_scenarios_data/l5kit_train_full.pkl --name facades_pix2pix --model pix2pix --direction BtoA
 
-** To run only on cpu add this:
+** To run only on cpu add:
 -gpu_ids -1
 
+** To limit dataset size add:
+-- max_dataset_size 1000

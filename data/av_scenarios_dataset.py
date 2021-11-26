@@ -12,9 +12,7 @@ You need to implement the following functions:
     -- <__len__>: Return the number of images.
 """
 from data.base_dataset import BaseDataset, get_transform
-# from data.image_folder import make_dataset
-# from PIL import Image
-
+import pickle
 
 class Av_scenarios_Dataset(BaseDataset):
     """A template dataset class for you to implement custom datasets."""
@@ -47,8 +45,9 @@ class Av_scenarios_Dataset(BaseDataset):
         """
         # save the option and dataset root
         BaseDataset.__init__(self, opt)
+        with open(opt.dataroot, 'rb') as fid:
+            self.dataset = pickle.loads(fid.read())
         # get the image paths of your dataset;
-        self.image_paths = []  # You can call sorted(make_dataset(self.root, opt.max_dataset_size)) to get all the image paths under the directory self.root
         # define the default transform function. You can use <base_dataset.get_transform>; You can also define your custom transform function
         self.transform = get_transform(opt)
 
