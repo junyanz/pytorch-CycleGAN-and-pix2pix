@@ -18,6 +18,7 @@ from data.base_dataset import BaseDataset, get_transform
 
 class Av_scenarios_Dataset(BaseDataset):
     """A template dataset class for you to implement custom datasets."""
+
     @staticmethod
     def modify_commandline_options(parser, is_train):
         """Add new dataset-specific options, and rewrite default values for existing options.
@@ -29,8 +30,8 @@ class Av_scenarios_Dataset(BaseDataset):
         Returns:
             the modified parser.
         """
-        parser.add_argument('--new_dataset_option', type=float, default=1.0, help='new dataset option')
-        parser.set_defaults(max_dataset_size=10, new_dataset_option=2.0)  # specify dataset-specific default values
+        # parser.add_argument('--new_dataset_option', type=float, default=1.0, help='new dataset option')
+        parser.set_defaults(max_dataset_size=float("inf"))  # specify dataset-specific default values
         return parser
 
     def __init__(self, opt):
@@ -42,7 +43,7 @@ class Av_scenarios_Dataset(BaseDataset):
         A few things can be done here.
         - save the options (have been done in BaseDataset)
         - get image paths and meta information of the dataset.
-        - define the image transformation.
+        - the image transformation.
         """
         # save the option and dataset root
         BaseDataset.__init__(self, opt)
