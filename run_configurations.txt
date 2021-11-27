@@ -5,8 +5,8 @@ $ python -m visdom.server
 ** To run training on a small sample dataset:
 # python -m train.py --dataset_mode av_scenarios --dataroot datasets/av_scenarios_data/l5kit_sample.pkl --name l5kit_sample --model av_scenarios --direction BtoA
 
-** To run only on cpu add:
--gpu_ids -1
+** To run only on CPU add:
+--gpu_ids -1
 
 ** To limit dataset size add:
 -- max_dataset_size 1000
