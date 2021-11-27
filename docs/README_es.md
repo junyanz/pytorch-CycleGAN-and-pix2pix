@@ -89,8 +89,8 @@ PyTorch Colab notebook: [CycleGAN](https://colab.research.google.com/github/juny
 
 - Clone este repositorio:
 ```bash
-git clone https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix
-cd pytorch-CycleGAN-and-pix2pix
+git clone ???
+cd ??
 ```
 
 - Instale [PyTorch](http://pytorch.org) 0.4+ y sus otras dependencias (e.g., torchvision, [visdom](https://github.com/facebookresearch/visdom) y [dominate](https://github.com/Knio/dominate)).

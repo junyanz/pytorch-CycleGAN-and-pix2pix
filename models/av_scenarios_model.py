@@ -20,7 +20,7 @@ from .base_model import BaseModel
 from . import networks
 
 
-class TemplateModel(BaseModel):
+class AvScenariosModel(BaseModel):
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
         """Add new model-specific options and rewrite default values for existing options.

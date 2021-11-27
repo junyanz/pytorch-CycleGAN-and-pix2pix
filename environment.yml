@@ -1,4 +1,4 @@
-name: pytorch-CycleGAN-and-pix2pix
+name: scene_gen
 channels:
 - pytorch
 - defaults
