@@ -49,25 +49,40 @@ class AvScenariosModel(BaseModel):
         - define loss function, visualization images, model names, and optimizers
         """
         BaseModel.__init__(self, opt)  # call the initialization method of BaseModel
-        # specify the training losses you want to print out. The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
-        self.loss_names = ['loss_G']
-        # specify the images you want to save and display. The program will call base_model.get_current_visuals to save and display these images.
-        self.visual_names = ['data_A', 'data_B', 'output']
-        # specify the models you want to save to the disk. The program will call base_model.save_networks and base_model.load_networks to save and load networks.
-        # you can use opt.isTrain to specify different behaviors for training and test. For example, some networks will not be used during test, and you don't need to load them.
-        self.model_names = ['G']
-        # define networks; you can use opt.isTrain to specify different behaviors for training and test.
-        self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, gpu_ids=self.gpu_ids)
-        if self.isTrain:  # only defined during training time
-            # define your loss functions. You can use losses provided by torch.nn such as torch.nn.L1Loss.
-            # We also provide a GANLoss class "networks.GANLoss". self.criterionGAN = networks.GANLoss().to(self.device)
-            self.criterionLoss = torch.nn.L1Loss()
-            # define and initialize optimizers. You can define one optimizer for each network.
-            # If two networks are updated at the same time, you can use itertools.chain to group them. See cycle_gan_model.py for an example.
-            self.optimizer = torch.optim.Adam(self.netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
-            self.optimizers = [self.optimizer]
 
-        # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
+        # specify the training losses you want to print out.
+        # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
+        self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
+
+        # specify the images you want to save and display. The program will call base_model.get_current_visuals to save and display these images.
+        self.visual_names = ['real_A', 'fake_B', 'real_B']
+
+        # specify the models you want to save to the disk.
+        # The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
+        if self.isTrain:
+            self.model_names = ['G', 'D']
+        else:  # during test time, only load G
+            self.model_names = ['G']
+
+        # define networks
+        self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
+                                      not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
+        if self.isTrain:
+            # define a discriminator; conditional GANs need to take both input and output images;
+            # Therefore, #channels for D is input_nc + output_nc
+            self.netD = networks.define_D(opt.input_nc + opt.output_nc, opt.ndf, opt.netD,
+                                          opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
+
+        if self.isTrain:
+            # define loss functions
+            self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)
+            self.criterionL1 = torch.nn.L1Loss()
+            # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
+            self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizers.append(self.optimizer_G)
+            self.optimizers.append(self.optimizer_D)
+             # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
 
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -75,25 +90,61 @@ class AvScenariosModel(BaseModel):
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        AtoB = self.opt.direction == 'AtoB'  # use <direction> to swap data_A and data_B
-        self.data_A = input['A' if AtoB else 'B'].to(self.device)  # get image data A
-        self.data_B = input['B' if AtoB else 'A'].to(self.device)  # get image data B
-        self.image_paths = input['A_paths' if AtoB else 'B_paths']  # get image paths
+
+        self.real_map = input['map_feat'].to(self.device)
+        self.real_agents = input['agents_feat'].to(self.device)
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        self.output = self.netG(self.data_A)  # generate output image given the input data_A
+        # generate the output of the generator given the input map
+        self.fake_agents,  self.recounstructed_map = self.netG(self.real_map)
 
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
+    def backward_D(self):
+        # Feed fake (generated) agents to discriminator and calculate its prediction loss
+        # we use conditional GANs; we need to feed both input and output to the discriminator
+        map_and_fake_agents = torch.cat((self.real_map, self.fake_agents), 1)
+        pred_fake = self.netD(map_and_fake_agents.detach())
+        self.loss_D_fake = self.criterionGAN(pred_fake, False)
+
+        # Feed real (loaded from data) agents to discriminator and calculate its prediction loss
+        map_and_real_agents = torch.cat((self.real_map, self.real_agents), 1)
+        pred_real = self.netD(map_and_real_agents)
+        self.loss_D_real = self.criterionGAN(pred_real, True)
+
+        # combine loss and calculate gradients
+        self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
+        self.loss_D.backward()
+
+
+    def backward_G(self):
+        """Calculate GAN and L1 loss for the generator"""
+        #  the generator should fool the discriminator
+        map_and_fake_agents = torch.cat((self.real_map, self.fake_agents), 1)
+        pred_fake = self.netD(map_and_fake_agents.detach())
+        self.loss_G_GAN = self.criterionGAN(pred_fake, True
+                                            )
+        # Second, we want G(map) = map, since the generator acts also as an encoder-decoder for the map
+        self.loss_G_L1 = self.criterionL1(self.recounstructed_map, self.real_map) * self.opt.lambda_L1
+
+        # combine loss and calculate gradients
+        self.loss_G = self.loss_G_GAN + self.loss_G_L1
+        self.loss_G.backward()
+
+        # calculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
         self.loss_G = self.criterionLoss(self.output, self.data_B) * self.opt.lambda_regression
         self.loss_G.backward()       # calculate gradients of network G w.r.t. loss_G
 
     def optimize_parameters(self):
         """Update network weights; it will be called in every training iteration."""
-        self.forward()               # first call forward to calculate intermediate results
-        self.optimizer.zero_grad()   # clear network G's existing gradients
-        self.backward()              # calculate gradients for network G
-        self.optimizer.step()        # update gradients for network G
+        self.forward()                   # compute fake images: G(A)
+        # update D
+        self.set_requires_grad(self.netD, True)  # enable backprop for D
+        self.optimizer_D.zero_grad()     # set D's gradients to zero
+        self.backward_D()                # calculate gradients for D
+        self.optimizer_D.step()          # update D's weights
+        # update G
+        self.set_requires_grad(self.netD, False)  # D requires no gradients when optimizing G
+        self.optimizer_G.zero_grad()        # set G's gradients to zero
+        self.backward_G()                   # calculate graidents for G
+        self.optimizer_G.step()             # udpate G's weights
