@@ -7,7 +7,7 @@ class TrainOptions(BaseOptions):
     It also includes shared options defined in BaseOptions.
     """
 
-    def initialize(self, parser):
+    def initialize(self, parser, is_image_data=True):
         parser = BaseOptions.initialize(self, parser)
         # visdom and HTML visualization parameters
         parser.add_argument('--display_freq', type=int, default=400, help='frequency of showing training results on screen')

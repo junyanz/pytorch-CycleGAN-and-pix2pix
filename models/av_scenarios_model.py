@@ -32,9 +32,11 @@ class AvScenariosModel(BaseModel):
         Returns:
             the modified parser.
         """
-        parser.set_defaults(dataset_mode='aligned')  # You can rewrite default values for this model. For example, this model usually uses aligned dataset as its dataset.
+        parser.set_defaults(norm='batch', netG='unet_256', dataset_mode='aligned')
+
         if is_train:
-            parser.add_argument('--lambda_regression', type=float, default=1.0, help='weight for the regression loss')  # You can define new arguments for this model.
+            parser.set_defaults(gan_mode='vanilla')
+            parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
 
         return parser
 
