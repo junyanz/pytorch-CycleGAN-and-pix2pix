@@ -48,7 +48,7 @@ class AvScenariosModel(BaseModel):
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
         """
-        BaseModel.__init__(self, opt)  # call the initialization method of BaseModel
+        BaseModel.__init__(self, opt, is_image_data=False)  # call the initialization method of BaseModel
 
         # specify the training losses you want to print out.
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
@@ -121,8 +121,8 @@ class AvScenariosModel(BaseModel):
         #  the generator should fool the discriminator
         map_and_fake_agents = torch.cat((self.real_map, self.fake_agents), 1)
         pred_fake = self.netD(map_and_fake_agents.detach())
-        self.loss_G_GAN = self.criterionGAN(pred_fake, True
-                                            )
+        self.loss_G_GAN = self.criterionGAN(pred_fake, True)
+
         # Second, we want G(map) = map, since the generator acts also as an encoder-decoder for the map
         self.loss_G_L1 = self.criterionL1(self.recounstructed_map, self.real_map) * self.opt.lambda_L1
 
