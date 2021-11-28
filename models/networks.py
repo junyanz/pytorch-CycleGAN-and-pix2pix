@@ -116,7 +116,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     return net
 
 
-def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_G(opt, gpu_ids=[]):
     """Create a generator
 
     Parameters:
@@ -143,23 +143,25 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
 
     The generator has been initialized by <init_net>. It uses RELU for non-linearity.
     """
+
+    use_dropout = not opt.no_dropout
     net = None
-    norm_layer = get_norm_layer(norm_type=norm)
+    norm_layer = get_norm_layer(norm_type=opt.norm)
 
-    if netG == 'resnet_9blocks':
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
-    elif netG == 'resnet_6blocks':
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
-    elif netG == 'unet_128':
-        net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
-    elif netG == 'unet_256':
-        net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+    if opt.netG == 'resnet_9blocks':
+        net = ResnetGenerator(opt.input_nc, opt.output_nc, opt.ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
+    elif opt.netG == 'resnet_6blocks':
+        net = ResnetGenerator(opt.input_nc, opt.output_nc, opt.ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
+    elif opt.netG == 'unet_128':
+        net = UnetGenerator(opt.input_nc, opt.output_nc, 7, opt.ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+    elif opt.netG == 'unet_256':
+        net = UnetGenerator(opt.input_nc, opt.output_nc, 8, opt.ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     else:
-        raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
-    return init_net(net, init_type, init_gain, gpu_ids)
+        raise NotImplementedError('Generator model name [%s] is not recognized' % opt.netG)
+    return init_net(net, opt.init_type, opt.init_gain, gpu_ids)
 
 
-def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_D(opt, gpu_ids=[]):
     """Create a discriminator
 
     Parameters:
@@ -190,17 +192,17 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
     The discriminator has been initialized by <init_net>. It uses Leakly RELU for non-linearity.
     """
     net = None
-    norm_layer = get_norm_layer(norm_type=norm)
+    norm_layer = get_norm_layer(norm_type=opt.norm)
 
-    if netD == 'basic':  # default PatchGAN classifier
-        net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer)
-    elif netD == 'n_layers':  # more options
-        net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
-    elif netD == 'pixel':     # classify if each pixel is real or fake
-        net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
+    if opt.netD == 'basic':  # default PatchGAN classifier
+        net = NLayerDiscriminator(opt.discriminator_in_nc, opt.ndf, n_layers=3, norm_layer=norm_layer)
+    elif opt.netD == 'n_layers':  # more options
+        net = NLayerDiscriminator(opt.discriminator_in_nc, opt.ndf, opt.n_layers_D, norm_layer=norm_layer)
+    elif opt.netD == 'pixel':     # classify if each pixel is real or fake
+        net = PixelDiscriminator(opt.discriminator_in_nc, opt.ndf, norm_layer=norm_layer)
     else:
-        raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
-    return init_net(net, init_type, init_gain, gpu_ids)
+        raise NotImplementedError('Discriminator model name [%s] is not recognized' % opt.netD)
+    return init_net(net, opt.init_type, opt.init_gain, gpu_ids)
 
 
 ##############################################################################
