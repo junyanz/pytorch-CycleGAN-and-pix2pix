@@ -130,10 +130,6 @@ class AvScenariosModel(BaseModel):
         self.loss_G = self.loss_G_GAN + self.loss_G_L1
         self.loss_G.backward()
 
-        # calculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        self.loss_G = self.criterionLoss(self.output, self.data_B) * self.opt.lambda_regression
-        self.loss_G.backward()       # calculate gradients of network G w.r.t. loss_G
 
     def optimize_parameters(self):
         """Update network weights; it will be called in every training iteration."""
@@ -146,5 +142,5 @@ class AvScenariosModel(BaseModel):
         # update G
         self.set_requires_grad(self.netD, False)  # D requires no gradients when optimizing G
         self.optimizer_G.zero_grad()        # set G's gradients to zero
-        self.backward_G()                   # calculate graidents for G
-        self.optimizer_G.step()             # udpate G's weights
+        self.backward_G()                   # calculate gradients for G
+        self.optimizer_G.step()             # update G's weights
