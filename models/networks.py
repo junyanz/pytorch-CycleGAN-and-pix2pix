@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
-from imgs_networks import ResnetGenerator, UnetGenerator, NLayerDiscriminator, PixelDiscriminator
+from .imgs_networks import ResnetGenerator, UnetGenerator, NLayerDiscriminator, PixelDiscriminator
 
 ###############################################################################
 # Helper Functions
@@ -161,7 +161,7 @@ def define_G(opt, gpu_ids=[]):
     return init_net(net, opt.init_type, opt.init_gain, gpu_ids)
 
 
-def define_D(opt, gpu_ids=[]):
+def define_D(opt, discriminator_in_nc, gpu_ids=[]):
     """Create a discriminator
 
     Parameters:
@@ -195,11 +195,11 @@ def define_D(opt, gpu_ids=[]):
     norm_layer = get_norm_layer(norm_type=opt.norm)
 
     if opt.netD == 'basic':  # default PatchGAN classifier
-        net = NLayerDiscriminator(opt.discriminator_in_nc, opt.ndf, n_layers=3, norm_layer=norm_layer)
+        net = NLayerDiscriminator(discriminator_in_nc, opt.ndf, n_layers=3, norm_layer=norm_layer)
     elif opt.netD == 'n_layers':  # more options
-        net = NLayerDiscriminator(opt.discriminator_in_nc, opt.ndf, opt.n_layers_D, norm_layer=norm_layer)
+        net = NLayerDiscriminator(discriminator_in_nc, opt.ndf, opt.n_layers_D, norm_layer=norm_layer)
     elif opt.netD == 'pixel':     # classify if each pixel is real or fake
-        net = PixelDiscriminator(opt.discriminator_in_nc, opt.ndf, norm_layer=norm_layer)
+        net = PixelDiscriminator(discriminator_in_nc, opt.ndf, norm_layer=norm_layer)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % opt.netD)
     return init_net(net, opt.init_type, opt.init_gain, gpu_ids)

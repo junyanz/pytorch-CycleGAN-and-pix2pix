@@ -71,7 +71,8 @@ class AvScenariosModel(BaseModel):
         if self.isTrain:
             # define a discriminator; conditional GANs need to take both input and output images;
             # Therefore, #channels for D is input_nc + output_nc
-            self.netD = networks.define_D(opt, self.gpu_ids)
+            discriminator_in_nc = opt.input_nc + opt.output_nc
+            self.netD = networks.define_D(opt, discriminator_in_nc, self.gpu_ids)
 
         if self.isTrain:
             # define loss functions
@@ -91,8 +92,9 @@ class AvScenariosModel(BaseModel):
             input: a dictionary that contains the data itself and its metadata information.
         """
 
-        self.real_map = input['map_feat'].to(self.device)
-        self.real_agents = input['agents_feat'].to(self.device)
+        self.real_map = input['map_feat']
+        self.real_agents = input['agents_feat']
+        # TODO: to device
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""

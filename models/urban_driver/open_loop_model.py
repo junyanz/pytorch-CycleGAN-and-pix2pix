@@ -106,7 +106,7 @@ class VectorizedModel(nn.Module):
         # [batch_size, num_elements, max_num_points]
         invalid_mask = ~mask
         invalid_polys = invalid_mask.all(-1)
-        # input features to local subgraoh and return result -
+        # input features to local subgraph and return result -
         # local subgraph reduces features over elements, i.e. creates one descriptor
         # per element
         # [batch_size, num_elements, embed_dim]
