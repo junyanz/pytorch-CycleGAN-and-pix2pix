@@ -55,6 +55,12 @@ class BaseOptions():
         parser.add_argument('--load_iter', type=int, default='0', help='which iteration to load? if load_iter > 0, the code will load models by iter_[load_iter]; otherwise, the code will load models by [epoch]')
         parser.add_argument('--verbose', action='store_true', help='if specified, print more debugging information')
         parser.add_argument('--suffix', default='', type=str, help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{load_size}')
+
+        # snes/nes options
+        parser.add_argument('--tf_split', type=float, default='0.7', help='test/train split for Triforce options.')
+        parser.add_argument('--tf_console_a', type=str, default='nes', help='Console A')
+        parser.add_argument('--tf_console_b', type=str, default='nes', help='Console B')
+
         self.initialized = True
         return parser
 

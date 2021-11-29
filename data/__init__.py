@@ -59,7 +59,7 @@ def create_dataset(opt):
     return dataset
 
 
-class CustomDatasetDataLoader():
+class CustomDatasetDataLoader:
     """Wrapper class of Dataset class that performs multi-threaded data loading"""
 
     def __init__(self, opt):
