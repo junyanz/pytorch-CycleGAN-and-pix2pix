@@ -4,10 +4,11 @@ RUN apt update && apt install -y wget unzip curl bzip2 git
 RUN curl -LO http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 RUN bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b
 RUN rm Miniconda3-latest-Linux-x86_64.sh
+# RUN apt-get -y install python3-pip
 ENV PATH=/miniconda/bin:${PATH}
 RUN conda update -y conda
 
-RUN conda install -y pytorch torchvision -c pytorch
-RUN mkdir /workspace/ && cd /workspace/ && git clone https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix.git && cd pytorch-CycleGAN-and-pix2pix && pip install -r requirements.txt
+RUN conda install -y pip pytorch torchvision -c pytorch
+RUN mkdir /workspace/ && cd /workspace/ && git clone https://github.com/hiive/pytorch-CycleGAN-and-pix2pix.git && cd pytorch-CycleGAN-and-pix2pix && pip install -r requirements.txt
 
 WORKDIR /workspace
