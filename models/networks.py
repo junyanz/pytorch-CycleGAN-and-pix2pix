@@ -4,7 +4,7 @@ from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
 from .imgs_networks import ResnetGenerator, UnetGenerator, NLayerDiscriminator, PixelDiscriminator
-
+from .av_scenarios_networks import SceneGenerator
 ###############################################################################
 # Helper Functions
 ###############################################################################
@@ -156,6 +156,8 @@ def define_G(opt, gpu_ids=[]):
         net = UnetGenerator(opt.input_nc, opt.output_nc, 7, opt.ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif opt.netG == 'unet_256':
         net = UnetGenerator(opt.input_nc, opt.output_nc, 8, opt.ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+    elif opt.netG == 'SceneGenerator':
+        net = SceneGenerator()
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % opt.netG)
     return init_net(net, opt.init_type, opt.init_gain, gpu_ids)
