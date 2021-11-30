@@ -1,7 +1,7 @@
 import os
 from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
-from PIL import Image
+from PIL import Image, ImageOps
 import random
 
 from data.ss_image_dataset import SSImageDataset, AugmentFlag, ZoomLevelFlag, ImageToTensorTransform
@@ -53,6 +53,8 @@ class TriforceDataset(BaseDataset):
         self.transform_A = get_transform(self.opt, grayscale=(input_nc == 1), method=Image.NEAREST)
         self.transform_B = get_transform(self.opt, grayscale=(output_nc == 1), method=Image.NEAREST)
 
+        self.dim_divisor = 256 if 'unet_' in opt.netG else None
+
     def __getitem__(self, index):
         """Return a data point and its metadata information.
 
@@ -73,6 +75,17 @@ class TriforceDataset(BaseDataset):
         B_path = self.B_paths[index_B]
         A_img = Image.open(A_path).convert('RGB')
         B_img = Image.open(B_path).convert('RGB')
+        # check if padding required
+        if self.dim_divisor is not None:
+            def _resize(img):
+                img_w, img_h = img.size
+                d_w = self.dim_divisor - img_w
+                d_h = self.dim_divisor - img_h
+                padding = (d_w // 2, d_h // 2, d_w - (d_w // 2), d_h - (d_h // 2))
+                return ImageOps.expand(img, padding)
+            A_img = _resize(A_img)
+            B_img = _resize(B_img)
+            pass
         # apply image transformation
         A = self.transform_A(A_img)
         B = self.transform_B(B_img)
