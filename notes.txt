@@ -1,3 +1,6 @@
+
+
+
 docker run --runtime=nvidia -it -p 8097:8097 -v ~/VSCodeProjects/pytorch-CycleGAN-and-pix2pix:/workspace/hiive-pytorch-CycleGAN-and-pix2pix pytorchcycleganandpix2pix
 
 python -m visdom.server &
