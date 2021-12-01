@@ -32,7 +32,7 @@ class AvScenariosModel(BaseModel):
         Returns:
             the modified parser.
         """
-        parser.set_defaults(norm='batch', netG='unet_256', dataset_mode='aligned')
+        parser.set_defaults(netG='SceneGenerator')
 
         if is_train:
             parser.set_defaults(gan_mode='vanilla')
