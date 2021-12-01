@@ -157,13 +157,13 @@ def define_G(opt, gpu_ids=[]):
     elif opt.netG == 'unet_256':
         net = UnetGenerator(opt.input_nc, opt.output_nc, 8, opt.ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif opt.netG == 'SceneGenerator':
-        net = SceneGenerator(opt)
+        net = SceneGenerator(opt, self.polygon_name_order)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % opt.netG)
     return init_net(net, opt.init_type, opt.init_gain, gpu_ids)
 
 
-def define_D(opt, discriminator_in_nc, gpu_ids=[]):
+def define_D(opt, discriminator_in_nc, gpu_ids=None):
     """Create a discriminator
 
     Parameters:
@@ -193,6 +193,8 @@ def define_D(opt, discriminator_in_nc, gpu_ids=[]):
 
     The discriminator has been initialized by <init_net>. It uses Leakly RELU for non-linearity.
     """
+    if gpu_ids is None:
+        gpu_ids = []
     net = None
     norm_layer = get_norm_layer(norm_type=opt.norm)
 
