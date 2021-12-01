@@ -58,6 +58,8 @@ class PointNet(nn.Module):
         h = torch.max(h, dim=0)
         h = self.A_out * h
         return h
+
+
 #########################################################################################
 
 
@@ -112,13 +114,12 @@ class MapEncoder(nn.Module):
                                n_conv_layers=opt.n_conv_layers_polygon,
                                kernel_size=opt.kernel_size_conv_polygon))
             self.elements_aggregators.append(PointNet(n_layers=self.n_poinnet_layers,
-                                            d_in=self.dim_latent_polygon_elem,
-                                            d_out=self.dim_latent_polygon_type,
-                                            d_hid=self.dim_latent_polygon_type))
-        self.poly_types_aggregator =\
+                                                      d_in=self.dim_latent_polygon_elem,
+                                                      d_out=self.dim_latent_polygon_type,
+                                                      d_hid=self.dim_latent_polygon_type))
+        self.poly_types_aggregator = \
             torch.nn.Linear(in_features=self.dim_latent_polygon_type * n_polygon_types,
                             out_features=self.dim_latent_map)
-
 
     def forward(self, input):
         """Standard forward
