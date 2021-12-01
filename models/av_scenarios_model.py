@@ -37,6 +37,10 @@ class AvScenariosModel(BaseModel):
         if is_train:
             parser.set_defaults(gan_mode='vanilla')
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
+            parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
+            parser.add_argument('--dim_latent_polygon', type=int, default=128, help='Scene latent noise dimension')
+            parser.add_argument('--kernel_size_conv_polygon', type=int, default=10, help='Scene latent noise dimension')
+
 
         return parser
 
