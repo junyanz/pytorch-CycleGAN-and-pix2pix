@@ -17,7 +17,6 @@ class PolygonEncoder(nn.Module):
         super(PolygonEncoder, self).__init__()
         self.dim_latent_polygon = opt.dim_latent_polygon
         self.kernel_size_conv_polygon = opt.kernel_size_conv_polygon
-
         conv1 = nn.Conv1d(in_channels=2, out_channels=self.dim_latent_polygon,
                           kernel_size=self.kernel_size_conv_polygon,
                           padding_mode='circular')
@@ -25,28 +24,22 @@ class PolygonEncoder(nn.Module):
 
     def forward(self, input):
         """Standard forward
-
-
         """
-        out = []
-
-
-        # conv1d input [batch_size x in_channels=2, n_points]
+        # conv1d input [in_channels=2 x n_points]
         latent_polygon = nnf.conv1d(input, self.conv_weights, padding='circular')
-        out.append(latent_polygon)
-        return out
+        return latent_polygon
 
 #########################################################################################
 
 class MapEncoder(nn.Module):
 
-    def __init__(self, opt):
+    def __init__(self, opt, polygon_name_order):
         super(MapEncoder, self).__init__()
-        self.polygon_name_order = ['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks']
+        self.polygon_name_order = polygon_name_order
         self.polygon_encoders = nn.ModuleList()
         for _ in self.polygon_name_order:
             self.polygon_encoders.append(PolygonEncoder(opt))
-
+        self.dim_latent_map = opt.dim_latent_polygon * len(self.polygon_name_order)
 
     def forward(self, input):
         """Standard forward
@@ -62,21 +55,19 @@ class MapEncoder(nn.Module):
 
 class SceneGenerator(nn.Module):
 
-    def __init__(self, opt):
+    def __init__(self, opt, polygon_name_order):
         super(SceneGenerator, self).__init__()
-        self.map_enc = MapEncoder(opt)
+        self.map_enc = MapEncoder(opt, polygon_name_order)
         self.dim_latent_scene_noise = opt.dim_latent_scene_noise
         self.batch_size = opt.batch_size
+        if self.batch_size != 1:
+            raise NotImplementedError
 
-
-    def forward(self, in_map_feat):
+    def forward(self, map_feat):
         """Standard forward"""
-        for i_sample in range(self.batch_size):
-            map_feat =  in_map_feat[i_sample]
-            map_latent = self.map_enc(in_map_feat)
-            latent_noise = torch.randn(self.batch_size, self.dim_latent_scene_noise)
-            scene_latent = torch.concat(map_latent, latent_noise, dim=1)
-
-        return map_latent
+        map_latent = self.map_enc(map_feat)
+        latent_noise = torch.randn(self.batch_size, self.dim_latent_scene_noise)
+        scene_latent= torch.concat([map_latent, latent_noise], dim=1)
+        return scene_latent
 #########################################################################################333
 

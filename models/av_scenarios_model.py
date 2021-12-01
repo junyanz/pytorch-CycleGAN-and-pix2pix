@@ -71,6 +71,7 @@ class AvScenariosModel(BaseModel):
             self.model_names = ['G']
 
         # define networks
+        self.polygon_name_order = ['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks']
         self.netG = networks.define_G(opt, self.gpu_ids)
         if self.isTrain:
             # define a discriminator; conditional GANs need to take both input and output images;
@@ -95,7 +96,6 @@ class AvScenariosModel(BaseModel):
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-
         self.real_map = input['map_feat']
         self.real_agents = input['agents_feat']
         # TODO: to device
