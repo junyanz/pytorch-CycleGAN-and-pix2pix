@@ -104,7 +104,7 @@ class MapEncoder(nn.Module):
         self.n_poinnet_layers = 3
         self.dim_latent_polygon_type = opt.dim_latent_polygon_type
         self.dim_latent_map = opt.dim_latent_map
-        self.poly_encoderoders = nn.ModuleList()
+        self.poly_encoder = nn.ModuleList()
         self.elements_aggregators = nn.ModuleList()
         for _ in self.polygon_name_order:
             self.poly_encoder.append(
@@ -150,7 +150,8 @@ class SceneGenerator(nn.Module):
     def __init__(self, opt):
         super(SceneGenerator, self).__init__()
         self.map_enc = MapEncoder(opt)
-        # Debug - print parameter names: print([a[0] for a in self.named_parameters()])
+        # Debug - print parameter names:
+        # [a[0] for a in self.named_parameters()]
         self.dim_latent_scene_noise = opt.dim_latent_scene_noise
         self.batch_size = opt.batch_size
         if self.batch_size != 1:
