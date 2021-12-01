@@ -116,7 +116,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     return net
 
 
-def define_G(opt, gpu_ids=[]):
+def define_G(opt, gpu_ids=None):
     """Create a generator
 
     Parameters:
@@ -144,6 +144,8 @@ def define_G(opt, gpu_ids=[]):
     The generator has been initialized by <init_net>. It uses RELU for non-linearity.
     """
 
+    if gpu_ids is None:
+        gpu_ids = []
     use_dropout = not opt.no_dropout
     net = None
     norm_layer = get_norm_layer(norm_type=opt.norm)
@@ -157,7 +159,7 @@ def define_G(opt, gpu_ids=[]):
     elif opt.netG == 'unet_256':
         net = UnetGenerator(opt.input_nc, opt.output_nc, 8, opt.ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif opt.netG == 'SceneGenerator':
-        net = SceneGenerator(opt, self.polygon_name_order)
+        net = SceneGenerator(opt)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % opt.netG)
     return init_net(net, opt.init_type, opt.init_gain, gpu_ids)

@@ -40,6 +40,8 @@ class AvScenariosModel(BaseModel):
             parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_polygon', type=int, default=128, help='Scene latent noise dimension')
             parser.add_argument('--kernel_size_conv_polygon', type=int, default=10, help='Scene latent noise dimension')
+            parser.add_argument('--n_pointnet_layers', type=int, default=3, help='PointNet layers number')
+
 
 
         return parser
@@ -71,7 +73,7 @@ class AvScenariosModel(BaseModel):
             self.model_names = ['G']
 
         # define networks
-        self.polygon_name_order = ['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks']
+        opt.polygon_name_order = ['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks']
         self.netG = networks.define_G(opt, self.gpu_ids)
         if self.isTrain:
             # define a discriminator; conditional GANs need to take both input and output images;
