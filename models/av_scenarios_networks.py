@@ -9,13 +9,14 @@ import torch.nn as nn
 import torch.nn.functional as nnf
 import functools
 
+
 #########################################################################################
 class PointNet(nn.Module):
 
     def __init__(self, n_layers, d_in, d_out, d_hid):
         super(PointNet, self).__init__()
         self.n_layers = n_layers
-        self .layer_dims = [d_in] + (n_layers - 1 ) * [d_hid] + [d_out]
+        self.layer_dims = [d_in] + (n_layers - 1) * [d_hid] + [d_out]
         self.A = []
         self.B = []
         for i_layer in range(n_layers - 1):
@@ -29,6 +30,7 @@ class PointNet(nn.Module):
             nn.init.kaiming_uniform_(self.B[i_layer], a=math.sqrt(5))
         self.A_out = nn.Parameter(torch.Tensor(d_hid, d_out))
         nn.init.kaiming_uniform_(self.A_out, a=math.sqrt(5))
+
     def forward(self, input):
         ''''
              each layer the function that operates on each element in the set x is
@@ -56,24 +58,23 @@ class PointNet(nn.Module):
         h = torch.max(h, dim=0)
         h = self.A_out * h
         return h
-
-
-
-
-
 #########################################################################################
+
 
 class PolygonEncoder(nn.Module):
 
     def __init__(self, opt):
-        # TODO: apply several layers with ReLU in between
         super(PolygonEncoder, self).__init__()
         self.dim_latent_polygon = opt.dim_latent_polygon
+        self.n_conv_layers_polygon = opt.n_conv_layers_polygon
         self.kernel_size_conv_polygon = opt.kernel_size_conv_polygon
-        self.conv1 = nn.Conv1d(in_channels=2, out_channels=self.dim_latent_polygon,
-                               kernel_size=self.kernel_size_conv_polygon,
-                               padding_mode='circular')
-        self.layers = nn.ModuleList([self.conv1])
+        self.conv_layers = []
+        for i_layer in range(self.n_conv_layers_polygon):
+            self.conv_layers.append(nn.Conv1d(in_channels=2,
+                                              out_channels=self.dim_latent_polygon,
+                                              kernel_size=self.kernel_size_conv_polygon,
+                                              padding_mode='circular'))
+        self.layers = nn.ModuleList(self.conv_layers)
 
     def forward(self, input):
         """Standard forward
@@ -81,10 +82,14 @@ class PolygonEncoder(nn.Module):
         """
 
         # fit to conv1d input dimensions [1  x in_channels=2  x n_points]
-        input = torch.permute(input, (0, 2, 1))
-        # We take a 1d circular convolution and sum its output - this is a shift-invariant operator
-        latent_polygon = self.conv1(input).sum(dim=2)
-        return latent_polygon
+        h = torch.permute(input, (0, 2, 1))
+
+        # We several layers a 1d circular convolution followed by ReLu (equivariant layers)
+        # and finally sum the output - this is all in all - a shift-invariant operator
+        for i_layer in range(self.n_conv_layers_polygon):
+            h = self.conv1(h)
+            h = nn.ReLU(h)
+        return h.sum(dim=2)
 
 
 #########################################################################################
