@@ -11,10 +11,10 @@ import functools
 
 #########################################################################################
 
-class MapEncoder(nn.Module):
+class PolygonEncoder(nn.Module):
 
     def __init__(self, opt):
-        super(MapEncoder, self).__init__()
+        super(PolygonEncoder, self).__init__()
         self.dim_latent_polygon = opt.dim_latent_polygon
         self.kernel_size_conv_polygon = opt.kernel_size_conv_polygon
 
@@ -23,13 +23,41 @@ class MapEncoder(nn.Module):
                           padding_mode='circular')
         self.conv_weights = nn.Parameter(conv1.weight)
 
+    def forward(self, input):
+        """Standard forward
+
+
+        """
+        out = []
+
+
+        # conv1d input [batch_size x in_channels=2, n_points]
+        latent_polygon = nnf.conv1d(input, self.conv_weights, padding='circular')
+        out.append(latent_polygon)
+        return out
+
+#########################################################################################
+
+class MapEncoder(nn.Module):
+
+    def __init__(self, opt):
+        super(MapEncoder, self).__init__()
+        self.polygon_name_order = ['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks']
+        self.polygon_encoders = nn.ModuleList()
+        for polygon_name in self.polygon_name_order:
+            self.polygon_encoders.append(PolygonEncoder(opt))
+
 
     def forward(self, input):
         """Standard forward
-        input [batch_size x in_channels=2, n_points]
         """
-        latent_polygon = nnf.conv1d(input, self.conv_weights, padding='circular')
-        return latent_polygon
+        pol_enc_outs = []
+        for i_enc, polygon_name in enumerate(self.polygon_name_order):
+            pol_enc = self.polygon_encoders[i_enc]
+            pol_enc_outs.append(pol_enc(input[polygon_name]))
+        out = torch.cat(pol_enc_outs)
+        return out
+
 #########################################################################################
 
 class SceneGenerator(nn.Module):
@@ -43,9 +71,11 @@ class SceneGenerator(nn.Module):
 
     def forward(self, in_map_feat):
         """Standard forward"""
-        map_latent = self.map_enc(in_map_feat)
-        latent_noise = torch.randn(self.batch_size, self.dim_latent_scene_noise)
-        scene_latent = torch.concat(map_latent, latent_noise, dim=1)
+        for i_sample in range(self.batch_size):
+            map_feat =  in_map_feat[i_sample]
+            map_latent = self.map_enc(in_map_feat)
+            latent_noise = torch.randn(self.batch_size, self.dim_latent_scene_noise)
+            scene_latent = torch.concat(map_latent, latent_noise, dim=1)
 
         return map_latent
 #########################################################################################333
