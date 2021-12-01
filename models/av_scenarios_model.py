@@ -38,10 +38,11 @@ class AvScenariosModel(BaseModel):
             parser.set_defaults(gan_mode='vanilla')
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
             parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
-            parser.add_argument('--dim_latent_polygon', type=int, default=128, help='Scene latent noise dimension')
+            parser.add_argument('--dim_latent_map', type=int, default=256, help='Scene latent noise dimension')
+            parser.add_argument('--dim_latent_polygon_elem', type=int, default=64, help='Scene latent noise dimension')
+            parser.add_argument('--dim_latent_polygon_type', type=int, default=128, help='Scene latent noise dimension')
             parser.add_argument('--kernel_size_conv_polygon', type=int, default=5, help='Scene latent noise dimension')
             parser.add_argument('--n_conv_layers_polygon', type=int, default=3, help='Scene latent noise dimension')
-
             parser.add_argument('--n_pointnet_layers', type=int, default=3, help='PointNet layers number')
 
 
