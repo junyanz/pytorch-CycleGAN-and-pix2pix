@@ -44,7 +44,7 @@ class MapEncoder(nn.Module):
         super(MapEncoder, self).__init__()
         self.polygon_name_order = ['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks']
         self.polygon_encoders = nn.ModuleList()
-        for polygon_name in self.polygon_name_order:
+        for _ in self.polygon_name_order:
             self.polygon_encoders.append(PolygonEncoder(opt))
 
 
