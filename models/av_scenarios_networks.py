@@ -63,10 +63,10 @@ class PointNet(nn.Module):
                 h_new_lst.append(h_new)
             h = torch.stack(h_new_lst)
             h = self.layer_normalizer(h)
-            h = nn.ReLU(h)
+            h = nnf.relu(h)
         # apply permutation invariant aggregation over all elements
         # max-pooling in our case
-        h = torch.max(h, dim=0)
+        h = torch.max(h, dim=0).values
         h = self.out_layer(h)
         return h
 #########################################################################################
