@@ -17,24 +17,24 @@ class PointNet(nn.Module):
         super(PointNet, self).__init__()
         self.n_layers = n_layers
         self.layer_dims = [d_in] + (n_layers - 1) * [d_hid] + [d_out]
-        self.A = {}
-        self.B = {}
+        self.matA = {}
+        self.matB = {}
         for i_layer in range(n_layers - 1):
             # each layer the function that operates on each element in the set x is
             # f(x) = ReLu(A x + B * (sum over all non x elements) )
             layer_dims = (self.layer_dims[i_layer], self.layer_dims[i_layer + 1])
-            self.A[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
-            self.B[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
-            self.register_parameter(name=f'A_{i_layer}', param=self.A[i_layer])
-            self.register_parameter(name=f'B_{i_layer}', param=self.B[i_layer])
+            self.matA[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
+            self.matB[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
+            self.register_parameter(name=f'matA_{i_layer}', param=self.A[i_layer])
+            self.register_parameter(name=f'matB_{i_layer}', param=self.B[i_layer])
 
             # PyTorch's default initialization:
             nn.init.kaiming_uniform_(self.A[i_layer], a=math.sqrt(5))
             nn.init.kaiming_uniform_(self.B[i_layer], a=math.sqrt(5))
-        self.A_out = nn.Parameter(torch.Tensor(d_hid, d_out))
-        nn.init.kaiming_uniform_(self.A_out, a=math.sqrt(5))
+        self.out_layer = nn.Linear(d_hid, d_out)
+        self.layer_normalizer = nn.LayerNorm(d_hid)
 
-    def forward(self, input):
+    def forward(self, in_set):
         ''''
              each layer the function that operates on each element in the set x is
             f(x) = ReLu(A x + B * (sum over all non x elements) )
@@ -45,21 +45,21 @@ class PointNet(nn.Module):
             input is a tensor of size [num_set_elements x elem_dim]
 
         '''
-        h = input
-        n_elements = input.shape[0]
+        h = in_set
+        n_elements = in_set.shape[0]
         for i_layer in range(self.n_layers - 1):
-            A = self.A[i_layer]
-            B = self.B[i_layer]
+            matA = self.matA[i_layer]
+            matB = self.matB[i_layer]
             pre_layer_sum = h.sum(dim=0)
-            B * pre_layer_sum
             for i_elem in range(n_elements):
                 sum_without_elem = pre_layer_sum - h[i_elem]
-                h[i_elem] = A @ h[i_elem] + B @ sum_without_elem
+                h[i_elem] = matA @ h[i_elem] + matB @ sum_without_elem
+            h = self.layer_normalizer(h)
             h = nn.ReLU(h)
         # apply permutation invariant aggregation over all elements
         # max-pooling in our case
         h = torch.max(h, dim=0)
-        h = self.A_out * h
+        h = self.out_layer(h)
         return h
 #########################################################################################
 
@@ -82,19 +82,24 @@ class PolygonEncoder(nn.Module):
                                               kernel_size=self.kernel_size,
                                               padding_mode='circular'))
         self.layers = nn.ModuleList(self.conv_layers)
+        self.layer_normalizer = nn.LayerNorm(self.dim_latent)
+        self.out_layer = nn.Linear(self.dim_latent, self.dim_latent)
 
-    def forward(self, input):
+    def forward(self, poly_points):
         """Standard forward
         input [1 x n_points  x 2 coordinates]
         """
         # fit to conv1d input dimensions [1  x in_channels=2  x n_points]
-        h = torch.permute(input, (0, 2, 1))
+        h = torch.permute(poly_points, (0, 2, 1))
         # We use several layers a 1d circular convolution followed by ReLu (equivariant layers)
         # and finally sum the output - this is all in all - a shift-invariant operator
         for i_layer in range(self.n_conv_layers):
             h = self.conv_layers[i_layer](h)
+            h = self.layer_normalizer(h)
             h = nn.functional.relu(h)
-        return h.sum(dim=2)
+        h = h.sum(dim=2)
+        h = self.out_layer(h)
+        return h
 #########################################################################################
 
 
@@ -105,7 +110,7 @@ class MapEncoder(nn.Module):
         self.polygon_name_order = opt.polygon_name_order
         self.dim_latent_polygon_elem = opt.dim_latent_polygon_elem
         n_polygon_types = len(opt.polygon_name_order)
-        self.n_poinnet_layers = 3
+        self.n_point_net_layers = 3
         self.dim_latent_polygon_type = opt.dim_latent_polygon_type
         self.dim_latent_map = opt.dim_latent_map
         self.poly_encoder = nn.ModuleList()
@@ -115,7 +120,7 @@ class MapEncoder(nn.Module):
                 PolygonEncoder(dim_latent=self.dim_latent_polygon_elem,
                                n_conv_layers=opt.n_conv_layers_polygon,
                                kernel_size=opt.kernel_size_conv_polygon))
-            self.sets_aggregators.append(PointNet(n_layers=self.n_poinnet_layers,
+            self.sets_aggregators.append(PointNet(n_layers=self.n_point_net_layers,
                                                   d_in=self.dim_latent_polygon_elem,
                                                   d_out=self.dim_latent_polygon_type,
                                                   d_hid=self.dim_latent_polygon_type))
@@ -139,8 +144,8 @@ class MapEncoder(nn.Module):
                 poly_latent_per_elem.append(poly_latent)
             # Run PointNet to aggregate all polygon elements of this  polygon type
             poly_latent_per_elem = torch.stack(poly_latent_per_elem)
-            elments_agg = self.sets_aggregators[i_poly_type]
-            poly_types_latents.append(elments_agg(poly_latent_per_elem))
+            elem_agg = self.sets_aggregators[i_poly_type]
+            poly_types_latents.append(elem_agg(poly_latent_per_elem))
         poly_types_latents = torch.stack(poly_types_latents)
         map_latent = self.poly_types_aggregator(poly_types_latents)
         return map_latent
@@ -154,8 +159,8 @@ class AgentsDecoder(nn.Module):
         super(AgentsDecoder, self).__init__()
 
     def forward(self, scene_latent):
-        ageants_feat = None
-        return ageants_feat
+        agents_feat = None
+        return agents_feat
 #########################################################################################
 
 
