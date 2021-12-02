@@ -204,7 +204,7 @@ class SceneGenerator(nn.Module):
     def forward(self, map_feat):
         """Standard forward"""
         map_latent = self.map_enc(map_feat)
-        latent_noise = torch.randn(self.batch_size, self.dim_latent_scene_noise)
-        scene_latent = torch.concat([map_latent, latent_noise], dim=1)
+        latent_noise = torch.randn(self.dim_latent_scene_noise)
+        scene_latent = torch.concat([map_latent, latent_noise], dim=0)
         return scene_latent
 #########################################################################################333
