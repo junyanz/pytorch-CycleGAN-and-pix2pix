@@ -31,7 +31,7 @@ class TriforceDataset(BaseDataset):
                                                        image_sets=['internetarchive',
                                                                    'mobygames',
                                                                    'superfamicomdotorg',
-                                                                   'vgm'],
+                                                                   ],
                                                        train=opt.isTrain,
                                                        train_pct=split,
                                                        consoles=[console],
