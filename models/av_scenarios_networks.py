@@ -8,9 +8,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
 import functools
-
-
 #########################################################################################
+
+
 class PointNet(nn.Module):
 
     def __init__(self, n_layers, d_in, d_out, d_hid):
@@ -25,11 +25,15 @@ class PointNet(nn.Module):
             layer_dims = (self.layer_dims[i_layer], self.layer_dims[i_layer + 1])
             self.A[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
             self.B[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
+            self.register_parameter(name=f'A_{i_layer}', param=self.A[i_layer])
+            self.register_parameter(name=f'B_{i_layer}', param=self.B[i_layer])
+
             # PyTorch's default initialization:
             nn.init.kaiming_uniform_(self.A[i_layer], a=math.sqrt(5))
             nn.init.kaiming_uniform_(self.B[i_layer], a=math.sqrt(5))
         self.A_out = nn.Parameter(torch.Tensor(d_hid, d_out))
         nn.init.kaiming_uniform_(self.A_out, a=math.sqrt(5))
+
     def forward(self, input):
         ''''
              each layer the function that operates on each element in the set x is
@@ -57,8 +61,6 @@ class PointNet(nn.Module):
         h = torch.max(h, dim=0)
         h = self.A_out * h
         return h
-
-
 #########################################################################################
 
 
@@ -71,7 +73,11 @@ class PolygonEncoder(nn.Module):
         self.kernel_size = kernel_size
         self.conv_layers = []
         for i_layer in range(self.n_conv_layers):
-            self.conv_layers.append(nn.Conv1d(in_channels=2,
+            if i_layer == 0:
+                in_channels = 2  # in the input each point has 2 channels (x,y)
+            else:
+                in_channels = self.dim_latent
+            self.conv_layers.append(nn.Conv1d(in_channels=in_channels,
                                               out_channels=self.dim_latent,
                                               kernel_size=self.kernel_size,
                                               padding_mode='circular'))
@@ -83,15 +89,14 @@ class PolygonEncoder(nn.Module):
         """
         # fit to conv1d input dimensions [1  x in_channels=2  x n_points]
         h = torch.permute(input, (0, 2, 1))
-        # We several layers a 1d circular convolution followed by ReLu (equivariant layers)
+        # We use several layers a 1d circular convolution followed by ReLu (equivariant layers)
         # and finally sum the output - this is all in all - a shift-invariant operator
         for i_layer in range(self.n_conv_layers):
-            h = self.conv1(h)
-            h = nn.ReLU(h)
+            h = self.conv_layers[i_layer](h)
+            h = nn.functional.relu(h)
         return h.sum(dim=2)
-
-
 #########################################################################################
+
 
 class MapEncoder(nn.Module):
 
@@ -104,16 +109,16 @@ class MapEncoder(nn.Module):
         self.dim_latent_polygon_type = opt.dim_latent_polygon_type
         self.dim_latent_map = opt.dim_latent_map
         self.poly_encoder = nn.ModuleList()
-        self.elements_aggregators = nn.ModuleList()
+        self.sets_aggregators = nn.ModuleList()
         for _ in self.polygon_name_order:
             self.poly_encoder.append(
                 PolygonEncoder(dim_latent=self.dim_latent_polygon_elem,
                                n_conv_layers=opt.n_conv_layers_polygon,
                                kernel_size=opt.kernel_size_conv_polygon))
-            self.elements_aggregators.append(PointNet(n_layers=self.n_poinnet_layers,
-                                                      d_in=self.dim_latent_polygon_elem,
-                                                      d_out=self.dim_latent_polygon_type,
-                                                      d_hid=self.dim_latent_polygon_type))
+            self.sets_aggregators.append(PointNet(n_layers=self.n_poinnet_layers,
+                                                  d_in=self.dim_latent_polygon_elem,
+                                                  d_out=self.dim_latent_polygon_type,
+                                                  d_hid=self.dim_latent_polygon_type))
         self.poly_types_aggregator = \
             torch.nn.Linear(in_features=self.dim_latent_polygon_type * n_polygon_types,
                             out_features=self.dim_latent_map)
@@ -134,14 +139,25 @@ class MapEncoder(nn.Module):
                 poly_latent_per_elem.append(poly_latent)
             # Run PointNet to aggregate all polygon elements of this  polygon type
             poly_latent_per_elem = torch.stack(poly_latent_per_elem)
-            elments_agg = self.elements_aggregators[i_poly_type]
+            elments_agg = self.sets_aggregators[i_poly_type]
             poly_types_latents.append(elments_agg(poly_latent_per_elem))
         poly_types_latents = torch.stack(poly_types_latents)
         map_latent = self.poly_types_aggregator(poly_types_latents)
         return map_latent
-
-
 #########################################################################################
+
+
+
+class AgentsDecoder(nn.Module):
+
+    def __init__(self, opt):
+        super(AgentsDecoder, self).__init__()
+
+    def forward(self, scene_latent):
+        ageants_feat = None
+        return ageants_feat
+#########################################################################################
+
 
 class SceneGenerator(nn.Module):
 
