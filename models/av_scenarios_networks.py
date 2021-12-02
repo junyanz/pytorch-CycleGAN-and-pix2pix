@@ -25,12 +25,12 @@ class PointNet(nn.Module):
             layer_dims = (self.layer_dims[i_layer], self.layer_dims[i_layer + 1])
             self.matA[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
             self.matB[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
-            self.register_parameter(name=f'matA_{i_layer}', param=self.A[i_layer])
-            self.register_parameter(name=f'matB_{i_layer}', param=self.B[i_layer])
+            self.register_parameter(name=f'matA_{i_layer}', param=self.matA[i_layer])
+            self.register_parameter(name=f'matB_{i_layer}', param=self.matB[i_layer])
 
             # PyTorch's default initialization:
-            nn.init.kaiming_uniform_(self.A[i_layer], a=math.sqrt(5))
-            nn.init.kaiming_uniform_(self.B[i_layer], a=math.sqrt(5))
+            nn.init.kaiming_uniform_(self.matA[i_layer], a=math.sqrt(5))
+            nn.init.kaiming_uniform_(self.matB[i_layer], a=math.sqrt(5))
         self.out_layer = nn.Linear(d_hid, d_out)
         self.layer_normalizer = nn.LayerNorm(d_hid)
 
