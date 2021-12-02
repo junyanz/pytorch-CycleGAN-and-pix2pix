@@ -171,7 +171,7 @@ class MapEncoder(nn.Module):
             poly_latent_per_elem = torch.stack(poly_latent_per_elem)
             elem_agg = self.sets_aggregators[i_poly_type]
             poly_types_latents.append(elem_agg(poly_latent_per_elem))
-        poly_types_latents = torch.stack(poly_types_latents)
+        poly_types_latents = torch.cat(poly_types_latents)
         map_latent = self.poly_types_aggregator(poly_types_latents)
         return map_latent
 #########################################################################################
