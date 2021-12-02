@@ -4,10 +4,11 @@ https://github.com/lyft/l5kit/blob/master/l5kit/l5kit/planning/vectorized/open_l
 
 '''
 import math
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
-import functools
+
 #########################################################################################
 
 
@@ -66,11 +67,12 @@ class PointNet(nn.Module):
 
 class PolygonEncoder(nn.Module):
 
-    def __init__(self, dim_latent, n_conv_layers, kernel_size):
+    def __init__(self, dim_latent, n_conv_layers, kernel_size, max_points_per_poly):
         super(PolygonEncoder, self).__init__()
         self.dim_latent = dim_latent
         self.n_conv_layers = n_conv_layers
         self.kernel_size = kernel_size
+        self.max_points_per_poly = max_points_per_poly
         self.conv_layers = []
         for i_layer in range(self.n_conv_layers):
             if i_layer == 0:
@@ -80,23 +82,38 @@ class PolygonEncoder(nn.Module):
             self.conv_layers.append(nn.Conv1d(in_channels=in_channels,
                                               out_channels=self.dim_latent,
                                               kernel_size=self.kernel_size,
+                                              padding='same',
                                               padding_mode='circular'))
         self.layers = nn.ModuleList(self.conv_layers)
-        self.layer_normalizer = nn.LayerNorm(self.dim_latent)
+        self.layer_normalizer = nn.LayerNorm([1, self.dim_latent, max_points_per_poly])
         self.out_layer = nn.Linear(self.dim_latent, self.dim_latent)
 
     def forward(self, poly_points):
         """Standard forward
         input [1 x n_points  x 2 coordinates]
         """
-        # fit to conv1d input dimensions [1  x in_channels=2  x n_points]
-        h = torch.permute(poly_points, (0, 2, 1))
+        assert poly_points.shape[0] == 1  # assume batch_size=1
+        n_points_orig = poly_points.shape[1]
+        assert n_points_orig <= self.max_points_per_poly
+
+        if n_points_orig < self.max_points_per_poly:
+            # Pad to fixed size, using wrap padding (that keeps the circular invariance of the embedding)
+            # h = nnf.pad(poly_points, (0, self.max_points_per_poly - n_points_orig), mode='circular')
+            h = np.pad(poly_points,
+                       ((0, 0), (0, self.max_points_per_poly - n_points_orig), (0, 0)),
+                       mode='wrap')
+            h = torch.from_numpy(h)
+        else:
+            h = poly_points
+
+        # fit to conv1d input dimensions [batch_size=1  x in_channels=2  x n_points]
+        h = torch.permute(h, (0, 2, 1))
         # We use several layers a 1d circular convolution followed by ReLu (equivariant layers)
         # and finally sum the output - this is all in all - a shift-invariant operator
         for i_layer in range(self.n_conv_layers):
             h = self.conv_layers[i_layer](h)
             h = self.layer_normalizer(h)
-            h = nn.functional.relu(h)
+            h = nnf.relu(h)
         h = h.sum(dim=2)
         h = self.out_layer(h)
         return h
@@ -119,7 +136,8 @@ class MapEncoder(nn.Module):
             self.poly_encoder.append(
                 PolygonEncoder(dim_latent=self.dim_latent_polygon_elem,
                                n_conv_layers=opt.n_conv_layers_polygon,
-                               kernel_size=opt.kernel_size_conv_polygon))
+                               kernel_size=opt.kernel_size_conv_polygon,
+                               max_points_per_poly=opt.max_points_per_poly))
             self.sets_aggregators.append(PointNet(n_layers=self.n_point_net_layers,
                                                   d_in=self.dim_latent_polygon_elem,
                                                   d_out=self.dim_latent_polygon_type,
@@ -139,7 +157,7 @@ class MapEncoder(nn.Module):
             poly_latent_per_elem = []
             for poly_elem in poly_elements:
                 # Transform from sequence of points to a fixed size vector,
-                # using a a circular-shift-invariant module
+                # using a circular-shift-invariant module
                 poly_latent = poly_encoder(poly_elem)
                 poly_latent_per_elem.append(poly_latent)
             # Run PointNet to aggregate all polygon elements of this  polygon type
