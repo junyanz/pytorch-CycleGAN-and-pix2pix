@@ -17,13 +17,16 @@ class PointNet(nn.Module):
     def __init__(self, n_layers, d_in, d_out, d_hid):
         super(PointNet, self).__init__()
         self.n_layers = n_layers
+        self.d_in = d_in
+        self.d_out = d_out
+        self.d_hid = d_hid
         self.layer_dims = [d_in] + (n_layers - 1) * [d_hid] + [d_out]
         self.matA = {}
         self.matB = {}
         for i_layer in range(n_layers - 1):
             # each layer the function that operates on each element in the set x is
             # f(x) = ReLu(A x + B * (sum over all non x elements) )
-            layer_dims = (self.layer_dims[i_layer], self.layer_dims[i_layer + 1])
+            layer_dims = (self.layer_dims[i_layer + 1], self.layer_dims[i_layer])
             self.matA[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
             self.matB[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
             self.register_parameter(name=f'matA_{i_layer}', param=self.matA[i_layer])
@@ -51,10 +54,14 @@ class PointNet(nn.Module):
         for i_layer in range(self.n_layers - 1):
             matA = self.matA[i_layer]
             matB = self.matB[i_layer]
-            pre_layer_sum = h.sum(dim=0)
+            pre_layer_sum = h.sum(dim=0).squeeze()
+            h_new_lst = []
             for i_elem in range(n_elements):
-                sum_without_elem = pre_layer_sum - h[i_elem]
-                h[i_elem] = matA @ h[i_elem] + matB @ sum_without_elem
+                h_elem = h[i_elem].squeeze()
+                sum_without_elem = pre_layer_sum - h_elem
+                h_new = matA @ h_elem + matB @ sum_without_elem
+                h_new_lst.append(h_new)
+            h = torch.stack(h_new_lst)
             h = self.layer_normalizer(h)
             h = nn.ReLU(h)
         # apply permutation invariant aggregation over all elements
@@ -98,7 +105,7 @@ class PolygonEncoder(nn.Module):
 
         if n_points_orig < self.max_points_per_poly:
             # Pad to fixed size, using wrap padding (that keeps the circular invariance of the embedding)
-            # h = nnf.pad(poly_points, (0, self.max_points_per_poly - n_points_orig), mode='circular')
+            # h = nnf.pad(poly_points, (0, self.max_points_per_poly - n_points_orig), mode='circular') # not implemented yet in PyTorch for 1d
             h = np.pad(poly_points,
                        ((0, 0), (0, self.max_points_per_poly - n_points_orig), (0, 0)),
                        mode='wrap')
@@ -188,7 +195,7 @@ class SceneGenerator(nn.Module):
         super(SceneGenerator, self).__init__()
         self.map_enc = MapEncoder(opt)
         # Debug - print parameter names:
-        # [a[0] for a in self.named_parameters()]
+        # [x[0] for x in self.named_parameters()]
         self.dim_latent_scene_noise = opt.dim_latent_scene_noise
         self.batch_size = opt.batch_size
         if self.batch_size != 1:
