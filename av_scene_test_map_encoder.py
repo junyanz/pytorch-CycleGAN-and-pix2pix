@@ -9,6 +9,7 @@ Run using:
 '''
 
 from options.train_options import TrainOptions
+from options.test_options import TestOptions
 from data import create_dataset
 from models import create_model
 import torch
@@ -28,30 +29,31 @@ class ModelTestMapEncoder(BaseModel):
 
     def set_input(self, map_feat):
         self.map_feat = map_feat
+        self.ground_truth = None
 
     def forward(self):
         self.prediction = None
 
     def backward(self):
-        ground_truth = None
-        self.loss = self.loss_criterion(self.prediction, ground_truth)
+        self.loss = self.loss_criterion(self.prediction, self.ground_truth)
         self.loss.backward()
 
     def optimize_parameters(self):
+        self.forward()
         self.optimizer.zero_grad()
-        self.backward_D()
-        self.optimizer_D.step()
+        self.backward()
+        self.optimizer.step()
 
 if __name__ == '__main__':
 
     n_epoch = 2
 
-    opt = TrainOptions().parse()  # get training options
-    train_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+    train_opt = TrainOptions().parse()  # get training options
+    train_dataset = create_dataset(train_opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(train_dataset)  # get the number of images in the dataset.
     print('The number of training samples = %d' % dataset_size)
-    model = create_model(opt)  # create a model given opt.model and other options
-    model.setup(opt)  # regular setup: load and print networks; create schedulers
+    model = create_model(train_opt)  # create a model given opt.model and other options
+    model.setup(train_opt)  # regular setup: load and print networks; create schedulers
 
     ##########
     # Train
@@ -67,6 +69,7 @@ if __name__ == '__main__':
     # Test
     ##########
     model.eval()
+    test_opt = TestOptions().parse()  # get test options
     eval_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
 
     for i, data in enumerate(eval_dataset):
