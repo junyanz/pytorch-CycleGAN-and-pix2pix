@@ -107,7 +107,7 @@ class AvScenariosModel(BaseModel):
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         # generate the output of the generator given the input map
-        self.fake_agents,  self.recounstructed_map = self.netG(self.real_map)
+        self.fake_agents = self.netG(self.real_map)
 
     def backward_D(self):
         # Feed fake (generated) agents to discriminator and calculate its prediction loss
