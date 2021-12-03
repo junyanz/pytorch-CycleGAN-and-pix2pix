@@ -94,14 +94,15 @@ class AvSceneModel(BaseModel):
             self.optimizers.append(self.optimizer_D)
              # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
 
-    def set_input(self, input):
+    def set_input(self, input_data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        self.real_map = input['map_feat']
-        self.real_agents = input['agents_feat']
+        assert len(input_data) == 1  # assume batch_size == 1
+        self.real_map = input_data['map_feat']
+        self.real_agents = input_data['agents_feat']
         # TODO: to device
 
     def forward(self):

@@ -11,10 +11,8 @@ Run using:
 from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
-from util.visualizer import Visualizer
 import torch
 from models.base_model import BaseModel
-from models import networks
 from models import av_scene_networks
 import time
 
@@ -23,11 +21,26 @@ class ModelTestMapEncoder(BaseModel):
     def __init__(self, opt):
         BaseModel.__init__(self, opt)
         self.map_enc = av_scene_networks.MapEncoder(opt)
-        self.criterionL1 = torch.nn.L1Loss()
+        self.loss_criterion = torch.nn.L1Loss()
         print('Map encoder parameters: ', [p[0] for p in self.map_enc.named_parameters()])
-        self.optimizer_prediction = torch.optim.Adam(self.map_enc.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
-        self.optimizers.append(self.optimizer_prediction)
+        self.optimizer = torch.optim.Adam(self.map_enc.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+        self.optimizers.append(self.optimizer)
 
+    def set_input(self, map_feat):
+        self.map_feat = map_feat
+
+    def forward(self):
+        self.prediction = None
+
+    def backward(self):
+        ground_truth = None
+        self.loss = self.loss_criterion(self.prediction, ground_truth)
+        self.loss.backward()
+
+    def optimize_parameters(self):
+        self.optimizer.zero_grad()
+        self.backward_D()
+        self.optimizer_D.step()
 
 if __name__ == '__main__':
 
@@ -43,7 +56,6 @@ if __name__ == '__main__':
     ##########
     # Train
     #########
-    total_iters = 0  # the total number of training iterations
     start_time = time.time()
     for i_epoch in range(n_epoch):
         for i_batch, data in enumerate(train_dataset):
@@ -58,16 +70,5 @@ if __name__ == '__main__':
     eval_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
 
     for i, data in enumerate(eval_dataset):
-        if i >= opt.num_test:  # only apply our model to opt.num_test images.
-            break
         model.set_input(data)  # unpack data from data loader
         model.test()  # run inference
-        visuals = model.get_current_visuals()  # get image results
-        img_path = model.get_image_paths()  # get image paths
-        if i % 5 == 0:  # save images to an HTML file
-            print('processing (%04d)-th image... %s' % (i, img_path))
-        save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize,
-                    use_wandb=opt.use_wandb)
-    webpage.save()  # save the HTML
-
-
