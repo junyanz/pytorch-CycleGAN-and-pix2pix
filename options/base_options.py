@@ -13,11 +13,12 @@ class BaseOptions():
     It also gathers additional options defined in <modify_commandline_options> functions in both dataset class and model class.
     """
 
-    def __init__(self):
-        """Reset the class; indicates the class hasn't been initailized"""
+    def __init__(self,  is_image_data=True):
+        """Reset the class; indicates the class hasn't been initialized"""
+        self.is_image_data = is_image_data
         self.initialized = False
 
-    def initialize(self, parser, is_image_data=True):
+    def initialize(self, parser):
         """Define the common options that are used in both training and test."""
         # basic parameters
         parser.add_argument('--dataroot', required=True, help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
@@ -52,7 +53,7 @@ class BaseOptions():
         parser.add_argument('--display_winsize', type=int, default=256,
                             help='display window size for both visdom and HTML')
 
-        if is_image_data:
+        if self.is_image_data:
             parser.add_argument('--direction', type=str, default='AtoB', help='AtoB or BtoA')
             parser.add_argument('--input_nc', type=int, default=3,
                                 help='# of input image channels: 3 for RGB and 1 for grayscale')

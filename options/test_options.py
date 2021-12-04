@@ -7,7 +7,7 @@ class TestOptions(BaseOptions):
     It also includes shared options defined in BaseOptions.
     """
 
-    def initialize(self, parser, is_image_data=True):
+    def initialize(self, parser):
         parser = BaseOptions.initialize(self, parser)  # define shared options
         parser.add_argument('--results_dir', type=str, default='./results/', help='saves results here.')
         parser.add_argument('--aspect_ratio', type=float, default=1.0, help='aspect ratio of result images')

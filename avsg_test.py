@@ -40,7 +40,7 @@ except ImportError:
 
 
 if __name__ == '__main__':
-    opt = TestOptions().parse()  # get test options
+    opt = TestOptions(is_image_data=False).parse()  # get test options
     # hard-code some parameters for test
     opt.num_threads = 0   # test code only supports num_threads = 0
     opt.batch_size = 1    # test code only supports batch_size = 1
