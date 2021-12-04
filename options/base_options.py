@@ -100,7 +100,10 @@ class BaseOptions():
         parser.add_argument('--tf_split', type=float, default='0.7', help='test/train split for Triforce options.')
         parser.add_argument('--tf_console_a', type=str, default='nes', help='Console A')
         parser.add_argument('--tf_console_b', type=str, default='nes', help='Console B')
-
+        parser.add_argument('--tf_clamp', action='store_true',
+                            help='if specified, clamp input images to console palette')
+        parser.add_argument('--tf_negate', action='store_true',
+                            help='if specified, negate image palette')
         self.initialized = True
         return parser
 

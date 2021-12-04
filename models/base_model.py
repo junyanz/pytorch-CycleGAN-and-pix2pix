@@ -130,11 +130,17 @@ class BaseModel(ABC):
         visual_ret = OrderedDict()
         for name in self.visual_names:
             if isinstance(name, str):
-                visual_ret[name] = getattr(self, name)
+                vis = getattr(self, name)
+                if self.opt.tf_negate:
+                    # negate back to normal
+                    vis = 255. - vis.clone().detach()
+                    pass
+                visual_ret[name] = vis
+
         return visual_ret
 
     def get_current_losses(self):
-        """Return traning losses / errors. train.py will print out these errors on console, and save them to a file"""
+        """Return training losses / errors. train.py will print out these errors on console, and save them to a file"""
         errors_ret = OrderedDict()
         for name in self.loss_names:
             if isinstance(name, str):

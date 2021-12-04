@@ -100,15 +100,22 @@ def get_triforce_transform(opt, console, params=None, grayscale=False, method=Im
     transform_list = get_base_transform_list(opt, params, grayscale, method, convert)
 
     # add color conversion transform
-    if console == 'nes':
-        transform_list.insert(0, TriforceQuantizeColorsToNESTransform())
-    elif console == 'snes':
-        transform_list.insert(0, TriforceQuantizeColorsToSNESTransform())
+    extra_transforms = []
+    if opt.tf_clamp:
+        if console == 'nes':
+            extra_transforms.append(TriforceQuantizeColorsToNESTransform())
+        elif console == 'snes':
+            extra_transforms.append(TriforceQuantizeColorsToSNESTransform())
+
+    # negate image if necessary
+    if opt.tf_negate:
+        extra_transforms.append(TriforceNegateColorsTransform())
 
     # ensure image dims are divisible by 256 if necessary
     if 'unet_' in opt.netG:
-        transform_list.insert(0, TriforcePaddingTransform(output_size=(256, 256)))
-    return transforms.Compose(transform_list)
+        extra_transforms.append(TriforcePaddingTransform(output_size=(256, 256)))
+
+    return transforms.Compose(extra_transforms + transform_list)
 
 
 class TriforcePaddingTransform:
@@ -123,6 +130,11 @@ class TriforcePaddingTransform:
         d_h = out_h - img_h
         padding = (d_w // 2, d_h // 2, d_w - (d_w // 2), d_h - (d_h // 2))
         return ImageOps.expand(img, padding)
+
+
+class TriforceNegateColorsTransform:
+    def __call__(self, img):
+        return ImageOps.invert(img)
 
 
 class TriforceQuantizeColorsToSNESTransform:
