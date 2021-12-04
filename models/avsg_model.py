@@ -32,8 +32,9 @@ class AvsgModel(BaseModel):
         Returns:
             the modified parser.
         """
+        parser.add_argument('--polygon_name_order', type=list,
+                            default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
         parser.set_defaults(netG='SceneGenerator')
-
         if is_train:
             parser.set_defaults(gan_mode='vanilla')
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
@@ -75,7 +76,6 @@ class AvsgModel(BaseModel):
             self.model_names = ['G']
 
         # define networks
-        opt.polygon_name_order = ['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks']
         self.netG = networks.define_G(opt, self.gpu_ids)
         if self.isTrain:
             # define a discriminator; conditional GANs need to take both input and output images;
