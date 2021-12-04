@@ -6,6 +6,7 @@ $ python -m avsg_train.py
 
 * Replace l5kit_sample.pkl with l5kit_train.pkl or l5kit_train_full.pkl for larger datasets
 * To run only on CPU add: --gpu_ids -1
+* To limit the datasets size --max_dataset_size 1000
 * Name the experiment with --name
 
 * Run visdom before training by $ python -m visdom.server
