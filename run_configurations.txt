@@ -4,7 +4,7 @@ $ python -m visdom.server
 Or you can also disable the visdom by setting: --display_id 0
 
 ** To run training on a small sample dataset:
-$ python -m train.py --dataset_mode av_scene --dataroot datasets/av_scene_data/l5kit_sample.pkl --name l5kit_sample --model av_scene
+$ python -m avsg_train.py --dataset_mode avsg --dataroot datasets/avsg_data/l5kit_sample.pkl --name l5kit_sample --model avsg
 
 ** To run only on CPU add: --gpu_ids -1
 ** you can disable the visdom by setting: --display_id 0

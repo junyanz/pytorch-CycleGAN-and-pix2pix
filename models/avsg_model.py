@@ -20,7 +20,7 @@ from .base_model import BaseModel
 from . import networks
 
 
-class AvSceneModel(BaseModel):
+class AvsgModel(BaseModel):
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
         """Add new model-specific options and rewrite default values for existing options.
@@ -100,7 +100,7 @@ class AvSceneModel(BaseModel):
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        assert len(input_data) == 1  # assume batch_size == 1
+        assert isinstance(input_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
         self.real_map = input_data['map_feat']
         self.real_agents = input_data['agents_feat']
         # TODO: to device

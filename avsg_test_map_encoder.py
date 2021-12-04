@@ -1,7 +1,7 @@
 ''''
 
 Run using:
- $ python -m av_scene_test_map_encoder.py --dataset_mode av_scene --dataroot datasets/av_scene_data/l5kit_sample.pkl --name l5kit_sample --model av_scene --display_id 0
+ $ python -m avsg_test_map_encoder.py --dataset_mode avsg --dataroot datasets/avsg_data/l5kit_sample.pkl --name l5kit_sample --model avsg --display_id 0
 
 ** To run only on CPU add: --gpu_ids -1
 
@@ -14,14 +14,14 @@ from data import create_dataset
 from models import create_model
 import torch
 from models.base_model import BaseModel
-from models import av_scene_networks
+from models import avsg_networks
 import time
 
 
 class ModelTestMapEncoder(BaseModel):
     def __init__(self, opt):
         BaseModel.__init__(self, opt)
-        self.map_enc = av_scene_networks.MapEncoder(opt)
+        self.map_enc = avsg_networks.MapEncoder(opt)
         self.loss_criterion = torch.nn.L1Loss()
         print('Map encoder parameters: ', [p[0] for p in self.map_enc.named_parameters()])
         self.optimizer = torch.optim.Adam(self.map_enc.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))

@@ -156,22 +156,26 @@ class MapEncoder(nn.Module):
     def forward(self, input):
         """Standard forward
         """
-        poly_types_latents = []
+        latents_per_poly_type = []
         for i_poly_type, poly_type_name in enumerate(self.polygon_name_order):
             # Get the latent embedding of all elements of this type of polygons:
             poly_encoder = self.poly_encoder[i_poly_type]
             poly_elements = input[poly_type_name]
-            poly_latent_per_elem = []
-            for poly_elem in poly_elements:
-                # Transform from sequence of points to a fixed size vector,
-                # using a circular-shift-invariant module
-                poly_latent = poly_encoder(poly_elem)
-                poly_latent_per_elem.append(poly_latent)
-            # Run PointNet to aggregate all polygon elements of this  polygon type
-            poly_latent_per_elem = torch.stack(poly_latent_per_elem)
-            elem_agg = self.sets_aggregators[i_poly_type]
-            poly_types_latents.append(elem_agg(poly_latent_per_elem))
-        poly_types_latents = torch.cat(poly_types_latents)
+            if len(poly_elements) == 0:
+                # if there are no polygon of this type in the scene:
+                latent_poly_type = torch.zeros(self.dim_latent_polygon_type, requires_grad=False)
+            else:
+                poly_latent_per_elem = []
+                for poly_elem in poly_elements:
+                    # Transform from sequence of points to a fixed size vector,
+                    # using a circular-shift-invariant module
+                    poly_elem_latent = poly_encoder(poly_elem)
+                    poly_latent_per_elem.append(poly_elem_latent)
+                # Run PointNet to aggregate all polygon elements of this  polygon type
+                poly_latent_per_elem = torch.stack(poly_latent_per_elem)
+                latent_poly_type = self.sets_aggregators[i_poly_type](poly_latent_per_elem)
+            latents_per_poly_type.append(latent_poly_type)
+        poly_types_latents = torch.cat(latents_per_poly_type)
         map_latent = self.poly_types_aggregator(poly_types_latents)
         return map_latent
 #########################################################################################

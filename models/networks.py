@@ -4,7 +4,7 @@ from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
 from .imgs_networks import ResnetGenerator, UnetGenerator, NLayerDiscriminator, PixelDiscriminator
-from .av_scene_networks import SceneGenerator
+from .avsg_networks import SceneGenerator
 ###############################################################################
 # Helper Functions
 ###############################################################################
