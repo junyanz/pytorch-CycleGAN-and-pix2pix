@@ -153,14 +153,14 @@ class MapEncoder(nn.Module):
             torch.nn.Linear(in_features=self.dim_latent_polygon_type * n_polygon_types,
                             out_features=self.dim_latent_map)
 
-    def forward(self, input):
+    def forward(self, map_feat):
         """Standard forward
         """
         latents_per_poly_type = []
         for i_poly_type, poly_type_name in enumerate(self.polygon_name_order):
             # Get the latent embedding of all elements of this type of polygons:
             poly_encoder = self.poly_encoder[i_poly_type]
-            poly_elements = input[poly_type_name]
+            poly_elements = map_feat[poly_type_name]
             if len(poly_elements) == 0:
                 # if there are no polygon of this type in the scene:
                 latent_poly_type = torch.zeros(self.dim_latent_polygon_type, requires_grad=False)
@@ -198,8 +198,8 @@ class SceneGenerator(nn.Module):
     def __init__(self, opt):
         super(SceneGenerator, self).__init__()
         self.map_enc = MapEncoder(opt)
-        # Debug - print parameter names:
-        # [x[0] for x in self.named_parameters()]
+        self.agents_dec = AgentsDecoder(opt)
+        # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
         self.dim_latent_scene_noise = opt.dim_latent_scene_noise
         self.batch_size = opt.batch_size
         if self.batch_size != 1:
@@ -210,5 +210,6 @@ class SceneGenerator(nn.Module):
         map_latent = self.map_enc(map_feat)
         latent_noise = torch.randn(self.dim_latent_scene_noise)
         scene_latent = torch.concat([map_latent, latent_noise], dim=0)
-        return scene_latent
+        agents_feat = self.agents_dec(scene_latent)
+        return agents_feat
 #########################################################################################333
