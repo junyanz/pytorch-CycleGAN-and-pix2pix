@@ -30,6 +30,7 @@ if __name__ == '__main__':
     for i_epoch in range(n_epoch):
         for i_batch, data in enumerate(train_dataset):
             model.set_input(data)  # unpack data from dataset and apply preprocessing
+            model.optimize_parameters()  # calculate loss functions, get gradients, update network weights
             model.update_learning_rate()  # update learning rates *after* first step (https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate)
         print(f'End of epoch {i_epoch}, elapsed time {time.time() - start_time}')
 

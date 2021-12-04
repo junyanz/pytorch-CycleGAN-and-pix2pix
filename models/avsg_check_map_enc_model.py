@@ -28,17 +28,24 @@ class AvsgCheckMapEncModel(BaseModel):
     def __init__(self, opt):
         BaseModel.__init__(self, opt, is_image_data=False)
         self.map_enc = avsg_networks.MapEncoder(opt)
+        # out layer, in case of scalar regression:
+        self.out_layer = torch.nn.Linear(in_features=opt.dim_latent_map, out_features=1)
+
         self.loss_criterion = torch.nn.L1Loss()
         print('Map encoder parameters: ', [p[0] for p in self.map_enc.named_parameters()])
         self.optimizer = torch.optim.Adam(self.map_enc.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
         self.optimizers.append(self.optimizer)
 
-    def set_input(self, map_feat):
+    def set_input(self, scene_data):
+        map_feat = scene_data['map_feat']
         self.map_feat = map_feat
-        self.ground_truth = None
+        n_lane_mid_elem = len(map_feat['lanes_mid'])
+        # the task -  scalar regression of the number of lanes:
+        self.ground_truth = n_lane_mid_elem
 
     def forward(self):
-        self.prediction = None
+        map_latent = self.map_enc(self.map_feat)
+        self.prediction = self.out_layer(map_latent)
 
     def backward(self):
         self.loss = self.loss_criterion(self.prediction, self.ground_truth)

@@ -94,15 +94,15 @@ class AvsgModel(BaseModel):
             self.optimizers.append(self.optimizer_D)
              # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
 
-    def set_input(self, input_data):
+    def set_input(self, scene_data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        assert isinstance(input_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
-        self.real_map = input_data['map_feat']
-        self.real_agents = input_data['agents_feat']
+        assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
+        self.real_map = scene_data['map_feat']
+        self.real_agents = scene_data['agents_feat']
         # TODO: to device
 
     def forward(self):
