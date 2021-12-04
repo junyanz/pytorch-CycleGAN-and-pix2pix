@@ -23,6 +23,9 @@ class AvsgCheckMapEncModel(BaseModel):
         parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
         parser.add_argument('--max_points_per_poly', type=int, default=20,
                             help='Maximal number of points per polygon element')
+
+        parser.set_defaults(lr=0.002, lr_policy='step', lr_decay_iters=100)
+
         return parser
 
     def __init__(self, opt):

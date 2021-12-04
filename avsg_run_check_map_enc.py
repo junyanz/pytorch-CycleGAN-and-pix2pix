@@ -1,7 +1,8 @@
 ''''
 
 Run using:
- $ python -m avsg_run_check_map_enc.py --dataset_mode avsg  --model avsg_check_map_enc --dataroot datasets/avsg_data/l5kit_train.pkl --data_eval datasets/avsg_data/l5kit_validation.pkl
+ $ python -m avsg_run_check_map_enc.py
+ --dataset_mode avsg  --model avsg_check_map_enc --dataroot datasets/avsg_data/l5kit_train.pkl --data_eval datasets/avsg_data/l5kit_validation.pkl
 * To change dataset files change --dataroot and --data_eval
 * To run only on CPU add: --gpu_ids -1
 * Name the experiment with --name
