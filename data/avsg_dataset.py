@@ -47,6 +47,7 @@ class AvsgDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         with open(opt.dataroot, 'rb') as fid:
             self.dataset = pickle.loads(fid.read())
+            print('Loaded file ', opt.dataroot)
         # get the image paths of your dataset;
         # define the default transform function. You can use <base_dataset.get_transform>; You can also define your custom transform function
         # self.transform = get_transform(opt)

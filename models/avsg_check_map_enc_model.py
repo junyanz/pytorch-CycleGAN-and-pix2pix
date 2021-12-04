@@ -41,7 +41,7 @@ class AvsgCheckMapEncModel(BaseModel):
         self.map_feat = map_feat
         n_lane_mid_elem = len(map_feat['lanes_mid'])
         # the task -  scalar regression of the number of lanes:
-        self.ground_truth = n_lane_mid_elem
+        self.ground_truth = torch.ones(1) * n_lane_mid_elem
 
     def forward(self):
         map_latent = self.map_enc(self.map_feat)

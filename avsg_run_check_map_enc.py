@@ -7,16 +7,18 @@ Run using:
 * Name the experiment with --name
 
 '''
+import os
+import time
 from data import create_dataset
 from models import create_model
 from options.train_options import TrainOptions
-import time
 
 
 if __name__ == '__main__':
 
-    n_epoch = 2
+    n_epoch = 1
     opt = TrainOptions(is_image_data=False).parse()  # get training options
+    assert os.path.isfile(opt.data_eval)
     train_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(train_dataset)  # get the number of images in the dataset.
     print('The number of training samples = %d' % dataset_size)
