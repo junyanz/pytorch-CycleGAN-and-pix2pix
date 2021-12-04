@@ -17,8 +17,10 @@ from options.train_options import TrainOptions
 
 if __name__ == '__main__':
 
-    n_epoch = 1
+
     opt = TrainOptions(is_image_data=False).parse()  # get training options
+    n_epoch = opt.epoch_count
+    print('Number of training epochs: ', n_epoch)
     assert os.path.isfile(opt.data_eval)
     train_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(train_dataset)  # get the number of images in the dataset.

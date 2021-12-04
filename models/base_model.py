@@ -127,7 +127,7 @@ class BaseModel(ABC):
 
         lr = self.optimizers[0].param_groups[0]['lr']
         if lr != old_lr:
-            print('learning rate %.7f -> %.7f' % (old_lr, lr))
+            print(f'learning rate {old_lr:.4e} -> {lr:.4e}')
 
     def get_current_visuals(self):
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
