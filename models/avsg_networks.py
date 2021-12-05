@@ -219,8 +219,10 @@ class AgentsDecoder(nn.Module):
         self.dim_latent_scene = scene_latent.shape[0]
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.dim_agents_feat_vec = opt.dim_agents_feat_vec
-        self.decoder_unit = DecoderUnit(opt, self.dim_latent_scene,
-                                        self.dim_agents_feat_vec, self.dim_agents_decoder_hid)
+        self.max_num_agents = opt.max_num_agents
+        self.decoder_unit = DecoderUnit(opt, dim_in=self.dim_latent_scene,
+                                        dim_out=self.dim_agents_feat_vec,
+                                        dim_hid=self.dim_agents_decoder_hid)
 
     def get_unit_in_vec(self, seq_token='mid'):
         # concatenate "phase of sequence token" coordinates to the scene_latent
@@ -241,8 +243,8 @@ class AgentsDecoder(nn.Module):
 
     def forward(self, scene_latent):
         init_hidden = self.decoder_unit.init_hidden()
-        # for i_agent in range()
-        output, hidden = self.rec_dec(scene_latent, init_hidden)
+        for i_agent in range(self.max_num_agents):
+            output, hidden = self.decoder_unit(scene_latent, init_hidden)
         agents_feat = None
         return agents_feat
 
