@@ -4,7 +4,7 @@ from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
 from .imgs_networks import ResnetGenerator, UnetGenerator, NLayerDiscriminator, PixelDiscriminator
-from .avsg_networks import SceneGenerator
+from .avsg_networks import SceneGenerator, SceneDiscriminator
 ###############################################################################
 # Helper Functions
 ###############################################################################
@@ -206,6 +206,8 @@ def define_D(opt, discriminator_in_nc, gpu_ids=None):
         net = NLayerDiscriminator(discriminator_in_nc, opt.ndf, opt.n_layers_D, norm_layer=norm_layer)
     elif opt.netD == 'pixel':     # classify if each pixel is real or fake
         net = PixelDiscriminator(discriminator_in_nc, opt.ndf, norm_layer=norm_layer)
+    elif opt.netD == 'SceneDiscriminator':
+        net = SceneDiscriminator(opt)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % opt.netD)
     return init_net(net, opt.init_type, opt.init_gain, gpu_ids)

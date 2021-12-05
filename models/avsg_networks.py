@@ -7,7 +7,7 @@ import math
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as nnf
+import torch.nn.functional as F
 
 
 #########################################################################################
@@ -64,7 +64,7 @@ class PointNet(nn.Module):
                 h_new_lst.append(h_new)
             h = torch.stack(h_new_lst)
             h = self.layer_normalizer(h)
-            h = nnf.relu(h)
+            h = F.relu(h)
         # apply permutation invariant aggregation over all elements
         # max-pooling in our case
         h = torch.max(h, dim=0).values
@@ -108,7 +108,7 @@ class PolygonEncoder(nn.Module):
 
         if n_points_orig < self.max_points_per_poly:
             # Pad to fixed size, using wrap padding (that keeps the circular invariance of the embedding)
-            # h = nnf.pad(poly_points, (0, self.max_points_per_poly - n_points_orig), mode='circular') # not implemented yet in PyTorch for 1d
+            # h = F.pad(poly_points, (0, self.max_points_per_poly - n_points_orig), mode='circular') # not implemented yet in PyTorch for 1d
             h = np.pad(poly_points,
                        ((0, 0), (0, self.max_points_per_poly - n_points_orig), (0, 0)),
                        mode='wrap')
@@ -123,7 +123,7 @@ class PolygonEncoder(nn.Module):
         for i_layer in range(self.n_conv_layers):
             h = self.conv_layers[i_layer](h)
             h = self.layer_normalizer(h)
-            h = nnf.relu(h)
+            h = F.relu(h)
         h = h.sum(dim=2)
         h = self.out_layer(h)
         return h
@@ -187,21 +187,28 @@ class MapEncoder(nn.Module):
 
 #########################################################################################
 
-class RecursiveDecoder(nn.Module):
-
-    def __init__(self, dim_in, dim_out, dim_hid):
-        super(RecursiveDecoder, self).__init__()
+class DecoderUnit(nn.Module):
+    # https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html
+    def __init__(self, opt, dim_in, dim_out, dim_hid):
+        super(DecoderUnit, self).__init__()
+        self.device = opt.device
         self.dim_hidden = dim_hid
         self.input_embedder = nn.Linear(dim_in, dim_hid)
         self.out_layer = nn.Linear(dim_hid, dim_out)
         self.gru = nn.GRU(dim_hid, dim_hid)
 
+    def init_hidden(self):
+        return torch.zeros(1, 1, self.hidden_size, device=self.device)
+
     def forward(self, curr_input, prev_hidden):
-        input_emb = self.input_embedder(curr_input)
-        out_latent, hidden = self.gru(input_emb, prev_hidden)
-        output = self.out_layer(out_latent)
-        return hidden, output
-#########################################################################################
+        curr_input = self.input_embedder(curr_input).view(1, 1, -1)
+        curr_input = F.relu(curr_input)
+        output, hidden = self.gru(curr_input, prev_hidden)
+        output = self.out_layer(output[0])
+        return output, hidden
+
+
+##############################################################################################
 
 
 class AgentsDecoder(nn.Module):
@@ -211,14 +218,14 @@ class AgentsDecoder(nn.Module):
         self.dim_latent_scene = dim_latent_scene
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.dim_agents_feat_vec = opt.dim_agents_feat_vec
-        self.rec_dec = RecursiveDecoder(dim_latent_scene, self.dim_agents_feat_vec, self.dim_agents_decoder_hid)
+        self.decoder_unit = DecoderUnit(opt, dim_latent_scene, self.dim_agents_feat_vec, self.dim_agents_decoder_hid)
 
     def forward(self, scene_latent):
-        init_hidden = torch.zeros(self.rec_dec.dim_hidden, requires_grad=False)
-        agents_feat = self.rec_dec(scene_latent, init_hidden)
+        init_hidden = self.decoder_unit.init_hidden()
+        # for i_agent in range()
+        output, hidden = self.rec_dec(scene_latent, init_hidden)
+        agents_feat = None
         return agents_feat
-
-
 #########################################################################################
 
 
@@ -245,4 +252,15 @@ class SceneGenerator(nn.Module):
         scene_latent = self.scene_embedder_out(scene_latent)
         agents_feat = self.agents_dec(scene_latent)
         return agents_feat
-#########################################################################################333
+#########################################################################################
+
+
+class SceneDiscriminator(nn.Module):
+
+    def __init__(self, opt):
+        super(SceneDiscriminator, self).__init__()
+        self.net = None
+
+    def forward(self, scene):
+        """Standard forward."""
+        return self.net(scene)
