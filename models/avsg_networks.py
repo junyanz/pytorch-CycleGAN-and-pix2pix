@@ -212,6 +212,10 @@ class DecoderUnit(nn.Module):
 
 
 class AgentsDecoder(nn.Module):
+    # based on:
+    # * Show, Attend and Tell: Neural Image Caption Generation with Visual Attention
+    # * https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html
+    # * https://towardsdatascience.com/image-captions-with-attention-in-tensorflow-step-by-step-927dad3569fa
 
     def __init__(self, opt, scene_latent):
         super(AgentsDecoder, self).__init__()
