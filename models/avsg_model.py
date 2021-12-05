@@ -51,7 +51,8 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
             parser.add_argument('--max_points_per_poly', type=int, default=20,
                                 help='Maximal number of points per polygon element')
-
+            parser.add_argument('--max_num_agents', type=int, default=30,
+                                help='Maximal number of agents in a scene')
 
         return parser
 

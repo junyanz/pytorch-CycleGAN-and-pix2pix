@@ -213,12 +213,31 @@ class DecoderUnit(nn.Module):
 
 class AgentsDecoder(nn.Module):
 
-    def __init__(self, opt, dim_latent_scene):
+    def __init__(self, opt, scene_latent):
         super(AgentsDecoder, self).__init__()
-        self.dim_latent_scene = dim_latent_scene
+        self.scene_latent = scene_latent
+        self.dim_latent_scene = scene_latent.shape[0]
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.dim_agents_feat_vec = opt.dim_agents_feat_vec
-        self.decoder_unit = DecoderUnit(opt, dim_latent_scene, self.dim_agents_feat_vec, self.dim_agents_decoder_hid)
+        self.decoder_unit = DecoderUnit(opt, self.dim_latent_scene,
+                                        self.dim_agents_feat_vec, self.dim_agents_decoder_hid)
+
+    def get_unit_in_vec(self, seq_token='mid'):
+        # concatenate "phase of sequence token" coordinates to the scene_latent
+        token_vec = torch.zeros(3)
+        if seq_token == 'start':
+            token_vec[0] = 1
+        elif seq_token == 'mid':
+            token_vec[1] = 1
+        elif seq_token == 'end':
+            token_vec[2] = 1
+        else:
+            raise ValueError
+        in_vec = torch.concat([token_vec, self.scene_latent])
+        return in_vec
+
+    def interpret_unit_out_vec(self, out_vec):
+        return
 
     def forward(self, scene_latent):
         init_hidden = self.decoder_unit.init_hidden()
@@ -226,6 +245,8 @@ class AgentsDecoder(nn.Module):
         output, hidden = self.rec_dec(scene_latent, init_hidden)
         agents_feat = None
         return agents_feat
+
+
 #########################################################################################
 
 
@@ -238,7 +259,7 @@ class SceneGenerator(nn.Module):
         self.dim_latent_map = opt.dim_latent_map
         self.map_enc = MapEncoder(opt)
         self.scene_embedder_out = nn.Linear(self.dim_latent_scene_noise + self.dim_latent_map, self.dim_latent_scene)
-        # self.agents_dec = AgentsDecoder(opt, self.dim_latent_scene)
+        self.agents_dec = AgentsDecoder(opt, self.dim_latent_scene)
         # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
         self.batch_size = opt.batch_size
         if self.batch_size != 1:
@@ -252,6 +273,8 @@ class SceneGenerator(nn.Module):
         scene_latent = self.scene_embedder_out(scene_latent)
         agents_feat = self.agents_dec(scene_latent)
         return agents_feat
+
+
 #########################################################################################
 
 
