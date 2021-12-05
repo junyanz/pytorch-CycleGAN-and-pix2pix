@@ -188,7 +188,7 @@ class MapEncoder(nn.Module):
 #########################################################################################
 
 class DecoderUnit(nn.Module):
-    # https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html
+
     def __init__(self, opt, dim_in, dim_out, dim_hid):
         super(DecoderUnit, self).__init__()
         self.device = opt.device
@@ -197,15 +197,14 @@ class DecoderUnit(nn.Module):
         self.out_layer = nn.Linear(dim_hid, dim_out)
         self.gru = nn.GRU(dim_hid, dim_hid)
 
-    def init_hidden(self):
-        return torch.zeros(1, 1, self.hidden_size, device=self.device)
-
-    def forward(self, curr_input, prev_hidden):
+    def forward(self, curr_input, prev_hidden, prev_out):
         curr_input = self.input_embedder(curr_input).view(1, 1, -1)
         curr_input = F.relu(curr_input)
-        output, hidden = self.gru(curr_input, prev_hidden)
-        output = self.out_layer(output[0])
-        return output, hidden
+        unit_out, next_hidden = self.gru(curr_input, prev_hidden)
+        output = self.out_layer(unit_out[0])
+        stop_flag = output[0]
+        output_feat = output[1:]
+        return stop_flag, output_feat, next_hidden
 
 
 ##############################################################################################
