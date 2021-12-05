@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
 
+
 #########################################################################################
 
 
@@ -69,6 +70,8 @@ class PointNet(nn.Module):
         h = torch.max(h, dim=0).values
         h = self.out_layer(h)
         return h
+
+
 #########################################################################################
 
 
@@ -124,6 +127,8 @@ class PolygonEncoder(nn.Module):
         h = h.sum(dim=2)
         h = self.out_layer(h)
         return h
+
+
 #########################################################################################
 
 
@@ -178,18 +183,42 @@ class MapEncoder(nn.Module):
         poly_types_latents = torch.cat(latents_per_poly_type)
         map_latent = self.poly_types_aggregator(poly_types_latents)
         return map_latent
+
+
 #########################################################################################
 
+class RecursiveDecoder(nn.Module):
+
+    def __init__(self, dim_in, dim_out, dim_hid):
+        super(RecursiveDecoder, self).__init__()
+        self.dim_hidden = dim_hid
+        self.input_embedder = nn.Linear(dim_in, dim_hid)
+        self.out_layer = nn.Linear(dim_hid, dim_out)
+        self.gru = nn.GRU(dim_hid, dim_hid)
+
+    def forward(self, curr_input, prev_hidden):
+        input_emb = self.input_embedder(curr_input)
+        out_latent, hidden = self.gru(input_emb, prev_hidden)
+        output = self.out_layer(out_latent)
+        return hidden, output
+#########################################################################################
 
 
 class AgentsDecoder(nn.Module):
 
-    def __init__(self, opt):
+    def __init__(self, opt, dim_latent_scene):
         super(AgentsDecoder, self).__init__()
+        self.dim_latent_scene = dim_latent_scene
+        self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
+        self.dim_agents_feat_vec = opt.dim_agents_feat_vec
+        self.rec_dec = RecursiveDecoder(dim_latent_scene, self.dim_agents_feat_vec, self.dim_agents_decoder_hid)
 
     def forward(self, scene_latent):
-        agents_feat = None
+        init_hidden = torch.zeros(self.rec_dec.dim_hidden, requires_grad=False)
+        agents_feat = self.rec_dec(scene_latent, init_hidden)
         return agents_feat
+
+
 #########################################################################################
 
 
@@ -197,10 +226,13 @@ class SceneGenerator(nn.Module):
 
     def __init__(self, opt):
         super(SceneGenerator, self).__init__()
-        self.map_enc = MapEncoder(opt)
-        self.agents_dec = AgentsDecoder(opt)
-        # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
         self.dim_latent_scene_noise = opt.dim_latent_scene_noise
+        self.dim_latent_scene = opt.dim_latent_scene
+        self.dim_latent_map = opt.dim_latent_map
+        self.map_enc = MapEncoder(opt)
+        self.scene_embedder_out = nn.Linear(self.dim_latent_scene_noise + self.dim_latent_map, self.dim_latent_scene)
+        # self.agents_dec = AgentsDecoder(opt, self.dim_latent_scene)
+        # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
         self.batch_size = opt.batch_size
         if self.batch_size != 1:
             raise NotImplementedError
@@ -210,6 +242,7 @@ class SceneGenerator(nn.Module):
         map_latent = self.map_enc(map_feat)
         latent_noise = torch.randn(self.dim_latent_scene_noise)
         scene_latent = torch.concat([map_latent, latent_noise], dim=0)
+        scene_latent = self.scene_embedder_out(scene_latent)
         agents_feat = self.agents_dec(scene_latent)
         return agents_feat
 #########################################################################################333

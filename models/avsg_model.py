@@ -40,6 +40,8 @@ class AvsgModel(BaseModel):
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
             parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=256, help='Scene latent noise dimension')
+            parser.add_argument('--dim_latent_scene', type=int, default=512, help='Scene latent noise dimension')
+            parser.add_argument('--dim_agents_decoder_hid', type=int, default=512, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_polygon_elem', type=int, default=64, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_polygon_type', type=int, default=128, help='Scene latent noise dimension')
             parser.add_argument('--kernel_size_conv_polygon', type=int, default=5, help='Scene latent noise dimension')
@@ -83,7 +85,7 @@ class AvsgModel(BaseModel):
         if self.isTrain:
             # define a discriminator; conditional GANs need to take both input and output images;
             # Therefore, #channels for D is input_nc + output_nc
-            discriminator_in_nc = opt.input_nc + opt.output_nc
+            discriminator_in_nc = opt.dim_latent_scene
             self.netD = networks.define_D(opt, discriminator_in_nc, self.gpu_ids)
 
         if self.isTrain:
@@ -106,6 +108,7 @@ class AvsgModel(BaseModel):
         assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
         self.real_map = scene_data['map_feat']
         self.real_agents = scene_data['agents_feat']
+        pass
         # TODO: to device
 
     def forward(self):
