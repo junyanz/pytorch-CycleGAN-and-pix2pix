@@ -31,6 +31,17 @@ def agent_feat_dict_to_agent_feat_vec(agent_feat_dict):
     agent_feat_vec = 0
     return agent_feat_vec
 
+
+#########################################################################################
+
+def detach_agents_feat(agents_list):
+    agents_list_detached = []
+    for agent in agents_list:
+        agents_list_detached.append(dict())
+        for key in agent.keys():
+            agents_list_detached[key] = agent[key].detach()
+    return agents_list_detached
+
 #########################################################################################
 
 class AvsgModel(BaseModel):
@@ -72,6 +83,8 @@ class AvsgModel(BaseModel):
                                 help='Maximal number of agents in a scene')
 
         return parser
+    #########################################################################################
+
 
     def __init__(self, opt):
         """Initialize this model class.
@@ -118,6 +131,7 @@ class AvsgModel(BaseModel):
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
              # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
+    #########################################################################################
 
     def set_input(self, scene_data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -140,44 +154,43 @@ class AvsgModel(BaseModel):
                 agents_feat[-1][key] = val.to(self.device)
         self.real_map = map_feat
         self.real_agents = agents_feat
-        pass
+    #########################################################################################
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         # generate the output of the generator given the input map
         self.fake_agents = self.netG(self.real_map)
+    #########################################################################################
 
     def backward_D(self):
         # Feed fake (generated) agents to discriminator and calculate its prediction loss
         # we use conditional GANs; we need to feed both input and output to the discriminator
-        map_and_fake_agents = torch.cat((self.real_map, self.fake_agents), 1)
-        pred_fake = self.netD(map_and_fake_agents.detach())
+        pred_fake = self.netD(self.real_map,  detach_agents_feat(self.fake_agents))
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
 
         # Feed real (loaded from data) agents to discriminator and calculate its prediction loss
-        map_and_real_agents = torch.cat((self.real_map, self.real_agents), 1)
-        pred_real = self.netD(map_and_real_agents)
+        pred_real = self.netD(self.real_map, self.real_agents)
         self.loss_D_real = self.criterionGAN(pred_real, True)
 
         # combine loss and calculate gradients
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
         self.loss_D.backward()
-
+    #########################################################################################
 
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
         #  the generator should fool the discriminator
-        map_and_fake_agents = torch.cat((self.real_map, self.fake_agents), 1)
-        pred_fake = self.netD(map_and_fake_agents.detach())
+        pred_fake = self.netD(self.real_map, detach_agents_feat(self.fake_agents))
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
 
-        # Second, we want G(map) = map, since the generator acts also as an encoder-decoder for the map
-        self.loss_G_L1 = self.criterionL1(self.recounstructed_map, self.real_map) * self.opt.lambda_L1
+        # # Second, we want G(map) = map, since the generator acts also as an encoder-decoder for the map
+        # self.loss_G_L1 = self.criterionL1(self.recounstructed_map, self.real_map) * self.opt.lambda_L1
 
         # combine loss and calculate gradients
-        self.loss_G = self.loss_G_GAN + self.loss_G_L1
+        # self.loss_G = self.loss_G_GAN + self.loss_G_L1
+        self.loss_G = self.loss_G_GAN
         self.loss_G.backward()
-
+    #########################################################################################
 
     def optimize_parameters(self):
         """Update network weights; it will be called in every training iteration."""
@@ -192,3 +205,4 @@ class AvsgModel(BaseModel):
         self.optimizer_G.zero_grad()        # set G's gradients to zero
         self.backward_G()                   # calculate gradients for G
         self.optimizer_G.step()             # update G's weights
+    #########################################################################################

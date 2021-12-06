@@ -335,7 +335,7 @@ class SceneDiscriminator(nn.Module):
                            d_hid=self.dim_latent_scene,
                            n_layers=3)
 
-    def forward(self, agents_feat_vec_list, map_feat):
+    def forward(self, map_feat, agents_feat_vec_list):
         """Standard forward."""
         map_latent = self.map_enc(map_feat)
         agents_latent = self.agents_enc(agents_feat_vec_list)
