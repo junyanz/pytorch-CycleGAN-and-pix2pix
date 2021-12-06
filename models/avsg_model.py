@@ -184,7 +184,7 @@ class AvsgModel(BaseModel):
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
 
         # # Second, we want G(map) = map, since the generator acts also as an encoder-decoder for the map
-        # self.loss_G_L1 = self.criterionL1(self.recounstructed_map, self.real_map) * self.opt.lambda_L1
+        # self.loss_G_L1 = self.criterionL1(self.reconstructed_map, self.real_map) * self.opt.lambda_L1
 
         # combine loss and calculate gradients
         # self.loss_G = self.loss_G_GAN + self.loss_G_L1
