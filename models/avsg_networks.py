@@ -33,6 +33,8 @@ class MLP(nn.Module):
 
     def forward(self, in_vec):
         return self.net(in_vec)
+
+
 #########################################################################################
 
 
@@ -249,6 +251,9 @@ def feat_vec_to_feat_dict(agent_feat_vec):
     return agent_feat_dict
 
 
+#########################################################################################
+
+
 class AgentsDecoder(nn.Module):
     # based on:
     # * Show, Attend and Tell: Neural Image Caption Generation with Visual Attention  https://arxiv.org/abs/1502.03044\
@@ -333,7 +338,20 @@ class SceneDiscriminator(nn.Module):
                                    d_out=self.dim_latent_agents,
                                    d_hid=self.dim_latent_agents,
                                    n_layers=3)
+        self.out_mlp = MLP(d_in=self.dim_latent_map + self.dim_latent_agents,
+                           d_out=1,
+                           d_hid=self.dim_latent_scene,
+                           n_layers=3)
 
-    def forward(self, scene):
+    def forward(self, agents_feat_vec_list, map_feat):
         """Standard forward."""
-        return self.net(scene)
+        map_latent = self.map_enc(map_feat)
+        agents_latent = self.agents_enc(agents_feat_vec_list)
+        scene_latent = torch.cat([map_latent, agents_latent])
+        pred_fake = self.out_mlp(scene_latent)
+        ''' 
+        Note: Do not use sigmoid as the last layer of Discriminator.
+        LSGAN needs no sigmoid. vanilla GANs will handle it with BCEWithLogitsLoss.
+        '''
+        return pred_fake
+#########################################################################################
