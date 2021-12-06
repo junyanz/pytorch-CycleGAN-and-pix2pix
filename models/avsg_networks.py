@@ -261,10 +261,9 @@ class AgentsDecoder(nn.Module):
     # * https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html
     # * https://towardsdatascience.com/image-captions-with-attention-in-tensorflow-step-by-step-927dad3569fa
 
-    def __init__(self, opt, scene_latent):
+    def __init__(self, opt):
         super(AgentsDecoder, self).__init__()
-        self.scene_latent = scene_latent
-        self.dim_latent_scene = scene_latent.shape[0]
+        self.dim_latent_scene = opt.dim_latent_scene
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.dim_agents_feat_vec = opt.dim_agents_feat_vec
         self.max_num_agents = opt.max_num_agents
@@ -308,7 +307,7 @@ class SceneGenerator(nn.Module):
                                       d_out=self.dim_latent_scene,
                                       d_hid=self.dim_latent_scene,
                                       n_layers=3)
-        self.agents_dec = AgentsDecoder(opt, self.dim_latent_scene)
+        self.agents_dec = AgentsDecoder(opt)
         # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
         self.batch_size = opt.batch_size
         if self.batch_size != 1:
