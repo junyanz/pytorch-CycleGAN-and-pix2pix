@@ -190,10 +190,10 @@ class MapEncoder(nn.Module):
         """Standard forward
         """
         latents_per_poly_type = []
-        for i_poly_type, poly_type_name in enumerate(self.polygon_name_order):
+        for i_poly_type, poly_type in enumerate(self.polygon_name_order):
             # Get the latent embedding of all elements of this type of polygons:
-            poly_encoder = self.poly_encoder[i_poly_type]
-            poly_elements = map_feat[poly_type_name]
+            poly_encoder = self.poly_encoder[poly_type]
+            poly_elements = map_feat[poly_type]
             if len(poly_elements) == 0:
                 # if there are no polygon of this type in the scene:
                 latent_poly_type = torch.zeros(self.dim_latent_polygon_type, requires_grad=False)
@@ -206,7 +206,7 @@ class MapEncoder(nn.Module):
                     poly_latent_per_elem.append(poly_elem_latent)
                 # Run PointNet to aggregate all polygon elements of this  polygon type
                 poly_latent_per_elem = torch.stack(poly_latent_per_elem)
-                latent_poly_type = self.sets_aggregators[i_poly_type](poly_latent_per_elem)
+                latent_poly_type = self.sets_aggregators[poly_type](poly_latent_per_elem)
             latents_per_poly_type.append(latent_poly_type)
         poly_types_latents = torch.cat(latents_per_poly_type)
         map_latent = self.poly_types_aggregator(poly_types_latents)
@@ -304,8 +304,10 @@ class SceneGenerator(nn.Module):
         self.dim_latent_scene = opt.dim_latent_scene
         self.dim_latent_map = opt.dim_latent_map
         self.map_enc = MapEncoder(opt)
-        self.scene_embedder_out = nn.Linear(self.dim_latent_scene_noise + self.dim_latent_map,
-                                            self.dim_latent_scene)
+        self.scene_embedder_out = MLP(d_in=self.dim_latent_scene_noise + self.dim_latent_map,
+                                      d_out=self.dim_latent_scene,
+                                      d_hid=self.dim_latent_scene,
+                                      n_layers=3)
         self.agents_dec = AgentsDecoder(opt, self.dim_latent_scene)
         # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
         self.batch_size = opt.batch_size
