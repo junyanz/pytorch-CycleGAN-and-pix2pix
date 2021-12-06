@@ -20,6 +20,19 @@ from .base_model import BaseModel
 from . import networks
 
 
+#########################################################################################
+def agent_feat_vec_to_agent_feat_dict(agent_feat_vec):
+    agent_feat_dict = {}
+    return agent_feat_dict
+#########################################################################################
+
+
+def agent_feat_dict_to_agent_feat_vec(agent_feat_dict):
+    agent_feat_vec = 0
+    return agent_feat_vec
+
+#########################################################################################
+
 class AvsgModel(BaseModel):
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
@@ -71,6 +84,7 @@ class AvsgModel(BaseModel):
         - define loss function, visualization images, model names, and optimizers
         """
         BaseModel.__init__(self, opt, is_image_data=False)  # call the initialization method of BaseModel
+        self.polygon_name_order = opt.polygon_name_order
 
         # specify the training losses you want to print out.
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
@@ -112,10 +126,15 @@ class AvsgModel(BaseModel):
             input: a dictionary that contains the data itself and its metadata information.
         """
         assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
-        self.real_map = scene_data['map_feat']
+        map_feat = dict()
+        for poly_type in self.polygon_name_order:
+            map_feat[poly_type] = []
+            poly_elems = scene_data['map_feat'][poly_type]
+            map_feat[poly_type] = [poly_elem.to(self.device) for poly_elem in poly_elems]
+        self.real_map = map_feat
         self.real_agents = scene_data['agents_feat']
         pass
-        # TODO: to device
+        # TODO: to device .to(self.device)
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""

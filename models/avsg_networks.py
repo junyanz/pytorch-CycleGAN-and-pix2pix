@@ -245,14 +245,6 @@ class DecoderUnit(nn.Module):
 ##############################################################################################
 
 
-def feat_vec_to_feat_dict(agent_feat_vec):
-    agent_feat_dict = {}
-    return agent_feat_dict
-
-
-#########################################################################################
-
-
 class AgentsDecoder(nn.Module):
     # based on:
     # * Show, Attend and Tell: Neural Image Caption Generation with Visual Attention  https://arxiv.org/abs/1502.03044\
