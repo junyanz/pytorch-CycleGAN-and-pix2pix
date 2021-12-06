@@ -126,15 +126,21 @@ class AvsgModel(BaseModel):
             input: a dictionary that contains the data itself and its metadata information.
         """
         assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
+
+        # Move to device
         map_feat = dict()
         for poly_type in self.polygon_name_order:
             map_feat[poly_type] = []
             poly_elems = scene_data['map_feat'][poly_type]
             map_feat[poly_type] = [poly_elem.to(self.device) for poly_elem in poly_elems]
+        agents_feat = []
+        for agent in scene_data['agents_feat']:
+            agents_feat.append(dict())
+            for key, val in agent.items():
+                agents_feat[-1][key] = val.to(self.device)
         self.real_map = map_feat
-        self.real_agents = scene_data['agents_feat']
+        self.real_agents = agents_feat
         pass
-        # TODO: to device .to(self.device)
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
