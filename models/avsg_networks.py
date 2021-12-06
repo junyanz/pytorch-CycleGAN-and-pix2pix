@@ -189,18 +189,23 @@ class MapEncoder(nn.Module):
 
 class DecoderUnit(nn.Module):
 
-    def __init__(self, opt, dim_in, dim_out, dim_hid):
+    def __init__(self, opt, dim_context, dim_out):
         super(DecoderUnit, self).__init__()
         self.device = opt.device
-        self.dim_hidden = dim_hid
-        self.input_embedder = nn.Linear(dim_in, dim_hid)
-        self.out_layer = nn.Linear(dim_hid, dim_out)
+        dim_hid = dim_context
+        self.dim_hid = dim_hid
+        self.dim_out = dim_out
         self.gru = nn.GRU(dim_hid, dim_hid)
+        self.input_layer = nn.Linear(dim_out + dim_hid, dim_hid)
+        self.out_layer = nn.Linear(dim_hid, dim_out + 1)
 
-    def forward(self, curr_input, prev_hidden, prev_out):
-        curr_input = self.input_embedder(curr_input).view(1, 1, -1)
-        curr_input = F.relu(curr_input)
-        unit_out, next_hidden = self.gru(curr_input, prev_hidden)
+    def forward(self, context_vec, prev_hidden, attn_scores, prev_out_feat):
+        # the input layer takes in the attention-applied context concatenated with the previous out features
+        attn_weights = F.softmax(attn_scores)
+        attn_applied = attn_weights * context_vec
+        gru_input = self.input_layer(torch.cat([attn_applied, prev_out_feat]))
+        gru_input = F.relu(gru_input)
+        unit_out, next_hidden = self.gru(gru_input, prev_hidden)
         output = self.out_layer(unit_out[0])
         stop_flag = output[0]
         output_feat = output[1:]
@@ -208,6 +213,11 @@ class DecoderUnit(nn.Module):
 
 
 ##############################################################################################
+
+
+def feat_vec_to_feat_dict(agent_feat_vec):
+    agent_feat_dict = {}
+    return agent_feat_dict
 
 
 class AgentsDecoder(nn.Module):
@@ -224,33 +234,28 @@ class AgentsDecoder(nn.Module):
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.dim_agents_feat_vec = opt.dim_agents_feat_vec
         self.max_num_agents = opt.max_num_agents
-        self.decoder_unit = DecoderUnit(opt, dim_in=self.dim_latent_scene,
-                                        dim_out=self.dim_agents_feat_vec,
-                                        dim_hid=self.dim_agents_decoder_hid)
-
-    def get_unit_in_vec(self, seq_token='mid'):
-        # concatenate "phase of sequence token" coordinates to the scene_latent
-        token_vec = torch.zeros(3)
-        if seq_token == 'start':
-            token_vec[0] = 1
-        elif seq_token == 'mid':
-            token_vec[1] = 1
-        elif seq_token == 'end':
-            token_vec[2] = 1
-        else:
-            raise ValueError
-        in_vec = torch.concat([token_vec, self.scene_latent])
-        return in_vec
-
-    def interpret_unit_out_vec(self, out_vec):
-        return
+        self.decoder_unit = DecoderUnit(opt, dim_context=self.dim_latent_scene,
+                                        dim_out=self.dim_agents_feat_vec)
 
     def forward(self, scene_latent):
-        init_hidden = self.decoder_unit.init_hidden()
+        agents_feat_vec_list = []
+        prev_hidden = scene_latent
+        attn_scores = torch.ones_like(prev_hidden, requires_grad=False)
+        prev_out_feat = torch.zeros(self.dim_agents_feat_vec, requires_grad=False)
         for i_agent in range(self.max_num_agents):
-            output, hidden = self.decoder_unit(scene_latent, init_hidden)
-        agents_feat = None
-        return agents_feat
+            stop_flag, output_feat, next_hidden = \
+                self.decoder_unit(context_vec=scene_latent,
+                                  prev_hidden=prev_hidden,
+                                  attn_scores=attn_scores,
+                                  prev_out_feat=prev_out_feat)
+            if stop_flag:
+                break
+            else:
+                prev_hidden = next_hidden
+                attn_scores = next_hidden
+                prev_out_feat = output_feat
+                agents_feat_vec_list.append(output_feat)
+        return agents_feat_vec_list
 
 
 #########################################################################################
@@ -277,8 +282,8 @@ class SceneGenerator(nn.Module):
         latent_noise = torch.randn(self.dim_latent_scene_noise)
         scene_latent = torch.concat([map_latent, latent_noise], dim=0)
         scene_latent = self.scene_embedder_out(scene_latent)
-        agents_feat = self.agents_dec(scene_latent)
-        return agents_feat
+        agents_feat_vec_list = self.agents_dec(scene_latent)
+        return agents_feat_vec_list
 
 
 #########################################################################################
