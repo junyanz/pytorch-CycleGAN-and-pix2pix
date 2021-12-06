@@ -1,8 +1,8 @@
-'''
+"""
 Inspired by
 https://github.com/lyft/l5kit/blob/master/l5kit/l5kit/planning/vectorized/open_loop_model.py
 
-'''
+"""
 import math
 import numpy as np
 import torch
@@ -10,12 +10,40 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class MLP(nn.Module):
+
+    def __init__(self, d_in, d_out, d_hid, n_layers):
+        super(MLP, self).__init__()
+        self.d_in = d_in
+        self.d_out = d_out
+        self.d_hid = d_hid
+        self.n_layers = n_layers
+        self.layer_dims = [d_in] + (n_layers - 1) * [d_hid] + [d_out]
+        self.layers = []
+        self.layers_normalizers = []
+        for i_layer in range(n_layers - 1):
+            layer_d_in = self.layer_dims[i_layer]
+            layer_d_out = self.layer_dims[i_layer + 1]
+            self.layers.append(nn.Linear(layer_d_in, layer_d_out))
+            if i_layer <= n_layers - 2:
+                self.layers_normalizers.append(nn.LayerNorm(layer_d_out))
+
+    def forward(self, in_vec):
+        h = in_vec
+        for i_layer in range(self.n_layers - 2):
+            h = self.layers[i_layer](h)
+            h = self.layers_normalizers[i_layer](h)
+            h = F.relu(h)
+        out_vec = self.layers[-1](h)
+        return out_vec
+
+
 #########################################################################################
 
 
 class PointNet(nn.Module):
 
-    def __init__(self, n_layers, d_in, d_out, d_hid):
+    def __init__(self, d_in, d_out, d_hid, n_layers):
         super(PointNet, self).__init__()
         self.n_layers = n_layers
         self.d_in = d_in
@@ -40,7 +68,7 @@ class PointNet(nn.Module):
         self.layer_normalizer = nn.LayerNorm(d_hid)
 
     def forward(self, in_set):
-        ''''
+        """'
              each layer the function that operates on each element in the set x is
             f(x) = ReLu(A x + B * (sum over all non x elements) )
             where A and B are the same for all elements, and are layer dependent.
@@ -49,7 +77,7 @@ class PointNet(nn.Module):
 
             input is a tensor of size [num_set_elements x elem_dim]
 
-        '''
+        """
         h = in_set
         n_elements = in_set.shape[0]
         for i_layer in range(self.n_layers - 1):
@@ -142,21 +170,21 @@ class MapEncoder(nn.Module):
         self.n_point_net_layers = 3
         self.dim_latent_polygon_type = opt.dim_latent_polygon_type
         self.dim_latent_map = opt.dim_latent_map
-        self.poly_encoder = nn.ModuleList()
-        self.sets_aggregators = nn.ModuleList()
-        for _ in self.polygon_name_order:
-            self.poly_encoder.append(
-                PolygonEncoder(dim_latent=self.dim_latent_polygon_elem,
-                               n_conv_layers=opt.n_conv_layers_polygon,
-                               kernel_size=opt.kernel_size_conv_polygon,
-                               max_points_per_poly=opt.max_points_per_poly))
-            self.sets_aggregators.append(PointNet(n_layers=self.n_point_net_layers,
-                                                  d_in=self.dim_latent_polygon_elem,
-                                                  d_out=self.dim_latent_polygon_type,
-                                                  d_hid=self.dim_latent_polygon_type))
-        self.poly_types_aggregator = \
-            torch.nn.Linear(in_features=self.dim_latent_polygon_type * n_polygon_types,
-                            out_features=self.dim_latent_map)
+        self.poly_encoder = nn.ModuleDict()
+        self.sets_aggregators = nn.ModuleDict()
+        for poly_type in self.polygon_name_order:
+            self.poly_encoder[poly_type] = PolygonEncoder(dim_latent=self.dim_latent_polygon_elem,
+                                                          n_conv_layers=opt.n_conv_layers_polygon,
+                                                          kernel_size=opt.kernel_size_conv_polygon,
+                                                          max_points_per_poly=opt.max_points_per_poly)
+            self.sets_aggregators[poly_type] = PointNet(d_in=self.dim_latent_polygon_elem,
+                                                        d_out=self.dim_latent_polygon_type,
+                                                        d_hid=self.dim_latent_polygon_type,
+                                                        n_layers=self.n_point_net_layers)
+        self.poly_types_aggregator = MLP(d_in=self.dim_latent_polygon_type * n_polygon_types,
+                                         d_out=self.dim_latent_map,
+                                         d_hid=self.dim_latent_map,
+                                         n_layers=3)
 
     def forward(self, map_feat):
         """Standard forward
@@ -196,17 +224,23 @@ class DecoderUnit(nn.Module):
         self.dim_hid = dim_hid
         self.dim_out = dim_out
         self.gru = nn.GRU(dim_hid, dim_hid)
-        self.input_layer = nn.Linear(dim_out + dim_hid, dim_hid)
-        self.out_layer = nn.Linear(dim_hid, dim_out + 1)
+        self.input_mlp = MLP(d_in=dim_out + dim_hid,
+                             d_out=dim_hid,
+                             d_hid=dim_hid,
+                             n_layers=3)
+        self.out_mlp = MLP(d_in=dim_hid,
+                           d_out=dim_out + 1,
+                           d_hid=dim_hid,
+                           n_layers=3)
 
     def forward(self, context_vec, prev_hidden, attn_scores, prev_out_feat):
         # the input layer takes in the attention-applied context concatenated with the previous out features
         attn_weights = F.softmax(attn_scores)
         attn_applied = attn_weights * context_vec
-        gru_input = self.input_layer(torch.cat([attn_applied, prev_out_feat]))
+        gru_input = self.input_mlp(torch.cat([attn_applied, prev_out_feat]))
         gru_input = F.relu(gru_input)
         unit_out, next_hidden = self.gru(gru_input, prev_hidden)
-        output = self.out_layer(unit_out[0])
+        output = self.out_mlp(unit_out[0])
         stop_flag = output[0]
         output_feat = output[1:]
         return stop_flag, output_feat, next_hidden
@@ -234,7 +268,8 @@ class AgentsDecoder(nn.Module):
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.dim_agents_feat_vec = opt.dim_agents_feat_vec
         self.max_num_agents = opt.max_num_agents
-        self.decoder_unit = DecoderUnit(opt, dim_context=self.dim_latent_scene,
+        self.decoder_unit = DecoderUnit(opt,
+                                        dim_context=self.dim_latent_scene,
                                         dim_out=self.dim_agents_feat_vec)
 
     def forward(self, scene_latent):
@@ -248,7 +283,7 @@ class AgentsDecoder(nn.Module):
                                   prev_hidden=prev_hidden,
                                   attn_scores=attn_scores,
                                   prev_out_feat=prev_out_feat)
-            if stop_flag:
+            if stop_flag > 0:
                 break
             else:
                 prev_hidden = next_hidden
@@ -269,7 +304,8 @@ class SceneGenerator(nn.Module):
         self.dim_latent_scene = opt.dim_latent_scene
         self.dim_latent_map = opt.dim_latent_map
         self.map_enc = MapEncoder(opt)
-        self.scene_embedder_out = nn.Linear(self.dim_latent_scene_noise + self.dim_latent_map, self.dim_latent_scene)
+        self.scene_embedder_out = nn.Linear(self.dim_latent_scene_noise + self.dim_latent_map,
+                                            self.dim_latent_scene)
         self.agents_dec = AgentsDecoder(opt, self.dim_latent_scene)
         # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
         self.batch_size = opt.batch_size
@@ -293,7 +329,13 @@ class SceneDiscriminator(nn.Module):
 
     def __init__(self, opt):
         super(SceneDiscriminator, self).__init__()
-        self.net = None
+        self.dim_agents_feat_vec = opt.dim_agents_feat_vec
+        self.dim_latent_agents = opt.dim_latent_agents
+        self.map_enc = MapEncoder(opt)
+        self.agents_enc = PointNet(d_in=self.dim_agents_feat_vec,
+                                   d_out=self.dim_latent_agents,
+                                   d_hid=self.dim_latent_agents,
+                                   n_layers=3)
 
     def forward(self, scene):
         """Standard forward."""

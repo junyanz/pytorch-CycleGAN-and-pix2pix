@@ -42,6 +42,7 @@ class AvsgModel(BaseModel):
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
             parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=256, help='Scene latent noise dimension')
+            parser.add_argument('--dim_latent_agents', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_scene', type=int, default=512, help='')
             parser.add_argument('--dim_agents_decoder_hid', type=int, default=512, help='')
             parser.add_argument('--dim_latent_polygon_elem', type=int, default=64, help='')
