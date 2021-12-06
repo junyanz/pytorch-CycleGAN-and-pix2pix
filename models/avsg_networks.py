@@ -216,7 +216,6 @@ class DecoderUnit(nn.Module):
 
     def __init__(self, opt, dim_context, dim_out):
         super(DecoderUnit, self).__init__()
-        self.device = opt.device
         dim_hid = dim_context
         self.dim_hid = dim_hid
         self.dim_out = dim_out
@@ -265,17 +264,17 @@ class AgentsDecoder(nn.Module):
         super(AgentsDecoder, self).__init__()
         self.dim_latent_scene = opt.dim_latent_scene
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
-        self.dim_agents_feat_vec = opt.dim_agents_feat_vec
+        self.dim_agent_feat_vec = opt.dim_agent_feat_vec
         self.max_num_agents = opt.max_num_agents
         self.decoder_unit = DecoderUnit(opt,
                                         dim_context=self.dim_latent_scene,
-                                        dim_out=self.dim_agents_feat_vec)
+                                        dim_out=self.dim_agent_feat_vec)
 
     def forward(self, scene_latent):
         agents_feat_vec_list = []
         prev_hidden = scene_latent
         attn_scores = torch.ones_like(prev_hidden, requires_grad=False)
-        prev_out_feat = torch.zeros(self.dim_agents_feat_vec, requires_grad=False)
+        prev_out_feat = torch.zeros(self.dim_agent_feat_vec, requires_grad=False)
         for i_agent in range(self.max_num_agents):
             stop_flag, output_feat, next_hidden = \
                 self.decoder_unit(context_vec=scene_latent,
@@ -330,14 +329,16 @@ class SceneDiscriminator(nn.Module):
 
     def __init__(self, opt):
         super(SceneDiscriminator, self).__init__()
-        self.dim_agents_feat_vec = opt.dim_agents_feat_vec
-        self.dim_latent_agents = opt.dim_latent_agents
+        self.dim_agent_feat_vec = opt.dim_agent_feat_vec
+        self.dim_latent_all_agents = opt.dim_latent_all_agents
+        self.dim_latent_map = opt.dim_latent_map
+        self.dim_latent_scene = opt.dim_latent_scene
         self.map_enc = MapEncoder(opt)
-        self.agents_enc = PointNet(d_in=self.dim_agents_feat_vec,
-                                   d_out=self.dim_latent_agents,
-                                   d_hid=self.dim_latent_agents,
+        self.agents_enc = PointNet(d_in=self.dim_agent_feat_vec,
+                                   d_out=self.dim_latent_all_agents,
+                                   d_hid=self.dim_latent_all_agents,
                                    n_layers=3)
-        self.out_mlp = MLP(d_in=self.dim_latent_map + self.dim_latent_agents,
+        self.out_mlp = MLP(d_in=self.dim_latent_map + self.dim_latent_all_agents,
                            d_out=1,
                            d_hid=self.dim_latent_scene,
                            n_layers=3)
