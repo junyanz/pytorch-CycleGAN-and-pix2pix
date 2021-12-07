@@ -171,13 +171,11 @@ class AvsgModel(BaseModel):
 
         # Agent features - Change to vector form, Move to device
         agents_feat = []
-        agents_feat_vecs = agents_feat_dicts_to_agent_feat_vecs(self.agent_feat_vec_coord_labels, scene_data['agents_feat'])
-        for agent in scene_data['agents_feat']:
-            agents_feat.append(dict())
-            for key, val in agent.items():
-                agents_feat[-1][key] = val.to(self.device)
+        agents_feat_vecs = agents_feat_dicts_to_agent_feat_vecs(self.agent_feat_vec_coord_labels,
+                                                                scene_data['agents_feat'],
+                                                                self.device)
         self.real_map = map_feat
-        self.real_agents = agents_feat
+        self.real_agents = agents_feat_vecs
 
     #########################################################################################
 
