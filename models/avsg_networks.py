@@ -219,7 +219,7 @@ class DecoderUnit(nn.Module):
         dim_hid = dim_context
         self.dim_hid = dim_hid
         self.dim_out = dim_out
-        self.gru = nn.GRU(dim_hid, dim_hid)
+        self.gru = nn.GRUCell(dim_hid, dim_hid)
         self.input_mlp = MLP(d_in=dim_out + dim_hid,
                              d_out=dim_hid,
                              d_hid=dim_hid,
@@ -231,15 +231,16 @@ class DecoderUnit(nn.Module):
 
     def forward(self, context_vec, prev_hidden, attn_scores, prev_out_feat):
         # the input layer takes in the attention-applied context concatenated with the previous out features
-        attn_weights = F.softmax(attn_scores)
+        attn_weights = F.softmax(attn_scores, dim=0)
         attn_applied = attn_weights * context_vec
         gru_input = self.input_mlp(torch.cat([attn_applied, prev_out_feat]))
         gru_input = F.relu(gru_input)
-        unit_out, next_hidden = self.gru(gru_input, prev_hidden)
-        output = self.out_mlp(unit_out[0])
+        hidden = self.gru(gru_input.unsqueeze(0), prev_hidden.unsqueeze(0))
+        hidden = hidden[0]
+        output = self.out_mlp(hidden)
         stop_flag = output[0]
         output_feat = output[1:]
-        return stop_flag, output_feat, next_hidden
+        return stop_flag, output_feat, hidden
 
 
 ##############################################################################################
