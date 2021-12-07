@@ -29,11 +29,24 @@ def agents_feat_vecs_to_agent_feat_dicts(agents_feat_vecs):
 #########################################################################################
 
 
-def agents_feat_dicts_to_agent_feat_vecs(agents_feat_dicts):
+def agents_feat_dicts_to_agent_feat_vecs(agent_feat_vec_coord_labels, agents_feat_dicts, device):
+    dim_agent_feat_vec = len(agent_feat_vec_coord_labels)
     agents_feat_vecs = []
     for agent_dict in agents_feat_dicts:
-        agent_feat_vec = 0
+        agent_feat_vec = torch.zeros(dim_agent_feat_vec, device)
+        agent_feat_vec[0] = agent_dict['centroid'][0]
+        agent_feat_vec[1] = agent_dict['centroid'][1]
+        agent_feat_vec[2] = torch.cos(agent_dict['yaw'])
+        agent_feat_vec[3] = torch.sin(agent_dict['yaw'])
+        agent_feat_vec[4] = agent_dict['extent'][0]
+        agent_feat_vec[5] = agent_dict['extent'][1]
+        agent_type = agent_dict['agent_type']
+        # # agent type ids are defined in
+        # agent_feat_vec[6] =
+        # agent_feat_vec[7] =
+        # agent_feat_vec[8] =
         agents_feat_vecs.append(agent_feat_vec)
+
     return agents_feat_vecs
 
 
@@ -62,11 +75,10 @@ class AvsgModel(BaseModel):
                                      'yaw_cos',  # [2]  in range [0,1],  sin(yaw)^2 + cos(yaw)^2 = 1
                                      'yaw_sin',  # [3]  in range [0,1],  sin(yaw)^2 + cos(yaw)^2 = 1
                                      'extent_length',  # [4] Real positive
-                                     'extent_width'  # [5] Real positive 
-                                     'is_UNKNOWN',  # [6]  0 or 1
-                                     'is_CAR',  # [7] 0 or 1
-                                     'is_CYCLIST',  # [8] 0 or 1
-                                     'is_PEDESTRIAN',  # [9]  0 or 1
+                                     'extent_width',  # [5] Real positive
+                                     'is_CAR',  # [6] 0 or 1
+                                     'is_CYCLIST',  # [7] 0 or 1
+                                     'is_PEDESTRIAN',  # [8]  0 or 1
                                      ],
                             type=list)
         parser.set_defaults(netG='SceneGenerator')
@@ -89,7 +101,6 @@ class AvsgModel(BaseModel):
                                 help='Maximal number of points per polygon element')
             parser.add_argument('--max_num_agents', type=int, default=30,
                                 help='Maximal number of agents in a scene')
-
         return parser
 
     #########################################################################################
@@ -106,6 +117,7 @@ class AvsgModel(BaseModel):
         """
         BaseModel.__init__(self, opt, is_image_data=False)  # call the initialization method of BaseModel
         self.polygon_name_order = opt.polygon_name_order
+        self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
 
         # specify the training losses you want to print out.
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
@@ -159,7 +171,7 @@ class AvsgModel(BaseModel):
 
         # Agent features - Change to vector form, Move to device
         agents_feat = []
-        agents_feat_vecs = agents_feat_dicts_to_agent_feat_vecs(scene_data['agents_feat'])
+        agents_feat_vecs = agents_feat_dicts_to_agent_feat_vecs(self.agent_feat_vec_coord_labels, scene_data['agents_feat'])
         for agent in scene_data['agents_feat']:
             agents_feat.append(dict())
             for key, val in agent.items():

@@ -258,6 +258,7 @@ class AgentsDecoder(nn.Module):
         super(AgentsDecoder, self).__init__()
         self.dim_latent_scene = opt.dim_latent_scene
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
+        self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.max_num_agents = opt.max_num_agents
         self.decoder_unit = DecoderUnit(opt,
