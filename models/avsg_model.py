@@ -21,19 +21,23 @@ from . import networks
 
 
 #########################################################################################
-def agent_feat_vec_to_agent_feat_dict(agent_feat_vec):
-    agent_feat_dict = {}
-    return agent_feat_dict
-#########################################################################################
-
-
-def agent_feat_dict_to_agent_feat_vec(agent_feat_dict):
-    agent_feat_vec = 0
-    return agent_feat_vec
+def agents_feat_vecs_to_agent_feat_dicts(agents_feat_vecs):
+    agents_feat_dicts = {}
+    return agents_feat_dicts
 
 
 #########################################################################################
 
+
+def agents_feat_dicts_to_agent_feat_vecs(agents_feat_dicts):
+    agents_feat_vecs = []
+    for agent_dict in agents_feat_dicts:
+        agent_feat_vec = 0
+        agents_feat_vecs.append(agent_feat_vec)
+    return agents_feat_vecs
+
+
+#########################################################################################
 
 
 #########################################################################################
@@ -52,18 +56,19 @@ class AvsgModel(BaseModel):
         """
         parser.add_argument('--polygon_name_order', type=list,
                             default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
-        parser.agent_feat_vec_coord_labels = ['centroid_x',  # [0]  Real number
-                                              'centroid_y',  # [1]  Real number
-                                              'yaw',  # [2] Real number, in range [0,2*pi]
-                                              'extent_length',  # [3] Real positive
-                                              'extent_width'  # [4] Real positive 
-                                              'is_UNKNOWN',  # [5]  0 or 1
-                                              'is_CAR',  # [6] 0 or 1
-                                              'is_CYCLIST',  # [7] 0 or 1
-                                              'is_PEDESTRIAN',  # [8]  0 or 1
-                                              ]
-        # TODO: add agent type as one-hot  # Real positive , CAR, CYCLIST, PEDESTRIAN
-        # TODO: add in the generator out - modulu yaw angle, softmax on activation
+        parser.add_argument('--agent_feat_vec_coord_labels',
+                            default=['centroid_x',  # [0]  Real number
+                                     'centroid_y',  # [1]  Real number
+                                     'yaw_cos',  # [2]  in range [0,1],  sin(yaw)^2 + cos(yaw)^2 = 1
+                                     'yaw_sin',  # [3]  in range [0,1],  sin(yaw)^2 + cos(yaw)^2 = 1
+                                     'extent_length',  # [4] Real positive
+                                     'extent_width'  # [5] Real positive 
+                                     'is_UNKNOWN',  # [6]  0 or 1
+                                     'is_CAR',  # [7] 0 or 1
+                                     'is_CYCLIST',  # [8] 0 or 1
+                                     'is_PEDESTRIAN',  # [9]  0 or 1
+                                     ],
+                            type=list)
         parser.set_defaults(netG='SceneGenerator')
         if is_train:
             parser.set_defaults(gan_mode='vanilla', netD='SceneDiscriminator')
@@ -73,9 +78,6 @@ class AvsgModel(BaseModel):
             parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_all_agents', type=int, default=256, help='')
-
-            parser.add_argument('--dim_agent_feat_vec', type=int, default=6, help='')
-
             parser.add_argument('--dim_latent_scene', type=int, default=512, help='')
             parser.add_argument('--dim_agents_decoder_hid', type=int, default=512, help='')
             parser.add_argument('--dim_latent_polygon_elem', type=int, default=64, help='')
@@ -89,8 +91,8 @@ class AvsgModel(BaseModel):
                                 help='Maximal number of agents in a scene')
 
         return parser
-    #########################################################################################
 
+    #########################################################################################
 
     def __init__(self, opt):
         """Initialize this model class.
@@ -136,7 +138,8 @@ class AvsgModel(BaseModel):
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
-             # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
+            # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
+
     #########################################################################################
 
     def set_input(self, scene_data):
@@ -147,19 +150,23 @@ class AvsgModel(BaseModel):
         """
         assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
 
-        # Move to device
+        # Map features - Move to device
         map_feat = dict()
         for poly_type in self.polygon_name_order:
             map_feat[poly_type] = []
             poly_elems = scene_data['map_feat'][poly_type]
             map_feat[poly_type] = [poly_elem.to(self.device) for poly_elem in poly_elems]
+
+        # Agent features - Change to vector form, Move to device
         agents_feat = []
+        agents_feat_vecs = agents_feat_dicts_to_agent_feat_vecs(scene_data['agents_feat'])
         for agent in scene_data['agents_feat']:
             agents_feat.append(dict())
             for key, val in agent.items():
                 agents_feat[-1][key] = val.to(self.device)
         self.real_map = map_feat
         self.real_agents = agents_feat
+
     #########################################################################################
 
     def forward(self):
@@ -168,6 +175,7 @@ class AvsgModel(BaseModel):
         self.fake_agents = self.netG(self.real_map)
         # TODO: generator should trans the yaw to [0,2pi] ? check the range of the yaw in the data
         pass
+
     #########################################################################################
 
     def backward_D(self):
@@ -187,6 +195,7 @@ class AvsgModel(BaseModel):
         # combine loss and calculate gradients
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
         self.loss_D.backward()
+
     #########################################################################################
 
     def backward_G(self):
@@ -203,19 +212,20 @@ class AvsgModel(BaseModel):
         self.loss_G = self.loss_G_GAN
 
         self.loss_G.backward()
+
     #########################################################################################
 
     def optimize_parameters(self):
         """Update network weights; it will be called in every training iteration."""
-        self.forward()                   # compute fake images: G(A)
+        self.forward()  # compute fake images: G(A)
         # update D
         self.set_requires_grad(self.netD, True)  # enable backprop for D
-        self.optimizer_D.zero_grad()     # set D's gradients to zero
-        self.backward_D()                # calculate gradients for D
-        self.optimizer_D.step()          # update D's weights
+        self.optimizer_D.zero_grad()  # set D's gradients to zero
+        self.backward_D()  # calculate gradients for D
+        self.optimizer_D.step()  # update D's weights
         # update G
         self.set_requires_grad(self.netD, False)  # D requires no gradients when optimizing G
-        self.optimizer_G.zero_grad()        # set G's gradients to zero
-        self.backward_G()                   # calculate gradients for G
-        self.optimizer_G.step()             # update G's weights
+        self.optimizer_G.zero_grad()  # set G's gradients to zero
+        self.backward_G()  # calculate gradients for G
+        self.optimizer_G.step()  # update G's weights
     #########################################################################################

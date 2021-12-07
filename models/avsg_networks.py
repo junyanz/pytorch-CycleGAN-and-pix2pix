@@ -258,7 +258,7 @@ class AgentsDecoder(nn.Module):
         super(AgentsDecoder, self).__init__()
         self.dim_latent_scene = opt.dim_latent_scene
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
-        self.dim_agent_feat_vec = opt.dim_agent_feat_vec
+        self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.max_num_agents = opt.max_num_agents
         self.decoder_unit = DecoderUnit(opt,
                                         dim_context=self.dim_latent_scene,
@@ -323,7 +323,8 @@ class SceneDiscriminator(nn.Module):
 
     def __init__(self, opt):
         super(SceneDiscriminator, self).__init__()
-        self.dim_agent_feat_vec = opt.dim_agent_feat_vec
+        self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
+        self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.dim_latent_all_agents = opt.dim_latent_all_agents
         self.dim_latent_map = opt.dim_latent_map
         self.dim_latent_scene = opt.dim_latent_scene
