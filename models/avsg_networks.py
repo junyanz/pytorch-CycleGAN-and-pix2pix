@@ -267,8 +267,8 @@ class AgentsDecoder(nn.Module):
     def forward(self, scene_latent):
         agents_feat_vec_list = []
         prev_hidden = scene_latent
-        attn_scores = torch.ones_like(prev_hidden, requires_grad=False)
-        prev_out_feat = torch.zeros(self.dim_agent_feat_vec, requires_grad=False)
+        attn_scores = torch.ones_like(prev_hidden)
+        prev_out_feat = torch.zeros(self.dim_agent_feat_vec)
         for i_agent in range(self.max_num_agents):
             stop_flag, output_feat, next_hidden = \
                 self.decoder_unit(context_vec=scene_latent,
