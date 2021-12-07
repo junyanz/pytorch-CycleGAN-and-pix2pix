@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from torch import linalg as LA
 
 class MLP(nn.Module):
 
@@ -228,6 +228,10 @@ class DecoderUnit(nn.Module):
                            d_out=dim_out + 1,
                            d_hid=dim_hid,
                            n_layers=3)
+        self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
+        assert self.agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y', 'yaw_cos', 'yaw_sin',
+                                                    'extent_length', 'extent_width', 'speed',
+                                                    'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
 
     def forward(self, context_vec, prev_hidden, attn_scores, prev_out_feat):
         # the input layer takes in the attention-applied context concatenated with the previous out features
@@ -241,6 +245,15 @@ class DecoderUnit(nn.Module):
         output = self.out_mlp(hidden)
         stop_flag = output[0]
         output_feat = output[1:]
+        # Project the generator output to the feature vectors domain:
+        # Coordinates 0,1 are centroid x,y - no need to project
+        # Coordinates 2,3 are yaw_cos, yaw_sin - project to unit circle
+        output_feat[2:4] = output_feat[2:4] / LA.vector_norm(output_feat[2:4], ord=2)
+        # Coordinates 4,5,6 are extent_length, extent_width, speed project to positive numbers
+        output_feat[4:7] = F.softplus(output_feat[4:7])
+        # Coordinates 7,8,9 are one-hot vector - project to 3-simplex
+        output_feat[7:10] = F.softmax(output_feat[7:10])
+
         return stop_flag, output_feat, hidden
 
 

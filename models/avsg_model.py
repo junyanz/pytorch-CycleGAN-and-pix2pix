@@ -24,11 +24,16 @@ from . import networks
 def agents_feat_vecs_to_agent_feat_dicts(agents_feat_vecs):
     agents_feat_dicts = {}
     return agents_feat_dicts
+
+
 #########################################################################################
 
 
 def agents_feat_dicts_to_agent_feat_vecs(agent_feat_vec_coord_labels, agents_feat_dicts, device):
     dim_agent_feat_vec = len(agent_feat_vec_coord_labels)
+    assert agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y', 'yaw_cos', 'yaw_sin',
+                                           'extent_length', 'extent_width', 'speed',
+                                           'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
     agents_feat_vecs = []
     for agent_dict in agents_feat_dicts:
         agent_feat_vec = torch.zeros(dim_agent_feat_vec, device=device)
@@ -219,8 +224,6 @@ class AvsgModel(BaseModel):
         # self.loss_G_L1 = self.criterionL1(self.reconstructed_map, self.real_map) * self.opt.lambda_L1
         # combine loss and calculate gradients
         # self.loss_G = self.loss_G_GAN + self.loss_G_L1
-
-
 
     #########################################################################################
 
