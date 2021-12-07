@@ -29,6 +29,7 @@ class MLP(nn.Module):
             modules_list.append(nn.ReLU())
         modules_list.append(nn.Linear(layer_dims[-2], d_out))
         self.net = nn.Sequential(*modules_list)
+        self.layer_dims = layer_dims
 
     def forward(self, in_vec):
         return self.net(in_vec)
