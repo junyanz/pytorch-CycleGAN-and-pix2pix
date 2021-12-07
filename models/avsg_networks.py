@@ -14,21 +14,20 @@ class MLP(nn.Module):
 
     def __init__(self, d_in, d_out, d_hid, n_layers):
         super(MLP, self).__init__()
+        assert n_layers >= 1
         self.d_in = d_in
         self.d_out = d_out
         self.d_hid = d_hid
         self.n_layers = n_layers
-        self.layer_dims = [d_in] + (n_layers - 1) * [d_hid] + [d_out]
+        layer_dims = [d_in] + (n_layers - 1) * [d_hid] + [d_out]
         modules_list = []
-        layer_d_in = d_in
-        layer_d_out = d_out
         for i_layer in range(n_layers - 1):
-            layer_d_in = self.layer_dims[i_layer]
-            layer_d_out = self.layer_dims[i_layer + 1]
+            layer_d_in = layer_dims[i_layer]
+            layer_d_out = layer_dims[i_layer + 1]
             modules_list.append(nn.Linear(layer_d_in, layer_d_out))
             modules_list.append(nn.LayerNorm(layer_d_out))
             modules_list.append(nn.ReLU())
-        modules_list.append(nn.Linear(layer_d_in, layer_d_out))
+        modules_list.append(nn.Linear(layer_dims[-2], d_out))
         self.net = nn.Sequential(*modules_list)
 
     def forward(self, in_vec):
