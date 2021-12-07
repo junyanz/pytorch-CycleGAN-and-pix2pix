@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import linalg as LA
 
+
 class MLP(nn.Module):
 
     def __init__(self, d_in, d_out, d_hid, n_layers):
@@ -233,11 +234,11 @@ class DecoderUnit(nn.Module):
                                                     'extent_length', 'extent_width', 'speed',
                                                     'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
 
-    def forward(self, context_vec, prev_hidden, attn_scores, prev_out_feat):
+    def forward(self, context_vec, prev_hidden, attn_scores, prev_agent_feat):
         # the input layer takes in the attention-applied context concatenated with the previous out features
         attn_weights = F.softmax(attn_scores, dim=0)
         attn_applied = attn_weights * context_vec
-        gru_input = torch.cat([attn_applied, prev_out_feat])
+        gru_input = torch.cat([attn_applied, prev_agent_feat])
         gru_input = self.input_mlp(gru_input)
         gru_input = F.relu(gru_input)
         hidden = self.gru(gru_input.unsqueeze(0), prev_hidden.unsqueeze(0))
@@ -245,20 +246,22 @@ class DecoderUnit(nn.Module):
         output = self.out_mlp(hidden)
         stop_flag = output[0]
         output_feat = output[1:]
-        # Project the generator output to the feature vectors domain:
-        # Coordinates 0,1 are centroid x,y - no need to project
-        # Coordinates 2,3 are yaw_cos, yaw_sin - project to unit circle
-        output_feat[2:4] = output_feat[2:4] / LA.vector_norm(output_feat[2:4], ord=2)
-        # Coordinates 4,5,6 are extent_length, extent_width, speed project to positive numbers
-        output_feat[4:7] = F.softplus(output_feat[4:7])
-        # Coordinates 7,8,9 are one-hot vector - project to 3-simplex
-        output_feat[7:10] = F.softmax(output_feat[7:10])
 
-        return stop_flag, output_feat, hidden
+        # Project the generator output to the feature vectors domain:
+        agent_feat = torch.cat([
+            # Coordinates 0,1 are centroid x,y - no need to project
+            output_feat[0:2],
+            # Coordinates 2,3 are yaw_cos, yaw_sin - project to unit circle
+            output_feat[2:4] / LA.vector_norm(output_feat[2:4], ord=2),
+            # Coordinates 4,5,6 are extent_length, extent_width, speed project to positive numbers
+            F.softplus(output_feat[4:7]),
+            # Coordinates 7,8,9 are one-hot vector - project to 3-simplex
+            F.softmax(output_feat[7:10], dim=0)
+        ])
+        return stop_flag, agent_feat, hidden
 
 
 ##############################################################################################
-
 
 class AgentsDecoder(nn.Module):
     # based on:
@@ -282,21 +285,21 @@ class AgentsDecoder(nn.Module):
         agents_feat_vec_list = []
         prev_hidden = scene_latent
         attn_scores = torch.ones_like(prev_hidden)
-        prev_out_feat = torch.zeros(self.dim_agent_feat_vec)
+        prev_agent_feat = torch.zeros(self.dim_agent_feat_vec)
         for i_agent in range(self.max_num_agents):
-            stop_flag, output_feat, next_hidden = \
+            stop_flag, agent_feat, next_hidden = \
                 self.decoder_unit(context_vec=scene_latent,
                                   prev_hidden=prev_hidden,
                                   attn_scores=attn_scores,
-                                  prev_out_feat=prev_out_feat)
+                                  prev_agent_feat=prev_agent_feat)
             if i_agent > 0 and stop_flag > 0:
                 # Stop flag is ignored at i=0, since we want at least one agent (including the AV)  in the scene
                 break
             else:
                 prev_hidden = next_hidden
                 attn_scores = next_hidden
-                prev_out_feat = output_feat
-                agents_feat_vec_list.append(output_feat)
+                prev_agent_feat = agent_feat
+                agents_feat_vec_list.append(agent_feat)
         return agents_feat_vec_list
 
 

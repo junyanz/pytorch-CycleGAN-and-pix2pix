@@ -19,7 +19,6 @@ import torch
 from .base_model import BaseModel
 from . import networks
 
-
 #########################################################################################
 def agents_feat_vecs_to_agent_feat_dicts(agents_feat_vecs):
     agents_feat_dicts = {}
