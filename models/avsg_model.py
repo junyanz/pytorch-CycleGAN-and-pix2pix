@@ -123,7 +123,7 @@ class AvsgModel(BaseModel):
 
         # specify the training losses you want to print out.
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
-        self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
+        self.loss_names = ['G_GAN', 'D_real', 'D_fake']  # = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
 
         # specify the images you want to save and display. The program will call base_model.get_current_visuals to save and display these images.
         self.visual_names = ['real_A', 'fake_B', 'real_B']
