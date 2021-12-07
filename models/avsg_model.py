@@ -34,19 +34,23 @@ def agents_feat_dicts_to_agent_feat_vecs(agent_feat_vec_coord_labels, agents_fea
     agents_feat_vecs = []
     for agent_dict in agents_feat_dicts:
         agent_feat_vec = torch.zeros(dim_agent_feat_vec, device=device)
-        agent_feat_vec[0] = agent_dict['centroid'][0]
-        agent_feat_vec[1] = agent_dict['centroid'][1]
+        assert agent_dict['centroid'].shape == torch.Size([1, 2])
+        agent_feat_vec[0] = agent_dict['centroid'][0, 0]
+        agent_feat_vec[1] = agent_dict['centroid'][0, 1]
         agent_feat_vec[2] = torch.cos(agent_dict['yaw'])
         agent_feat_vec[3] = torch.sin(agent_dict['yaw'])
-        agent_feat_vec[4] = agent_dict['extent'][0]
-        agent_feat_vec[5] = agent_dict['extent'][1]
+        assert agent_dict['extent'].shape == torch.Size([1, 2])
+        agent_feat_vec[4] = agent_dict['extent'][0, 0]
+        agent_feat_vec[5] = agent_dict['extent'][0, 1]
         agent_feat_vec[6] = agent_dict['speed']
         # agent type ['CAR', 'CYCLIST', 'PEDESTRIAN'] is represented in one-hot encoding
         agent_feat_vec[7] = agent_dict['agent_label_id'] == 0
         agent_feat_vec[8] = agent_dict['agent_label_id'] == 1
         agent_feat_vec[9] = agent_dict['agent_label_id'] == 2
+        assert agent_feat_vec[7:].sum() == 1
         agents_feat_vecs.append(agent_feat_vec)
 
+    agents_feat_vecs = torch.stack(agents_feat_vecs)
     return agents_feat_vecs
 
 
@@ -72,8 +76,8 @@ class AvsgModel(BaseModel):
         parser.add_argument('--agent_feat_vec_coord_labels',
                             default=['centroid_x',  # [0]  Real number
                                      'centroid_y',  # [1]  Real number
-                                     'yaw_cos',  # [2]  in range [0,1],  sin(yaw)^2 + cos(yaw)^2 = 1
-                                     'yaw_sin',  # [3]  in range [0,1],  sin(yaw)^2 + cos(yaw)^2 = 1
+                                     'yaw_cos',  # [2]  in range [-1,1],  sin(yaw)^2 + cos(yaw)^2 = 1
+                                     'yaw_sin',  # [3]  in range [-1,1],  sin(yaw)^2 + cos(yaw)^2 = 1
                                      'extent_length',  # [4] Real positive
                                      'extent_width',  # [5] Real positive
                                      'speed',  # [6] Real non-negative
