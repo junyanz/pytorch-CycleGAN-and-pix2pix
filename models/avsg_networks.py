@@ -233,7 +233,8 @@ class DecoderUnit(nn.Module):
         # the input layer takes in the attention-applied context concatenated with the previous out features
         attn_weights = F.softmax(attn_scores, dim=0)
         attn_applied = attn_weights * context_vec
-        gru_input = self.input_mlp(torch.cat([attn_applied, prev_out_feat]))
+        gru_input = torch.cat([attn_applied, prev_out_feat])
+        gru_input = self.input_mlp(gru_input)
         gru_input = F.relu(gru_input)
         hidden = self.gru(gru_input.unsqueeze(0), prev_hidden.unsqueeze(0))
         hidden = hidden[0]
