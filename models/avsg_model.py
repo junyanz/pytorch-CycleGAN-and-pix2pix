@@ -52,6 +52,18 @@ class AvsgModel(BaseModel):
         """
         parser.add_argument('--polygon_name_order', type=list,
                             default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
+        parser.agent_feat_vec_coord_labels = ['centroid_x',  # [0]  Real number
+                                              'centroid_y',  # [1]  Real number
+                                              'yaw',  # [2] Real number, in range [0,2*pi]
+                                              'extent_length',  # [3] Real positive
+                                              'extent_width'  # [4] Real positive 
+                                              'is_UNKNOWN',  # [5]  0 or 1
+                                              'is_CAR',  # [6] 0 or 1
+                                              'is_CYCLIST',  # [7] 0 or 1
+                                              'is_PEDESTRIAN',  # [8]  0 or 1
+                                              ]
+        # TODO: add agent type as one-hot  # Real positive , CAR, CYCLIST, PEDESTRIAN
+        # TODO: add in the generator out - modulu yaw angle, softmax on activation
         parser.set_defaults(netG='SceneGenerator')
         if is_train:
             parser.set_defaults(gan_mode='vanilla', netD='SceneDiscriminator')
@@ -154,6 +166,8 @@ class AvsgModel(BaseModel):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         # generate the output of the generator given the input map
         self.fake_agents = self.netG(self.real_map)
+        # TODO: generator should trans the yaw to [0,2pi] ? check the range of the yaw in the data
+        pass
     #########################################################################################
 
     def backward_D(self):
