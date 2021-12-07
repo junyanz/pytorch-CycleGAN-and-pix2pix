@@ -276,7 +276,8 @@ class AgentsDecoder(nn.Module):
                                   prev_hidden=prev_hidden,
                                   attn_scores=attn_scores,
                                   prev_out_feat=prev_out_feat)
-            if stop_flag > 0:
+            if i_agent > 0 and stop_flag > 0:
+                # Stop flag is ignored at i=0, since we want at least one agent (including the AV)  in the scene
                 break
             else:
                 prev_hidden = next_hidden
@@ -314,7 +315,8 @@ class SceneGenerator(nn.Module):
         scene_latent = torch.concat([map_latent, latent_noise], dim=0)
         scene_latent = self.scene_embedder_out(scene_latent)
         agents_feat_vec_list = self.agents_dec(scene_latent)
-        return agents_feat_vec_list
+        agents_feat_vecs = torch.stack(agents_feat_vec_list)
+        return agents_feat_vecs
 
 
 #########################################################################################
@@ -339,10 +341,10 @@ class SceneDiscriminator(nn.Module):
                            d_hid=self.dim_latent_scene,
                            n_layers=3)
 
-    def forward(self, map_feat, agents_feat_vec_list):
+    def forward(self, map_feat, agents_feat_vecs):
         """Standard forward."""
         map_latent = self.map_enc(map_feat)
-        agents_latent = self.agents_enc(agents_feat_vec_list)
+        agents_latent = self.agents_enc(agents_feat_vecs)
         scene_latent = torch.cat([map_latent, agents_latent])
         pred_fake = self.out_mlp(scene_latent)
         ''' 

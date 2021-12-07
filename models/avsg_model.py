@@ -24,8 +24,6 @@ from . import networks
 def agents_feat_vecs_to_agent_feat_dicts(agents_feat_vecs):
     agents_feat_dicts = {}
     return agents_feat_dicts
-
-
 #########################################################################################
 
 
@@ -49,7 +47,6 @@ def agents_feat_dicts_to_agent_feat_vecs(agent_feat_vec_coord_labels, agents_fea
         agent_feat_vec[9] = agent_dict['agent_label_id'] == 2
         assert agent_feat_vec[7:].sum() == 1
         agents_feat_vecs.append(agent_feat_vec)
-
     agents_feat_vecs = torch.stack(agents_feat_vecs)
     return agents_feat_vecs
 
@@ -197,7 +194,7 @@ class AvsgModel(BaseModel):
         # Feed fake (generated) agents to discriminator and calculate its prediction loss
         # we use conditional GANs; we need to feed both input and output to the discriminator
         # stop backprop to the generator by detaching fake_B
-        fake_agents_detached = [agent_vec.detach for agent_vec in self.fake_agents]
+        fake_agents_detached = self.fake_agents.detach()
         pred_fake = self.netD(self.real_map, fake_agents_detached)
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
 
