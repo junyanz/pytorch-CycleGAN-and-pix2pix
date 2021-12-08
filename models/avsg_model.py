@@ -74,6 +74,9 @@ class AvsgModel(BaseModel):
         """
         parser.add_argument('--polygon_name_order', type=list,
                             default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
+        parser.add_argument('--closed_polygon_types', type=list,
+                            default=['crosswalks'], help='')
+
         parser.add_argument('--agent_feat_vec_coord_labels',
                             default=['centroid_x',  # [0]  Real number
                                      'centroid_y',  # [1]  Real number

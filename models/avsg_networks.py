@@ -103,8 +103,9 @@ class PointNet(nn.Module):
 
 class PolygonEncoder(nn.Module):
 
-    def __init__(self, dim_latent, n_conv_layers, kernel_size, max_points_per_poly):
+    def __init__(self, dim_latent, n_conv_layers, kernel_size, max_points_per_poly, is_closed):
         super(PolygonEncoder, self).__init__()
+        self.is_closed = is_closed
         self.dim_latent = dim_latent
         self.n_conv_layers = n_conv_layers
         self.kernel_size = kernel_size
@@ -121,7 +122,6 @@ class PolygonEncoder(nn.Module):
                                               padding='same',
                                               padding_mode='circular'))
         self.layers = nn.ModuleList(self.conv_layers)
-        self.layer_normalizer = nn.LayerNorm([1, self.dim_latent, max_points_per_poly])
         self.out_layer = nn.Linear(self.dim_latent, self.dim_latent)
 
     def forward(self, poly_points):
@@ -129,16 +129,17 @@ class PolygonEncoder(nn.Module):
         input [1 x n_points  x 2 coordinates]
         """
         assert poly_points.shape[0] == 1  # assume batch_size=1
-        n_points_orig = poly_points.shape[1]
-        assert n_points_orig <= self.max_points_per_poly
+        n_points = poly_points.shape[1]
+        assert n_points <= self.max_points_per_poly
 
-        if n_points_orig < self.max_points_per_poly:
-            # Pad to fixed size, using wrap padding (that keeps the circular invariance of the embedding)
-            # h = F.pad(poly_points, (0, self.max_points_per_poly - n_points_orig), mode='circular') # not implemented yet in PyTorch for 1d
-            h = np.pad(poly_points,
-                       ((0, 0), (0, self.max_points_per_poly - n_points_orig), (0, 0)),
-                       mode='wrap')
-            h = torch.from_numpy(h)
+        if not self.is_closed:
+            # concatenate a reflection of this sequence.
+            # since the model is cyclic-shift invariant, we get a pipeline that is
+            # invariant to the direction of the sequence
+            poly_points = np.pad(poly_points,
+                                 ((0, 0), (0, n_points), (0, 0)),
+                                 mode='reflect')
+            h = torch.from_numpy(poly_points)
         else:
             h = poly_points
 
@@ -148,7 +149,6 @@ class PolygonEncoder(nn.Module):
         # and finally sum the output - this is all in all - a shift-invariant operator
         for i_layer in range(self.n_conv_layers):
             h = self.conv_layers[i_layer](h)
-            h = self.layer_normalizer(h)
             h = F.relu(h)
         h = h.sum(dim=2)
         h = self.out_layer(h)
@@ -163,6 +163,7 @@ class MapEncoder(nn.Module):
     def __init__(self, opt):
         super(MapEncoder, self).__init__()
         self.polygon_name_order = opt.polygon_name_order
+        self.closed_polygon_types = opt.closed_polygon_types
         self.dim_latent_polygon_elem = opt.dim_latent_polygon_elem
         n_polygon_types = len(opt.polygon_name_order)
         self.n_point_net_layers = 3
@@ -171,10 +172,12 @@ class MapEncoder(nn.Module):
         self.poly_encoder = nn.ModuleDict()
         self.sets_aggregators = nn.ModuleDict()
         for poly_type in self.polygon_name_order:
+            is_closed = poly_type in self.closed_polygon_types
             self.poly_encoder[poly_type] = PolygonEncoder(dim_latent=self.dim_latent_polygon_elem,
                                                           n_conv_layers=opt.n_conv_layers_polygon,
                                                           kernel_size=opt.kernel_size_conv_polygon,
-                                                          max_points_per_poly=opt.max_points_per_poly)
+                                                          max_points_per_poly=opt.max_points_per_poly,
+                                                          is_closed=is_closed)
             self.sets_aggregators[poly_type] = PointNet(d_in=self.dim_latent_polygon_elem,
                                                         d_out=self.dim_latent_polygon_type,
                                                         d_hid=self.dim_latent_polygon_type,
