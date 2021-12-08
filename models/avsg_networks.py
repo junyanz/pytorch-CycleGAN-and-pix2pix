@@ -103,13 +103,12 @@ class PointNet(nn.Module):
 
 class PolygonEncoder(nn.Module):
 
-    def __init__(self, dim_latent, n_conv_layers, kernel_size, max_points_per_poly, is_closed):
+    def __init__(self, dim_latent, n_conv_layers, kernel_size, is_closed):
         super(PolygonEncoder, self).__init__()
         self.is_closed = is_closed
         self.dim_latent = dim_latent
         self.n_conv_layers = n_conv_layers
         self.kernel_size = kernel_size
-        self.max_points_per_poly = max_points_per_poly
         self.conv_layers = []
         for i_layer in range(self.n_conv_layers):
             if i_layer == 0:
@@ -130,7 +129,6 @@ class PolygonEncoder(nn.Module):
         """
         assert poly_points.shape[0] == 1  # assume batch_size=1
         n_points = poly_points.shape[1]
-        assert n_points <= self.max_points_per_poly
 
         if not self.is_closed:
             # concatenate a reflection of this sequence.
@@ -176,7 +174,6 @@ class MapEncoder(nn.Module):
             self.poly_encoder[poly_type] = PolygonEncoder(dim_latent=self.dim_latent_polygon_elem,
                                                           n_conv_layers=opt.n_conv_layers_polygon,
                                                           kernel_size=opt.kernel_size_conv_polygon,
-                                                          max_points_per_poly=opt.max_points_per_poly,
                                                           is_closed=is_closed)
             self.sets_aggregators[poly_type] = PointNet(d_in=self.dim_latent_polygon_elem,
                                                         d_out=self.dim_latent_polygon_type,
