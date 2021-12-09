@@ -254,7 +254,7 @@ class DecoderUnit(nn.Module):
         hidden = self.gru(gru_input.unsqueeze(0), prev_hidden.unsqueeze(0))
         hidden = hidden[0]
         output = self.out_mlp(hidden)
-        stop_flag = output[0]
+        stop_score = output[0]
         output_feat = output[1:]
 
         # Project the generator output to the feature vectors domain:
@@ -268,7 +268,7 @@ class DecoderUnit(nn.Module):
             # Coordinates 7,8,9 are one-hot vector - project to 3-simplex
             F.softmax(output_feat[7:10], dim=0)
         ])
-        return stop_flag, agent_feat, hidden
+        return stop_score, agent_feat, hidden
 
 
 ##############################################################################################
@@ -298,12 +298,14 @@ class AgentsDecoder(nn.Module):
         attn_scores = torch.ones_like(prev_hidden)
         prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
         for i_agent in range(self.max_num_agents):
-            stop_flag, agent_feat, next_hidden = \
+            stop_score, agent_feat, next_hidden = \
                 self.decoder_unit(context_vec=scene_latent,
                                   prev_hidden=prev_hidden,
                                   attn_scores=attn_scores,
                                   prev_agent_feat=prev_agent_feat)
-            if i_agent > 0 and stop_flag > 0:
+            stop_prob = torch.sigmoid(stop_score)
+            stop_flag = torch.bernoulli(stop_prob)
+            if i_agent > 0 and stop_flag > 0.5:
                 # Stop flag is ignored at i=0, since we want at least one agent (including the AV)  in the scene
                 break
             else:
