@@ -225,6 +225,7 @@ class DecoderUnit(nn.Module):
     def __init__(self, opt, dim_context, dim_out):
         super(DecoderUnit, self).__init__()
         dim_hid = dim_context
+        self.device = opt.device
         self.dim_hid = dim_hid
         self.dim_out = dim_out
         self.gru = nn.GRUCell(dim_hid, dim_hid)
