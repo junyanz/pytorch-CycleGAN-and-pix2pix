@@ -30,7 +30,6 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
-from visualization_utils import visualize_scene_feat
 
 if __name__ == '__main__':
     opt = TrainOptions(is_image_data=False).parse()   # get training options
@@ -59,11 +58,18 @@ if __name__ == '__main__':
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
             model.update_learning_rate()  # update learning rates *after* first step (https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate)
 
-            if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
+
+
+
+
+
+
+
+
+            if True:   #total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
                 save_result = total_iters % opt.update_html_freq == 0
                 model.compute_visuals()
-                # visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
-                visualize_scene_feat(agents_feat, map_feat)
+                visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
 
             if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
                 losses = model.get_current_losses()

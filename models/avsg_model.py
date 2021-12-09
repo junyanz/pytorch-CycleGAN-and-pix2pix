@@ -19,17 +19,28 @@ import torch
 from .base_model import BaseModel
 from . import networks
 from collections import OrderedDict
+from visualization_utils import visualize_scene_feat
+
 
 #########################################################################################
-def agents_feat_vecs_to_agent_feat_dicts(agents_feat_vecs):
-    agents_feat_dicts = {}
+def agents_feat_vecs_to_dicts(agents_feat_vecs):
+    agents_feat_dicts = []
+    n_agents = agents_feat_vecs.shape[0]
+    for i_agent in range(n_agents):
+        agent_feat_vec = agents_feat_vecs[i_agent]
+        agent_feat_dict = ({'centroid': agent_feat_vec[:2],
+                            'yaw': torch.atan2(agent_feat_vec[3], agent_feat_vec[2]),
+                            'extent': agent_feat_vec[4:6],
+                            'speed': agent_feat_vec[6],
+                            'agent_label_id': torch.argmax(agent_feat_vec[7:10])})
+        agents_feat_dicts.append(agent_feat_dict)
     return agents_feat_dicts
 
 
 #########################################################################################
 
 
-def agents_feat_dicts_to_agent_feat_vecs(agent_feat_vec_coord_labels, agents_feat_dicts, device):
+def agents_feat_dicts_to_vecs(agent_feat_vec_coord_labels, agents_feat_dicts, device):
     dim_agent_feat_vec = len(agent_feat_vec_coord_labels)
     assert agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y', 'yaw_cos', 'yaw_sin',
                                            'extent_length', 'extent_width', 'speed',
@@ -134,7 +145,7 @@ class AvsgModel(BaseModel):
         self.loss_names = ['G_GAN', 'D_real', 'D_fake']  # = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
 
         # specify the images you want to save and display. The program will call base_model.get_current_visuals to save and display these images.
-        self.visual_names = ['real_A', 'fake_B', 'real_B']
+        self.visual_names = ['fake_agents', 'real_agents']
 
         # specify the models you want to save to the disk.
         # The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
@@ -183,9 +194,9 @@ class AvsgModel(BaseModel):
 
         # Agent features - Change to vector form, Move to device
         agents_feat = []
-        agents_feat_vecs = agents_feat_dicts_to_agent_feat_vecs(self.agent_feat_vec_coord_labels,
-                                                                scene_data['agents_feat'],
-                                                                self.device)
+        agents_feat_vecs = agents_feat_dicts_to_vecs(self.agent_feat_vec_coord_labels,
+                                                     scene_data['agents_feat'],
+                                                     self.device)
         self.real_map = map_feat
         self.real_agents = agents_feat_vecs
 
@@ -245,15 +256,18 @@ class AvsgModel(BaseModel):
         self.optimizer_G.zero_grad()  # set G's gradients to zero
         self.backward_G()  # calculate gradients for G
         self.optimizer_G.step()  # update G's weights
-    #########################################################################################
 
+    #########################################################################################
 
     def get_current_visuals(self):
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
         visual_ret = OrderedDict()
         for name in self.visual_names:
             if isinstance(name, str):
-                visual_ret[name] = getattr(self, name)
+                # Generate image:
+                agents_feat_vecs_ = getattr(self, name)
+                agents_feat_dicts = agents_feat_vecs_to_dicts(agents_feat_vecs_)
+                visualize_scene_feat(agents_feat_dicts, self.real_map)
+                visual_ret[name] = 0
         return visual_ret
     #########################################################################################
-
