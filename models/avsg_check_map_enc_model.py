@@ -8,6 +8,7 @@ class AvsgCheckMapEncModel(BaseModel):
     def modify_commandline_options(parser, is_train=True):
         """Add new dataset-specific options, and rewrite default values for existing options.
         """
+        parser.set_defaults(lr=0.002, lr_policy='step', lr_decay_iters=1000)
 
         parser.add_argument('--polygon_name_order', type=list,
                             default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
@@ -30,15 +31,17 @@ class AvsgCheckMapEncModel(BaseModel):
         parser.add_argument('--max_points_per_poly', type=int, default=20,
                             help='Maximal number of points per polygon element')
 
-        parser.set_defaults(lr=0.002, lr_policy='step', lr_decay_iters=1000)
 
         return parser
 
     def __init__(self, opt):
         BaseModel.__init__(self, opt, is_image_data=False)
+
+        opt.device = self.device
+        self.polygon_name_order = opt.polygon_name_order
         self.map_enc = avsg_networks.MapEncoder(opt)
         # out layer, in case of scalar regression:
-        self.out_layer = torch.nn.Linear(in_features=opt.dim_latent_map, out_features=1)
+        self.out_layer = torch.nn.Linear(in_features=opt.dim_latent_map, out_features=1, device=self.device)
 
         self.loss_criterion = torch.nn.L1Loss()
         print('Map encoder parameters: ', [p[0] for p in self.map_enc.named_parameters()])
@@ -46,11 +49,16 @@ class AvsgCheckMapEncModel(BaseModel):
         self.optimizers.append(self.optimizer)
 
     def set_input(self, scene_data):
-        map_feat = scene_data['map_feat']
+        # Map features - Move to device
+        map_feat = dict()
+        for poly_type in self.polygon_name_order:
+            map_feat[poly_type] = []
+            poly_elems = scene_data['map_feat'][poly_type]
+            map_feat[poly_type] = [poly_elem.to(self.device) for poly_elem in poly_elems]
         self.map_feat = map_feat
         n_lane_mid_elem = len(map_feat['lanes_mid'])
         # the task -  scalar regression of the number of lanes:
-        self.ground_truth = torch.ones(1) * n_lane_mid_elem
+        self.ground_truth = torch.ones(1, device=self.device) * n_lane_mid_elem
 
     def forward(self):
         map_latent = self.map_enc(self.map_feat)
