@@ -18,6 +18,7 @@ You need to implement the following functions:
 import torch
 from .base_model import BaseModel
 from . import networks
+from collections import OrderedDict
 
 #########################################################################################
 def agents_feat_vecs_to_agent_feat_dicts(agents_feat_vecs):
@@ -243,3 +244,14 @@ class AvsgModel(BaseModel):
         self.backward_G()  # calculate gradients for G
         self.optimizer_G.step()  # update G's weights
     #########################################################################################
+
+
+    def get_current_visuals(self):
+        """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
+        visual_ret = OrderedDict()
+        for name in self.visual_names:
+            if isinstance(name, str):
+                visual_ret[name] = getattr(self, name)
+        return visual_ret
+    #########################################################################################
+

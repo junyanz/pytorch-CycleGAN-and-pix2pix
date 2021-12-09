@@ -128,21 +128,21 @@ class PolygonEncoder(nn.Module):
         input [1 x n_points  x 2 coordinates]
         """
         assert poly_points.shape[0] == 1  # assume batch_size=1
-        n_points = poly_points.shape[1]
-
-        if not self.is_closed:
-            # concatenate a reflection of this sequence.
-            # since the model is cyclic-shift invariant, we get a pipeline that is
-            # invariant to the direction of the sequence
-            poly_points = np.pad(poly_points,
-                                 ((0, 0), (0, n_points), (0, 0)),
-                                 mode='reflect')
-            h = torch.from_numpy(poly_points)
-        else:
-            h = poly_points
 
         # fit to conv1d input dimensions [batch_size=1  x in_channels=2  x n_points]
-        h = torch.permute(h, (0, 2, 1))
+        h = torch.permute(poly_points, (0, 2, 1))
+
+        if not self.is_closed:
+            # concatenate a reflection of this sequence, to create a circular closed polygon.
+            # since the model is cyclic-shift invariant, we get a pipeline that is
+            # invariant to the direction of the sequence
+            h = F.pad(h, (0, h.shape[2] - 1), mode='reflect').contiguous()
+
+        # If the points sequence is too short to use the conv filter - pad in circular manner
+        while h.shape[2] < self.kernel_size:
+            pad_len = min(self.kernel_size - h.shape[2], h.shape[2])
+            h = F.pad(h, (0, pad_len), mode='circular').contiguous()
+
         # We use several layers a 1d circular convolution followed by ReLu (equivariant layers)
         # and finally sum the output - this is all in all - a shift-invariant operator
         for i_layer in range(self.n_conv_layers):
