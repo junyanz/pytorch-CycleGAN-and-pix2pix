@@ -1,17 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 from matplotlib.patches import Rectangle
 
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
+
+
 ######################################################################
 
 
 def plot_poly_elems(ax, poly, facecolor='0.4', alpha=0.3, edgecolor='black', label='', is_closed=False, linewidth=1):
     first_plt = True
     for elem in poly:
-        x = [p[0] for p in elem]
-        y = [p[1] for p in elem]
+        x = elem[0, :, 0].detach().cpu()
+        y = elem[0, :, 1].detach().cpu()
         if first_plt:
             first_plt = False
         else:
@@ -26,16 +29,16 @@ def plot_poly_elems(ax, poly, facecolor='0.4', alpha=0.3, edgecolor='black', lab
 
 
 def plot_lanes(ax, left_lanes, right_lanes, facecolor='0.4', alpha=0.3, edgecolor='black', label='', linewidth=1):
-    assert len(left_lanes) == len(right_lanes)
-    n_elems = len(left_lanes)
+    # assert len(left_lanes) == len(right_lanes)
+    n_elems = min(len(left_lanes), len(right_lanes))
     first_plt = True
     for i in range(n_elems):
-        x_left = [p[0] for p in left_lanes[i]]
-        y_left = [p[1] for p in left_lanes[i]]
-        x_right = [p[0] for p in right_lanes[i]]
-        y_right = [p[1] for p in right_lanes[i]]
-        x = np.concatenate((x_left, x_right[::-1]))
-        y = np.concatenate((y_left, y_right[::-1]))
+        x_left = left_lanes[i][0, :, 0]
+        y_left = left_lanes[i][0, :, 1]
+        x_right = right_lanes[i][0, :, 0]
+        y_right = right_lanes[i][0, :, 1]
+        x = torch.cat((x_left, torch.flip(x_right, [0]))).detach().cpu()
+        y = torch.cat((y_left, torch.flip(y_right, [0]))).detach().cpu()
         if first_plt:
             first_plt = False
         else:
@@ -73,10 +76,10 @@ def plot_rectangles(ax, centroids, extents, yaws, label='car', facecolor='skyblu
 def visualize_scene_feat(agents_feat, map_feat):
     centroids = [af['centroid'] for af in agents_feat]
     yaws = [af['yaw'] for af in agents_feat]
-    print('agents centroids: ', centroids)
-    print('agents yaws: ', yaws)
-    print('agents speed: ', [af['speed'] for af in agents_feat])
-    print('agents types: ', [af['agent_label_id'] for af in agents_feat])
+    # print('agents centroids: ', centroids)
+    # print('agents yaws: ', yaws)
+    # print('agents speed: ', [af['speed'] for af in agents_feat])
+    # print('agents types: ', [af['agent_label_id'] for af in agents_feat])
     X = [p[0] for p in centroids]
     Y = [p[1] for p in centroids]
     U = [af['speed'] * np.cos(af['yaw']) for af in agents_feat]
@@ -90,14 +93,23 @@ def visualize_scene_feat(agents_feat, map_feat):
     plot_poly_elems(ax, map_feat['crosswalks'], facecolor='orange', alpha=0.3, edgecolor='orange', label='Crosswalks',
                     is_closed=True)
 
-    extents = [af['extent'] for af in agents_feat]
-    plot_rectangles(ax, centroids[1:], extents[1:], yaws[1:])
-    plot_rectangles(ax, [centroids[0]], [extents[0]], [yaws[0]], label='ego', facecolor='red', edgecolor='red')
+    n_agents = len(agents_feat)
+    if n_agents > 0:
+        extents = [af['extent'] for af in agents_feat]
+        plot_rectangles(ax, centroids[1:], extents[1:], yaws[1:])
+        plot_rectangles(ax, [centroids[0]], [extents[0]], [yaws[0]], label='ego', facecolor='red', edgecolor='red')
 
-    ax.quiver(X[1:], Y[1:], U[1:], V[1:], units='xy', color='b', label='Non-ego', width=0.5)
-    ax.quiver(X[0], Y[0], U[0], V[0], units='xy', color='r', label='Ego', width=0.5)
+        # ax.quiver(X[1:], Y[1:], U[1:], V[1:], units='xy', color='b', label='Non-ego', width=0.5)
+        # ax.quiver(X[0], Y[0], U[0], V[0], units='xy', color='r', label='Ego', width=0.5)
 
     ax.grid()
     plt.legend()
-    plt.show()
+    # plt.show()
+
+    canvas = plt.gca().figure.canvas
+    canvas.draw()
+    data = np.frombuffer(canvas.tostring_rgb(), dtype=np.uint8)
+    image = data.reshape(canvas.get_width_height()[::-1] + (3,))
+    plt.close(fig)
+    return image
 ##############################################################################################

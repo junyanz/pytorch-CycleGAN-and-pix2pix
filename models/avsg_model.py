@@ -33,6 +33,8 @@ def agents_feat_vecs_to_dicts(agents_feat_vecs):
                             'extent': agent_feat_vec[4:6],
                             'speed': agent_feat_vec[6],
                             'agent_label_id': torch.argmax(agent_feat_vec[7:10])})
+        for key in agent_feat_dict.keys():
+            agent_feat_dict[key] = agent_feat_dict[key].detach().cpu().numpy()
         agents_feat_dicts.append(agent_feat_dict)
     return agents_feat_dicts
 
@@ -267,7 +269,6 @@ class AvsgModel(BaseModel):
                 # Generate image:
                 agents_feat_vecs_ = getattr(self, name)
                 agents_feat_dicts = agents_feat_vecs_to_dicts(agents_feat_vecs_)
-                visualize_scene_feat(agents_feat_dicts, self.real_map)
-                visual_ret[name] = 0
+                visual_ret[name] = visualize_scene_feat(agents_feat_dicts, self.real_map)
         return visual_ret
     #########################################################################################

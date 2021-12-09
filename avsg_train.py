@@ -58,15 +58,7 @@ if __name__ == '__main__':
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
             model.update_learning_rate()  # update learning rates *after* first step (https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate)
 
-
-
-
-
-
-
-
-
-            if True:   #total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
+            if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
                 save_result = total_iters % opt.update_html_freq == 0
                 model.compute_visuals()
                 visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
