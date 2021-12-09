@@ -13,9 +13,10 @@ from torch import linalg as LA
 
 class MLP(nn.Module):
 
-    def __init__(self, d_in, d_out, d_hid, n_layers):
+    def __init__(self, d_in, d_out, d_hid, n_layers, device):
         super(MLP, self).__init__()
         assert n_layers >= 1
+        self.device = device
         self.d_in = d_in
         self.d_out = d_out
         self.d_hid = d_hid
@@ -25,10 +26,10 @@ class MLP(nn.Module):
         for i_layer in range(n_layers - 1):
             layer_d_in = layer_dims[i_layer]
             layer_d_out = layer_dims[i_layer + 1]
-            modules_list.append(nn.Linear(layer_d_in, layer_d_out))
-            modules_list.append(nn.LayerNorm(layer_d_out))
+            modules_list.append(nn.Linear(layer_d_in, layer_d_out, device=self.device))
+            modules_list.append(nn.LayerNorm(layer_d_out, device=self.device))
             modules_list.append(nn.ReLU())
-        modules_list.append(nn.Linear(layer_dims[-2], d_out))
+        modules_list.append(nn.Linear(layer_dims[-2], d_out, device=self.device))
         self.net = nn.Sequential(*modules_list)
         self.layer_dims = layer_dims
 
@@ -41,8 +42,9 @@ class MLP(nn.Module):
 
 class PointNet(nn.Module):
 
-    def __init__(self, d_in, d_out, d_hid, n_layers):
+    def __init__(self, d_in, d_out, d_hid, n_layers, device):
         super(PointNet, self).__init__()
+        self.device = device
         self.n_layers = n_layers
         self.d_in = d_in
         self.d_out = d_out
@@ -54,16 +56,15 @@ class PointNet(nn.Module):
             # each layer the function that operates on each element in the set x is
             # f(x) = ReLu(A x + B * (sum over all non x elements) )
             layer_dims = (self.layer_dims[i_layer + 1], self.layer_dims[i_layer])
-            self.matA[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
-            self.matB[i_layer] = nn.Parameter(torch.Tensor(*layer_dims))
+            self.matA[i_layer] = nn.Parameter(torch.zeros(layer_dims, device=device, requires_grad=True))
+            self.matB[i_layer] = nn.Parameter(torch.zeros(layer_dims, device=device, requires_grad=True))
             self.register_parameter(name=f'matA_{i_layer}', param=self.matA[i_layer])
             self.register_parameter(name=f'matB_{i_layer}', param=self.matB[i_layer])
-
             # PyTorch's default initialization:
             nn.init.kaiming_uniform_(self.matA[i_layer], a=math.sqrt(5))
             nn.init.kaiming_uniform_(self.matB[i_layer], a=math.sqrt(5))
-        self.out_layer = nn.Linear(d_hid, d_out)
-        self.layer_normalizer = nn.LayerNorm(d_hid)
+        self.out_layer = nn.Linear(d_hid, d_out, device=self.device)
+        self.layer_normalizer = nn.LayerNorm(d_hid, device=self.device)
 
     def forward(self, in_set):
         """'
@@ -103,8 +104,9 @@ class PointNet(nn.Module):
 
 class PolygonEncoder(nn.Module):
 
-    def __init__(self, dim_latent, n_conv_layers, kernel_size, is_closed):
+    def __init__(self, dim_latent, n_conv_layers, kernel_size, is_closed, device):
         super(PolygonEncoder, self).__init__()
+        self.device = device
         self.is_closed = is_closed
         self.dim_latent = dim_latent
         self.n_conv_layers = n_conv_layers
@@ -119,9 +121,10 @@ class PolygonEncoder(nn.Module):
                                               out_channels=self.dim_latent,
                                               kernel_size=self.kernel_size,
                                               padding='same',
-                                              padding_mode='circular'))
+                                              padding_mode='circular',
+                                              device=self.device))
         self.layers = nn.ModuleList(self.conv_layers)
-        self.out_layer = nn.Linear(self.dim_latent, self.dim_latent)
+        self.out_layer = nn.Linear(self.dim_latent, self.dim_latent, device=self.device)
 
     def forward(self, poly_points):
         """Standard forward
@@ -160,6 +163,7 @@ class MapEncoder(nn.Module):
 
     def __init__(self, opt):
         super(MapEncoder, self).__init__()
+        self.device = opt.device
         self.polygon_name_order = opt.polygon_name_order
         self.closed_polygon_types = opt.closed_polygon_types
         self.dim_latent_polygon_elem = opt.dim_latent_polygon_elem
@@ -174,15 +178,18 @@ class MapEncoder(nn.Module):
             self.poly_encoder[poly_type] = PolygonEncoder(dim_latent=self.dim_latent_polygon_elem,
                                                           n_conv_layers=opt.n_conv_layers_polygon,
                                                           kernel_size=opt.kernel_size_conv_polygon,
-                                                          is_closed=is_closed)
+                                                          is_closed=is_closed,
+                                                          device=self.device)
             self.sets_aggregators[poly_type] = PointNet(d_in=self.dim_latent_polygon_elem,
                                                         d_out=self.dim_latent_polygon_type,
                                                         d_hid=self.dim_latent_polygon_type,
-                                                        n_layers=self.n_point_net_layers)
+                                                        n_layers=self.n_point_net_layers,
+                                                        device=self.device)
         self.poly_types_aggregator = MLP(d_in=self.dim_latent_polygon_type * n_polygon_types,
                                          d_out=self.dim_latent_map,
                                          d_hid=self.dim_latent_map,
-                                         n_layers=3)
+                                         n_layers=3,
+                                         device=self.device)
 
     def forward(self, map_feat):
         """Standard forward
@@ -194,7 +201,7 @@ class MapEncoder(nn.Module):
             poly_elements = map_feat[poly_type]
             if len(poly_elements) == 0:
                 # if there are no polygon of this type in the scene:
-                latent_poly_type = torch.zeros(self.dim_latent_polygon_type, requires_grad=False)
+                latent_poly_type = torch.zeros(self.dim_latent_polygon_type, device=self.device)
             else:
                 poly_latent_per_elem = []
                 for poly_elem in poly_elements:
@@ -224,11 +231,13 @@ class DecoderUnit(nn.Module):
         self.input_mlp = MLP(d_in=dim_out + dim_hid,
                              d_out=dim_hid,
                              d_hid=dim_hid,
-                             n_layers=3)
+                             n_layers=3,
+                             device=self.device)
         self.out_mlp = MLP(d_in=dim_hid,
                            d_out=dim_out + 1,
                            d_hid=dim_hid,
-                           n_layers=3)
+                           n_layers=3,
+                           device=self.device)
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         assert self.agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y', 'yaw_cos', 'yaw_sin',
                                                     'extent_length', 'extent_width', 'speed',
@@ -270,8 +279,9 @@ class AgentsDecoder(nn.Module):
     # * https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html
     # * https://towardsdatascience.com/image-captions-with-attention-in-tensorflow-step-by-step-927dad3569fa
 
-    def __init__(self, opt):
+    def __init__(self, opt, device):
         super(AgentsDecoder, self).__init__()
+        self.device = device
         self.dim_latent_scene = opt.dim_latent_scene
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
@@ -285,7 +295,7 @@ class AgentsDecoder(nn.Module):
         agents_feat_vec_list = []
         prev_hidden = scene_latent
         attn_scores = torch.ones_like(prev_hidden)
-        prev_agent_feat = torch.zeros(self.dim_agent_feat_vec)
+        prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
         for i_agent in range(self.max_num_agents):
             stop_flag, agent_feat, next_hidden = \
                 self.decoder_unit(context_vec=scene_latent,
@@ -310,6 +320,7 @@ class SceneGenerator(nn.Module):
 
     def __init__(self, opt):
         super(SceneGenerator, self).__init__()
+        self.device = opt.device
         self.dim_latent_scene_noise = opt.dim_latent_scene_noise
         self.dim_latent_scene = opt.dim_latent_scene
         self.dim_latent_map = opt.dim_latent_map
@@ -317,8 +328,9 @@ class SceneGenerator(nn.Module):
         self.scene_embedder_out = MLP(d_in=self.dim_latent_scene_noise + self.dim_latent_map,
                                       d_out=self.dim_latent_scene,
                                       d_hid=self.dim_latent_scene,
-                                      n_layers=3)
-        self.agents_dec = AgentsDecoder(opt)
+                                      n_layers=3,
+                                      device=self.device)
+        self.agents_dec = AgentsDecoder(opt, self.device)
         # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
         self.batch_size = opt.batch_size
         if self.batch_size != 1:
@@ -327,7 +339,7 @@ class SceneGenerator(nn.Module):
     def forward(self, map_feat):
         """Standard forward"""
         map_latent = self.map_enc(map_feat)
-        latent_noise = torch.randn(self.dim_latent_scene_noise)
+        latent_noise = torch.randn(self.dim_latent_scene_noise, device=self.device)
         scene_latent = torch.concat([map_latent, latent_noise], dim=0)
         scene_latent = self.scene_embedder_out(scene_latent)
         agents_feat_vec_list = self.agents_dec(scene_latent)
@@ -342,6 +354,7 @@ class SceneDiscriminator(nn.Module):
 
     def __init__(self, opt):
         super(SceneDiscriminator, self).__init__()
+        self.device = opt.device
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.dim_latent_all_agents = opt.dim_latent_all_agents
@@ -351,11 +364,13 @@ class SceneDiscriminator(nn.Module):
         self.agents_enc = PointNet(d_in=self.dim_agent_feat_vec,
                                    d_out=self.dim_latent_all_agents,
                                    d_hid=self.dim_latent_all_agents,
-                                   n_layers=3)
+                                   n_layers=3,
+                                   device=self.device)
         self.out_mlp = MLP(d_in=self.dim_latent_map + self.dim_latent_all_agents,
                            d_out=1,
                            d_hid=self.dim_latent_scene,
-                           n_layers=3)
+                           n_layers=3,
+                           device=self.device)
 
     def forward(self, map_feat, agents_feat_vecs):
         """Standard forward."""

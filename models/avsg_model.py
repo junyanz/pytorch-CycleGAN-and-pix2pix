@@ -143,6 +143,8 @@ class AvsgModel(BaseModel):
         else:  # during test time, only load G
             self.model_names = ['G']
 
+        opt.device = self.device
+
         # define networks
         self.netG = networks.define_G(opt, self.gpu_ids)
         if self.isTrain:
