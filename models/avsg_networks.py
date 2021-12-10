@@ -228,6 +228,7 @@ class DecoderUnit(nn.Module):
         self.device = opt.device
         self.dim_hid = dim_hid
         self.dim_out = dim_out
+        self.stop_flag_n_coords = 2
         self.gru = nn.GRUCell(dim_hid, dim_hid)
         self.input_mlp = MLP(d_in=dim_out + dim_hid,
                              d_out=dim_hid,
@@ -235,7 +236,7 @@ class DecoderUnit(nn.Module):
                              n_layers=3,
                              device=self.device)
         self.out_mlp = MLP(d_in=dim_hid,
-                           d_out=dim_out + 1,
+                           d_out=dim_out + self.stop_flag_n_coords,
                            d_hid=dim_hid,
                            n_layers=3,
                            device=self.device)
@@ -303,8 +304,8 @@ class AgentsDecoder(nn.Module):
                                   prev_hidden=prev_hidden,
                                   attn_scores=attn_scores,
                                   prev_agent_feat=prev_agent_feat)
-            stop_prob = torch.sigmoid(stop_score)
-            stop_flag = torch.bernoulli(stop_prob)
+            # Sample hard categorical using "Straight-through" , returns one-hot vector
+            stop_flag = F.gumbel_softmax(logits=stop_score, tau=1, hard=True)
             if i_agent > 0 and stop_flag > 0.5:
                 # Stop flag is ignored at i=0, since we want at least one agent (including the AV)  in the scene
                 break
