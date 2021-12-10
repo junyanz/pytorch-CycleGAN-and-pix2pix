@@ -201,7 +201,6 @@ class AvsgModel(BaseModel):
                                                      self.device)
         self.real_map = map_feat
         self.real_agents = agents_feat_vecs
-
     #########################################################################################
 
     def forward(self):
