@@ -15,6 +15,7 @@ You need to implement the following functions:
     <forward>: Run forward pass. This will be called by both <optimize_parameters> and <test>.
     <optimize_parameters>: Update network weights; it will be called in every training iteration.
 """
+import numpy as np
 import torch
 from .base_model import BaseModel
 from . import networks
@@ -48,6 +49,7 @@ def agents_feat_dicts_to_vecs(agent_feat_vec_coord_labels, agents_feat_dicts, de
                                            'extent_length', 'extent_width', 'speed',
                                            'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
     agents_feat_vecs = []
+    n_agents = len(agents_feat_dicts)
     for agent_dict in agents_feat_dicts:
         agent_feat_vec = torch.zeros(dim_agent_feat_vec, device=device)
         assert agent_dict['centroid'].shape == torch.Size([1, 2])
@@ -122,8 +124,10 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
             parser.add_argument('--max_points_per_poly', type=int, default=20,
                                 help='Maximal number of points per polygon element')
-            parser.add_argument('--max_num_agents', type=int, default=30,
+            parser.add_argument('--max_num_agents', type=int, default=5,
                                 help='Maximal number of agents in a scene')
+            parser.add_argument('--min_num_agents', type=int, default=2,
+                                help='Minimal number of agents in a scene')
         return parser
 
     #########################################################################################
@@ -141,6 +145,8 @@ class AvsgModel(BaseModel):
         BaseModel.__init__(self, opt, is_image_data=False)  # call the initialization method of BaseModel
         self.polygon_name_order = opt.polygon_name_order
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
+        self.max_num_agents = opt.max_num_agents
+        self.min_num_agents = opt.min_num_agents
 
         # specify the training losses you want to print out.
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
@@ -194,13 +200,19 @@ class AvsgModel(BaseModel):
             poly_elems = scene_data['map_feat'][poly_type]
             map_feat[poly_type] = [poly_elem.to(self.device) for poly_elem in poly_elems]
 
-        # Agent features - Change to vector form, Move to device
+        # Agent features -
+        #
+        agent_dists_to_ego = [np.linalg.norm(agent_dict['centroid'][0, :]) for agent_dict in scene_data['agents_feat']]
+
+        # Change to vector form, Move to device
         agents_feat = []
         agents_feat_vecs = agents_feat_dicts_to_vecs(self.agent_feat_vec_coord_labels,
                                                      scene_data['agents_feat'],
                                                      self.device)
+        agents_dists_order = np.argsort(agent_dists_to_ego)
+        n_agents_to_use = np.random.randint(low=self.min_num_agents, high=self.max_num_agents+1)
         self.real_map = map_feat
-        self.real_agents = agents_feat_vecs
+        self.real_agents = agents_feat_vecs[agents_dists_order[:n_agents_to_use]]
     #########################################################################################
 
     def forward(self):

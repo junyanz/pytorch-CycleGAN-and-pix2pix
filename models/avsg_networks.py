@@ -298,22 +298,26 @@ class AgentsDecoder(nn.Module):
         prev_hidden = scene_latent
         attn_scores = torch.ones_like(prev_hidden)
         prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
+
+        n_agents_to_use = np.random.randint(low=self.min_num_agents, high=self.max_num_agents + 1)
+
         for i_agent in range(self.max_num_agents):
             stop_score, agent_feat, next_hidden = \
                 self.decoder_unit(context_vec=scene_latent,
                                   prev_hidden=prev_hidden,
                                   attn_scores=attn_scores,
                                   prev_agent_feat=prev_agent_feat)
-            # Sample hard categorical using "Straight-through" , returns one-hot vector
-            stop_flag = F.gumbel_softmax(logits=stop_score, tau=1, hard=True)
-            if i_agent > 0 and stop_flag > 0.5:
-                # Stop flag is ignored at i=0, since we want at least one agent (including the AV)  in the scene
-                break
-            else:
                 prev_hidden = next_hidden
                 attn_scores = next_hidden
                 prev_agent_feat = agent_feat
                 agents_feat_vec_list.append(agent_feat)
+            # # Sample hard categorical using "Straight-through" , returns one-hot vector
+            # stop_flag = F.gumbel_softmax(logits=stop_score, tau=1, hard=True)
+            # if i_agent > 0 and stop_flag > 0.5:
+            #     # Stop flag is ignored at i=0, since we want at least one agent (including the AV)  in the scene
+            #     break
+            # else:
+
         return agents_feat_vec_list
 
 
