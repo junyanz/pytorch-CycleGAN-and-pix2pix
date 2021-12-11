@@ -20,61 +20,11 @@ import torch
 from .base_model import BaseModel
 from . import networks
 from collections import OrderedDict
-from visualization_utils import visualize_scene_feat
-
-
-#########################################################################################
-def agents_feat_vecs_to_dicts(agents_feat_vecs):
-    agents_feat_dicts = []
-    n_agents = agents_feat_vecs.shape[0]
-    for i_agent in range(n_agents):
-        agent_feat_vec = agents_feat_vecs[i_agent]
-        agent_feat_dict = ({'centroid': agent_feat_vec[:2],
-                            'yaw': torch.atan2(agent_feat_vec[3], agent_feat_vec[2]),
-                            'extent': agent_feat_vec[4:6],
-                            'speed': agent_feat_vec[6],
-                            'agent_label_id': torch.argmax(agent_feat_vec[7:10])})
-        for key in agent_feat_dict.keys():
-            agent_feat_dict[key] = agent_feat_dict[key].detach().cpu().numpy()
-        agents_feat_dicts.append(agent_feat_dict)
-    return agents_feat_dicts
-
-
+from avsg_visualization_utils import visualize_scene_feat
+from avsg_utils import agents_feat_vecs_to_dicts, agents_feat_dicts_to_vecs
 #########################################################################################
 
 
-def agents_feat_dicts_to_vecs(agent_feat_vec_coord_labels, agents_feat_dicts, device):
-    dim_agent_feat_vec = len(agent_feat_vec_coord_labels)
-    assert agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y', 'yaw_cos', 'yaw_sin',
-                                           'extent_length', 'extent_width', 'speed',
-                                           'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
-    agents_feat_vecs = []
-    n_agents = len(agents_feat_dicts)
-    for agent_dict in agents_feat_dicts:
-        agent_feat_vec = torch.zeros(dim_agent_feat_vec, device=device)
-        assert agent_dict['centroid'].shape == torch.Size([1, 2])
-        agent_feat_vec[0] = agent_dict['centroid'][0, 0]
-        agent_feat_vec[1] = agent_dict['centroid'][0, 1]
-        agent_feat_vec[2] = torch.cos(agent_dict['yaw'])
-        agent_feat_vec[3] = torch.sin(agent_dict['yaw'])
-        assert agent_dict['extent'].shape == torch.Size([1, 2])
-        agent_feat_vec[4] = agent_dict['extent'][0, 0]
-        agent_feat_vec[5] = agent_dict['extent'][0, 1]
-        agent_feat_vec[6] = agent_dict['speed']
-        # agent type ['CAR', 'CYCLIST', 'PEDESTRIAN'] is represented in one-hot encoding
-        agent_feat_vec[7] = agent_dict['agent_label_id'] == 0
-        agent_feat_vec[8] = agent_dict['agent_label_id'] == 1
-        agent_feat_vec[9] = agent_dict['agent_label_id'] == 2
-        assert agent_feat_vec[7:].sum() == 1
-        agents_feat_vecs.append(agent_feat_vec)
-    agents_feat_vecs = torch.stack(agents_feat_vecs)
-    return agents_feat_vecs
-
-
-#########################################################################################
-
-
-#########################################################################################
 
 class AvsgModel(BaseModel):
     @staticmethod
@@ -112,7 +62,7 @@ class AvsgModel(BaseModel):
             parser.set_defaults(lr=0.002,
                                 lr_policy='step',
                                 lr_decay_iters=10000,
-                                display_freq=100)
+                                display_freq=20)
 
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
             parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
@@ -127,7 +77,7 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
             parser.add_argument('--max_points_per_poly', type=int, default=20,
                                 help='Maximal number of points per polygon element')
-            parser.add_argument('--max_num_agents', type=int, default=5,
+            parser.add_argument('--max_num_agents', type=int, default=6,
                                 help='Maximal number of agents in a scene')
             parser.add_argument('--min_num_agents', type=int, default=2,
                                 help='Minimal number of agents in a scene')
@@ -213,16 +163,16 @@ class AvsgModel(BaseModel):
                                                      scene_data['agents_feat'],
                                                      self.device)
         agents_dists_order = np.argsort(agent_dists_to_ego)
-        n_agents_to_use = np.random.randint(low=self.min_num_agents, high=self.max_num_agents+1)
-        agents_feat_vecs = agents_feat_vecs[agents_dists_order[:n_agents_to_use]]
-        self.real_map = map_feat
+        n_agents = np.random.randint(low=self.min_num_agents, high=self.max_num_agents+1)
+        agents_feat_vecs = agents_feat_vecs[agents_dists_order[:n_agents]]
+        self.conditioning = {'map_feat': map_feat, 'n_agents': n_agents}
         self.real_agents = agents_feat_vecs
     #########################################################################################
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         # generate the output of the generator given the input map
-        self.fake_agents = self.netG(self.real_map)
+        self.fake_agents = self.netG(self.conditioning)
 
     #########################################################################################
 
@@ -233,11 +183,11 @@ class AvsgModel(BaseModel):
         # we use conditional GANs; we need to feed both input and output to the discriminator
         # stop backprop to the generator by detaching fake_B
         fake_agents_detached = self.fake_agents.detach()
-        pred_fake = self.netD(self.real_map, fake_agents_detached)
+        pred_fake = self.netD(self.conditioning, fake_agents_detached)
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
 
         # Feed real (loaded from data) agents to discriminator and calculate its prediction loss
-        pred_real = self.netD(self.real_map, self.real_agents)
+        pred_real = self.netD(self.conditioning, self.real_agents)
         self.loss_D_real = self.criterionGAN(pred_real, True)
 
         # combine loss and calculate gradients
@@ -249,12 +199,12 @@ class AvsgModel(BaseModel):
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
         #  the generator should fool the discriminator
-        pred_fake = self.netD(self.real_map, self.fake_agents)
+        pred_fake = self.netD(self.conditioning, self.fake_agents)
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
         self.loss_G = self.loss_G_GAN
         self.loss_G.backward()
         # # Second, we want G(map) = map, since the generator acts also as an encoder-decoder for the map
-        # self.loss_G_L1 = self.criterionL1(self.reconstructed_map, self.real_map) * self.opt.lambda_L1
+        # self.loss_G_L1 = self.criterionL1(self.reconstructed_map, self.conditioning) * self.opt.lambda_L1
         # combine loss and calculate gradients
         # self.loss_G = self.loss_G_GAN + self.loss_G_L1
 
@@ -284,6 +234,6 @@ class AvsgModel(BaseModel):
                 # Generate image:
                 agents_feat_vecs_ = getattr(self, name)
                 agents_feat_dicts = agents_feat_vecs_to_dicts(agents_feat_vecs_)
-                visual_ret[name] = visualize_scene_feat(agents_feat_dicts, self.real_map)
+                visual_ret[name] = visualize_scene_feat(agents_feat_dicts, self.conditioning['map_feat'])
         return visual_ret
     #########################################################################################

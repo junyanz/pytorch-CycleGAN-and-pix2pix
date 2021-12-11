@@ -292,15 +292,14 @@ class AgentsDecoder(nn.Module):
                                         dim_context=self.dim_latent_scene,
                                         dim_out=self.dim_agent_feat_vec)
 
-    def forward(self, scene_latent):
+    def forward(self, scene_latent, n_agents):
 
         prev_hidden = scene_latent
         attn_scores = torch.ones_like(prev_hidden)
         prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
 
-        n_agents_to_generate = np.random.randint(low=self.min_num_agents, high=self.max_num_agents + 1)
         agents_feat_vec_list = []
-        for i_agent in range(n_agents_to_generate):
+        for i_agent in range(n_agents):
             agent_feat, next_hidden = self.decoder_unit(
                 context_vec=scene_latent,
                 prev_hidden=prev_hidden,
@@ -342,13 +341,15 @@ class SceneGenerator(nn.Module):
         if self.batch_size != 1:
             raise NotImplementedError
 
-    def forward(self, map_feat):
+    def forward(self, conditioning):
         """Standard forward"""
+        map_feat = conditioning['map_feat']
+        n_agents = conditioning['n_agents']
         map_latent = self.map_enc(map_feat)
         latent_noise = torch.randn(self.dim_latent_scene_noise, device=self.device)
         scene_latent = torch.concat([map_latent, latent_noise], dim=0)
         scene_latent = self.scene_embedder_out(scene_latent)
-        agents_feat_vec_list = self.agents_dec(scene_latent)
+        agents_feat_vec_list = self.agents_dec(scene_latent, n_agents)
         agents_feat_vecs = torch.stack(agents_feat_vec_list)
         return agents_feat_vecs
 
@@ -378,8 +379,9 @@ class SceneDiscriminator(nn.Module):
                            n_layers=3,
                            device=self.device)
 
-    def forward(self, map_feat, agents_feat_vecs):
+    def forward(self, conditioning, agents_feat_vecs):
         """Standard forward."""
+        map_feat = conditioning['map_feat']
         map_latent = self.map_enc(map_feat)
         agents_latent = self.agents_enc(agents_feat_vecs)
         scene_latent = torch.cat([map_latent, agents_latent])

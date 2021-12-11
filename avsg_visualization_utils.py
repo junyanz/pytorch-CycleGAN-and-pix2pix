@@ -49,7 +49,7 @@ def plot_lanes(ax, left_lanes, right_lanes, facecolor='0.4', alpha=0.3, edgecolo
 ##############################################################################################
 
 
-def plot_rectangles(ax, centroids, extents, yaws, label='car', facecolor='saddlebrown', alpha=0.4, edgecolor='skyblue'):
+def plot_rectangles(ax, centroids, extents, yaws, label, facecolor, alpha=0.7, edgecolor='black'):
     n_elems = len(centroids)
     first_plt = True
     for i in range(n_elems):
@@ -96,11 +96,11 @@ def visualize_scene_feat(agents_feat, map_feat):
     n_agents = len(agents_feat)
     if n_agents > 0:
         extents = [af['extent'] for af in agents_feat]
-        plot_rectangles(ax, centroids[1:], extents[1:], yaws[1:])
-        plot_rectangles(ax, [centroids[0]], [extents[0]], [yaws[0]], label='ego', facecolor='red', edgecolor='red')
+        plot_rectangles(ax, centroids[1:], extents[1:], yaws[1:], label='non-ego', facecolor='saddlebrown')
+        plot_rectangles(ax, [centroids[0]], [extents[0]], [yaws[0]], label='ego', facecolor='red')
 
-        # ax.quiver(X[1:], Y[1:], U[1:], V[1:], units='xy', color='b', label='Non-ego', width=0.5)
-        # ax.quiver(X[0], Y[0], U[0], V[0], units='xy', color='r', label='Ego', width=0.5)
+        ax.quiver(X[1:], Y[1:], U[1:], V[1:], units='xy', color='saddlebrown', label='Non-ego', width=0.5)
+        ax.quiver(X[0], Y[0], U[0], V[0], units='xy', color='red', label='Ego', width=0.5)
 
     ax.grid()
     plt.legend()
