@@ -76,7 +76,8 @@ class Visualizer():
         self.port = opt.display_port
         self.saved = False
         self.use_wandb = opt.use_wandb
-        self.current_epoch = 0
+        self.current_fig_index = (0, 0)
+        self.plotted_inds =  []
         if self.display_id > 0:  # connect to a visdom server given <display_port> and <display_server>
             import visdom
             self.ncols = opt.display_ncols
@@ -110,7 +111,7 @@ class Visualizer():
         print('Command: %s' % cmd)
         Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
 
-    def display_current_results(self, visuals, epoch, save_result):
+    def display_current_results(self, visuals, epoch, epoch_iter, save_result):
         """Display current results on visdom; save current results to an HTML file.
 
         Parameters:
@@ -118,6 +119,9 @@ class Visualizer():
             epoch (int) - - the current epoch
             save_result (bool) - - if save the current results to an HTML file
         """
+        fig_index = (epoch, epoch_iter)
+        self.plotted_inds.append(fig_index)
+
         if self.display_id > 0 or self.use_wandb:  # show images in the browser using visdom
             ncols = self.ncols
             if ncols > 0:        # show all the images in one visdom panel
@@ -170,9 +174,9 @@ class Visualizer():
 
             if self.use_wandb:
                 columns = [key for key, _ in visuals.items()]
-                columns.insert(0,'epoch')
+                columns.insert(0, 'epoch, iter')
                 result_table = wandb.Table(columns=columns)
-                table_row = [epoch]
+                table_row = [fig_index]
                 ims_dict = {}
                 for label, image in visuals.items():
                     image_numpy = util.tensor2im(image)
@@ -180,8 +184,8 @@ class Visualizer():
                     table_row.append(wandb_image)
                     ims_dict[label] = wandb_image
                 self.wandb_run.log(ims_dict)
-                if epoch != self.current_epoch:
-                    self.current_epoch = epoch
+                if fig_index != self.current_fig_index:
+                    self.current_fig_index = fig_index
                     result_table.add_data(*table_row)
                     self.wandb_run.log({"Result": result_table})
 
@@ -191,18 +195,18 @@ class Visualizer():
             # save images to the disk
             for label, image in visuals.items():
                 image_numpy = util.tensor2im(image)
-                img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))
+                img_path = os.path.join(self.img_dir, f'e{epoch}_i{epoch_iter}_{label}.png')
                 util.save_image(image_numpy, img_path)
 
             # update website
             webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, refresh=1)
-            for n in range(epoch, 0, -1):
-                webpage.add_header('epoch [%d]' % n)
+            for ind in self.plotted_inds[::-1]:
+                webpage.add_header(f'epoch {ind[0]}, iter {ind[1]}')
                 ims, txts, links = [], [], []
 
                 for label, image_numpy in visuals.items():
                     image_numpy = util.tensor2im(image)
-                    img_path = 'epoch%.3d_%s.png' % (n, label)
+                    img_path = f'e{ind[0]}_i{ind[1]}_{label}.png'
                     ims.append(img_path)
                     txts.append(label)
                     links.append(img_path)

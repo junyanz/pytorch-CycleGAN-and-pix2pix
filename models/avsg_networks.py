@@ -298,6 +298,7 @@ class AgentsDecoder(nn.Module):
         attn_scores = torch.ones_like(prev_hidden)
         prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
 
+
         agents_feat_vec_list = []
         for i_agent in range(n_agents):
             agent_feat, next_hidden = self.decoder_unit(

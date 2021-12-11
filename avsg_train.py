@@ -60,8 +60,8 @@ if __name__ == '__main__':
             if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
                 save_result = total_iters % opt.update_html_freq == 0
                 model.compute_visuals()
-                visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
-                print(f'epoch {epoch}, total_iters {total_iters}, fig saved')
+                visualizer.display_current_results(model.get_current_visuals(), epoch, epoch_iter, save_result)
+                print(f'epoch {epoch}, epoch_iter {epoch_iter}, fig saved')
 
             if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
                 losses = model.get_current_losses()
