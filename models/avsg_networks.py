@@ -228,7 +228,6 @@ class DecoderUnit(nn.Module):
         self.device = opt.device
         self.dim_hid = dim_hid
         self.dim_out = dim_out
-        self.stop_flag_n_coords = 2
         self.gru = nn.GRUCell(dim_hid, dim_hid)
         self.input_mlp = MLP(d_in=dim_out + dim_hid,
                              d_out=dim_hid,
@@ -236,7 +235,7 @@ class DecoderUnit(nn.Module):
                              n_layers=3,
                              device=self.device)
         self.out_mlp = MLP(d_in=dim_hid,
-                           d_out=dim_out + self.stop_flag_n_coords,
+                           d_out=dim_out,
                            d_hid=dim_hid,
                            n_layers=3,
                            device=self.device)
@@ -255,8 +254,7 @@ class DecoderUnit(nn.Module):
         hidden = self.gru(gru_input.unsqueeze(0), prev_hidden.unsqueeze(0))
         hidden = hidden[0]
         output = self.out_mlp(hidden)
-        stop_score = output[0]
-        output_feat = output[1:]
+        output_feat = output
 
         # Project the generator output to the feature vectors domain:
         agent_feat = torch.cat([
@@ -269,7 +267,7 @@ class DecoderUnit(nn.Module):
             # Coordinates 7,8,9 are one-hot vector - project to 3-simplex
             F.softmax(output_feat[7:10], dim=0)
         ])
-        return stop_score, agent_feat, hidden
+        return  agent_feat, hidden
 
 
 ##############################################################################################
@@ -294,33 +292,32 @@ class AgentsDecoder(nn.Module):
                                         dim_out=self.dim_agent_feat_vec)
 
     def forward(self, scene_latent):
-        agents_feat_vec_list = []
+
         prev_hidden = scene_latent
         attn_scores = torch.ones_like(prev_hidden)
         prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
 
-        n_agents_to_use = np.random.randint(low=self.min_num_agents, high=self.max_num_agents + 1)
-
-        for i_agent in range(self.max_num_agents):
-            stop_score, agent_feat, next_hidden = \
-                self.decoder_unit(context_vec=scene_latent,
-                                  prev_hidden=prev_hidden,
-                                  attn_scores=attn_scores,
-                                  prev_agent_feat=prev_agent_feat)
-                prev_hidden = next_hidden
-                attn_scores = next_hidden
-                prev_agent_feat = agent_feat
-                agents_feat_vec_list.append(agent_feat)
-            # # Sample hard categorical using "Straight-through" , returns one-hot vector
-            # stop_flag = F.gumbel_softmax(logits=stop_score, tau=1, hard=True)
-            # if i_agent > 0 and stop_flag > 0.5:
-            #     # Stop flag is ignored at i=0, since we want at least one agent (including the AV)  in the scene
-            #     break
-            # else:
-
+        n_agents_to_generate = np.random.randint(low=self.min_num_agents, high=self.max_num_agents + 1)
+        agents_feat_vec_list = []
+        for i_agent in range(n_agents_to_generate):
+            agent_feat, next_hidden = self.decoder_unit(
+                context_vec=scene_latent,
+                prev_hidden=prev_hidden,
+                attn_scores=attn_scores,
+                prev_agent_feat=prev_agent_feat)
+            prev_hidden = next_hidden
+            attn_scores = next_hidden
+            prev_agent_feat = agent_feat
+            agents_feat_vec_list.append(agent_feat)
         return agents_feat_vec_list
 
 
+# # Sample hard categorical using "Straight-through" , returns one-hot vector
+# stop_flag = F.gumbel_softmax(logits=stop_score, tau=1, hard=True)
+# if i_agent > 0 and stop_flag > 0.5:
+#     # Stop flag is ignored at i=0, since we want at least one agent (including the AV)  in the scene
+#     break
+# else:
 #########################################################################################
 
 
