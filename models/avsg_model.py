@@ -211,8 +211,9 @@ class AvsgModel(BaseModel):
                                                      self.device)
         agents_dists_order = np.argsort(agent_dists_to_ego)
         n_agents_to_use = np.random.randint(low=self.min_num_agents, high=self.max_num_agents+1)
+        agents_feat_vecs = agents_feat_vecs[agents_dists_order[:n_agents_to_use]]
         self.real_map = map_feat
-        self.real_agents = agents_feat_vecs[agents_dists_order[:n_agents_to_use]]
+        self.real_agents = agents_feat_vecs
     #########################################################################################
 
     def forward(self):

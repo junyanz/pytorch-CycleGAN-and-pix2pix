@@ -267,7 +267,7 @@ class DecoderUnit(nn.Module):
             # Coordinates 7,8,9 are one-hot vector - project to 3-simplex
             F.softmax(output_feat[7:10], dim=0)
         ])
-        return  agent_feat, hidden
+        return agent_feat, hidden
 
 
 ##############################################################################################
@@ -287,6 +287,7 @@ class AgentsDecoder(nn.Module):
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.max_num_agents = opt.max_num_agents
+        self.min_num_agents = opt.min_num_agents
         self.decoder_unit = DecoderUnit(opt,
                                         dim_context=self.dim_latent_scene,
                                         dim_out=self.dim_agent_feat_vec)
