@@ -74,18 +74,16 @@ def plot_rectangles(ax, centroids, extents, yaws, label, facecolor, alpha=0.7, e
 
 
 def visualize_scene_feat(agents_feat, map_feat):
-    centroids = [af['centroid'] for af in agents_feat]
-    yaws = [af['yaw'] for af in agents_feat]
-    # print('agents centroids: ', centroids)
-    # print('agents yaws: ', yaws)
-    # print('agents speed: ', [af['speed'] for af in agents_feat])
+    centroids = np.stack([af['centroid'] for af in agents_feat])
+    yaws = np.stack([af['yaw'] for af in agents_feat])
+    speed = np.stack([af['speed'] for af in agents_feat])
     # print('agents types: ', [af['agent_label_id'] for af in agents_feat])
-    X = [p[0] for p in centroids]
-    Y = [p[1] for p in centroids]
-    U = [af['speed'] * np.cos(af['yaw']) for af in agents_feat]
-    V = [af['speed'] * np.sin(af['yaw']) for af in agents_feat]
-    fig, ax = plt.subplots()
+    X = centroids[:, 0]
+    Y = centroids[:, 1]
+    U = speed * np.cos(yaws)
+    V = speed * np.sin(yaws)
 
+    fig, ax = plt.subplots()
     plot_lanes(ax, map_feat['lanes_left'], map_feat['lanes_right'], facecolor='grey', alpha=0.3, edgecolor='black',
                label='Lanes')
     plot_poly_elems(ax, map_feat['lanes_mid'], facecolor='lime', alpha=0.4, edgecolor='lime', label='Lanes mid',
@@ -99,8 +97,8 @@ def visualize_scene_feat(agents_feat, map_feat):
         plot_rectangles(ax, centroids[1:], extents[1:], yaws[1:], label='non-ego', facecolor='saddlebrown')
         plot_rectangles(ax, [centroids[0]], [extents[0]], [yaws[0]], label='ego', facecolor='red')
 
-        ax.quiver(X[1:], Y[1:], U[1:], V[1:], units='xy', color='saddlebrown', label='Non-ego', width=0.5)
-        ax.quiver(X[0], Y[0], U[0], V[0], units='xy', color='red', label='Ego', width=0.5)
+        valid = speed > 1e-10
+        ax.quiver(X[valid], Y[valid], U[valid], V[valid], units='xy', color='black', width=0.5)
 
     ax.grid()
     plt.legend()
