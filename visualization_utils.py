@@ -49,7 +49,7 @@ def plot_lanes(ax, left_lanes, right_lanes, facecolor='0.4', alpha=0.3, edgecolo
 ##############################################################################################
 
 
-def plot_rectangles(ax, centroids, extents, yaws, label='car', facecolor='skyblue', alpha=0.4, edgecolor='skyblue'):
+def plot_rectangles(ax, centroids, extents, yaws, label='car', facecolor='saddlebrown', alpha=0.4, edgecolor='skyblue'):
     n_elems = len(centroids)
     first_plt = True
     for i in range(n_elems):
