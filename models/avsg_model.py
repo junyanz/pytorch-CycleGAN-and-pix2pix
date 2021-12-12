@@ -78,10 +78,12 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
             parser.add_argument('--max_points_per_poly', type=int, default=20,
                                 help='Maximal number of points per polygon element')
-            parser.add_argument('--max_num_agents', type=int, default=6,
-                                help='Maximal number of agents in a scene')
-            parser.add_argument('--min_num_agents', type=int, default=2,
-                                help='Minimal number of agents in a scene')
+
+            parser.add_argument('--num_agents', type=int, default=4,   help=' number of agents in a scene')
+            # parser.add_argument('--max_num_agents', type=int, default=6,
+            #                     help='Maximal number of agents in a scene')
+            # parser.add_argument('--min_num_agents', type=int, default=2,
+            #                     help='Minimal number of agents in a scene')
         return parser
 
     #########################################################################################
@@ -99,8 +101,10 @@ class AvsgModel(BaseModel):
         BaseModel.__init__(self, opt, is_image_data=False)  # call the initialization method of BaseModel
         self.polygon_name_order = opt.polygon_name_order
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
-        self.max_num_agents = opt.max_num_agents
-        self.min_num_agents = opt.min_num_agents
+
+        self.num_agents = opt.num_agents
+        # self.max_num_agents = opt.max_num_agents
+        # self.min_num_agents = opt.min_num_agents
 
         # specify the training losses you want to print out.
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
@@ -147,6 +151,10 @@ class AvsgModel(BaseModel):
         """
         assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
 
+        # if there are too few agents in the scene - skip it
+        if len(scene_data['agents_feat']) < self.num_agents:
+            return False
+
         # Map features - Move to device
         map_feat = dict()
         for poly_type in self.polygon_name_order:
@@ -155,19 +163,22 @@ class AvsgModel(BaseModel):
             map_feat[poly_type] = [poly_elem.to(self.device) for poly_elem in poly_elems]
 
         # Agent features -
-        #
+
         agent_dists_to_ego = [np.linalg.norm(agent_dict['centroid'][0, :]) for agent_dict in scene_data['agents_feat']]
 
         # Change to vector form, Move to device
-        agents_feat = []
         agents_feat_vecs = agents_feat_dicts_to_vecs(self.agent_feat_vec_coord_labels,
                                                      scene_data['agents_feat'],
                                                      self.device)
         agents_dists_order = np.argsort(agent_dists_to_ego)
-        n_agents = np.random.randint(low=self.min_num_agents, high=self.max_num_agents+1)
+
+        # n_agents = np.random.randint(low=self.min_num_agents, high=self.max_num_agents+1)
+        n_agents = self.num_agents
         agents_feat_vecs = agents_feat_vecs[agents_dists_order[:n_agents]]
         self.conditioning = {'map_feat': map_feat, 'n_agents': n_agents}
         self.real_agents = agents_feat_vecs
+
+        return True
     #########################################################################################
 
     def forward(self):

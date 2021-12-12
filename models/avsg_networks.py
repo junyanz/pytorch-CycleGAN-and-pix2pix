@@ -286,8 +286,9 @@ class AgentsDecoder(nn.Module):
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
-        self.max_num_agents = opt.max_num_agents
-        self.min_num_agents = opt.min_num_agents
+        # self.max_num_agents = opt.max_num_agents
+        # self.min_num_agents = opt.min_num_agents
+        self.num_agents = opt.num_agents
         self.decoder_unit = DecoderUnit(opt,
                                         dim_context=self.dim_latent_scene,
                                         dim_out=self.dim_agent_feat_vec)
