@@ -290,8 +290,6 @@ class AgentsDecoderGRU(nn.Module):
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
-        # self.max_num_agents = opt.max_num_agents
-        # self.min_num_agents = opt.min_num_agents
         self.num_agents = opt.num_agents
         self.decoder_unit = DecoderUnit(opt,
                                         dim_context=self.dim_latent_scene,
@@ -302,8 +300,6 @@ class AgentsDecoderGRU(nn.Module):
         prev_hidden = scene_latent
         attn_scores = torch.ones_like(prev_hidden)
         prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
-
-
         agents_feat_vec_list = []
         for i_agent in range(n_agents):
             agent_feat, next_hidden = self.decoder_unit(
@@ -337,27 +333,23 @@ class AgentsDecoderMLP(nn.Module):
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.num_agents = opt.num_agents
-        self.decoder_unit = DecoderUnit(opt,
-                                        dim_context=self.dim_latent_scene,
-                                        dim_out=self.dim_agent_feat_vec)
+
+        self.decoder = MLP(d_in=self.dim_latent_scene,
+                           d_out=self.dim_agent_feat_vec * self.num_agents,
+                           d_hid=self.dim_agents_decoder_hid,
+                           n_layers=4,
+                           device=self.device)
 
     def forward(self, scene_latent, n_agents):
 
-        prev_hidden = scene_latent
-        attn_scores = torch.ones_like(prev_hidden)
-        prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
-
+        assert n_agents == self.num_agents
+        out_vec = self.decoder(scene_latent)
 
         agents_feat_vec_list = []
         for i_agent in range(n_agents):
-            agent_feat, next_hidden = self.decoder_unit(
-                context_vec=scene_latent,
-                prev_hidden=prev_hidden,
-                attn_scores=attn_scores,
-                prev_agent_feat=prev_agent_feat)
-            prev_hidden = next_hidden
-            attn_scores = next_hidden
-            prev_agent_feat = agent_feat
+            output_feat = out_vec[i_agent*self.dim_agent_feat_vec:(i_agent+1)*self.dim_agent_feat_vec]
+            # Project the generator output to the feature vectors domain:
+            agent_feat = project_to_agent_feat(output_feat)
             agents_feat_vec_list.append(agent_feat)
         return agents_feat_vec_list
 
