@@ -56,6 +56,8 @@ class AvsgModel(BaseModel):
                                      'is_PEDESTRIAN',  # [9]  0 or 1
                                      ],
                             type=list)
+        parser.add_argument('--agents_decoder_model', type=str,
+                            default='GRU')  # 'GRU' | 'TransposedPointNet'
         parser.set_defaults(netG='SceneGenerator')
         if is_train:
             parser.set_defaults(gan_mode='vanilla', netD='SceneDiscriminator')

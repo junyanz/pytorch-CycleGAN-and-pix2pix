@@ -272,7 +272,7 @@ class DecoderUnit(nn.Module):
 
 ##############################################################################################
 
-class AgentsDecoder(nn.Module):
+class AgentsDecoderGRU(nn.Module):
     # based on:
     # * Show, Attend and Tell: Neural Image Caption Generation with Visual Attention  https://arxiv.org/abs/1502.03044\
     # * https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning
@@ -280,7 +280,7 @@ class AgentsDecoder(nn.Module):
     # * https://towardsdatascience.com/image-captions-with-attention-in-tensorflow-step-by-step-927dad3569fa
 
     def __init__(self, opt, device):
-        super(AgentsDecoder, self).__init__()
+        super(AgentsDecoderGRU, self).__init__()
         self.device = device
         self.dim_latent_scene = opt.dim_latent_scene
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
@@ -321,7 +321,44 @@ class AgentsDecoder(nn.Module):
 #     break
 # else:
 #########################################################################################
+##############################################################################################
 
+class AgentsDecoderTransposedPointNet(nn.Module):
+
+    def __init__(self, opt, device):
+        super(AgentsDecoderTransposedPointNet, self).__init__()
+        self.device = device
+        self.dim_latent_scene = opt.dim_latent_scene
+        self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
+        self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
+        self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
+        self.num_agents = opt.num_agents
+        self.decoder_unit = DecoderUnit(opt,
+                                        dim_context=self.dim_latent_scene,
+                                        dim_out=self.dim_agent_feat_vec)
+
+    def forward(self, scene_latent, n_agents):
+
+        prev_hidden = scene_latent
+        attn_scores = torch.ones_like(prev_hidden)
+        prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
+
+
+        agents_feat_vec_list = []
+        for i_agent in range(n_agents):
+            agent_feat, next_hidden = self.decoder_unit(
+                context_vec=scene_latent,
+                prev_hidden=prev_hidden,
+                attn_scores=attn_scores,
+                prev_agent_feat=prev_agent_feat)
+            prev_hidden = next_hidden
+            attn_scores = next_hidden
+            prev_agent_feat = agent_feat
+            agents_feat_vec_list.append(agent_feat)
+        return agents_feat_vec_list
+
+
+#########
 
 class SceneGenerator(nn.Module):
 
@@ -337,7 +374,12 @@ class SceneGenerator(nn.Module):
                                       d_hid=self.dim_latent_scene,
                                       n_layers=3,
                                       device=self.device)
-        self.agents_dec = AgentsDecoder(opt, self.device)
+        if opt.agents_decoder_model == 'GRU':
+            self.agents_dec = AgentsDecoderGRU(opt, self.device)
+        elif opt.agents_decoder_model == 'TransposedPointNet':
+            self.agents_dec = AgentsDecoderTransposedPointNet(opt, self.device)
+        else:
+            raise ValueError
         # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
         self.batch_size = opt.batch_size
         if self.batch_size != 1:
