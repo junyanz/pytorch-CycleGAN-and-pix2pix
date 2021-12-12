@@ -217,6 +217,20 @@ class MapEncoder(nn.Module):
         map_latent = self.poly_types_aggregator(poly_types_latents)
         return map_latent
 
+#########################################################################################
+def project_to_agent_feat(raw_vec):
+ # Project the generator output to the feature vectors domain:
+    agent_feat = torch.cat([
+        # Coordinates 0,1 are centroid x,y - no need to project
+        raw_vec[0:2],
+        # Coordinates 2,3 are yaw_cos, yaw_sin - project to unit circle
+        raw_vec[2:4] / LA.vector_norm(raw_vec[2:4], ord=2),
+        # Coordinates 4,5,6 are extent_length, extent_width, speed project to positive numbers
+        F.softplus(raw_vec[4:7]),
+        # Coordinates 7,8,9 are one-hot vector - project to 3-simplex
+        F.softmax(raw_vec[7:10], dim=0)
+    ])
+    return agent_feat
 
 #########################################################################################
 
@@ -253,20 +267,10 @@ class DecoderUnit(nn.Module):
         gru_input = F.relu(gru_input)
         hidden = self.gru(gru_input.unsqueeze(0), prev_hidden.unsqueeze(0))
         hidden = hidden[0]
-        output = self.out_mlp(hidden)
-        output_feat = output
+        output_feat = self.out_mlp(hidden)
 
         # Project the generator output to the feature vectors domain:
-        agent_feat = torch.cat([
-            # Coordinates 0,1 are centroid x,y - no need to project
-            output_feat[0:2],
-            # Coordinates 2,3 are yaw_cos, yaw_sin - project to unit circle
-            output_feat[2:4] / LA.vector_norm(output_feat[2:4], ord=2),
-            # Coordinates 4,5,6 are extent_length, extent_width, speed project to positive numbers
-            F.softplus(output_feat[4:7]),
-            # Coordinates 7,8,9 are one-hot vector - project to 3-simplex
-            F.softmax(output_feat[7:10], dim=0)
-        ])
+        agent_feat = project_to_agent_feat(output_feat)
         return agent_feat, hidden
 
 
@@ -323,10 +327,10 @@ class AgentsDecoderGRU(nn.Module):
 #########################################################################################
 ##############################################################################################
 
-class AgentsDecoderTransposedPointNet(nn.Module):
+class AgentsDecoderMLP(nn.Module):
 
     def __init__(self, opt, device):
-        super(AgentsDecoderTransposedPointNet, self).__init__()
+        super(AgentsDecoderMLP, self).__init__()
         self.device = device
         self.dim_latent_scene = opt.dim_latent_scene
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
@@ -376,8 +380,8 @@ class SceneGenerator(nn.Module):
                                       device=self.device)
         if opt.agents_decoder_model == 'GRU':
             self.agents_dec = AgentsDecoderGRU(opt, self.device)
-        elif opt.agents_decoder_model == 'TransposedPointNet':
-            self.agents_dec = AgentsDecoderTransposedPointNet(opt, self.device)
+        elif opt.agents_decoder_model == 'MLP':
+            self.agents_dec = AgentsDecoderMLP(opt, self.device)
         else:
             raise ValueError
         # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
