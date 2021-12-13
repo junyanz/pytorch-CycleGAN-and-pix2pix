@@ -250,7 +250,7 @@ class AvsgModel(BaseModel):
             real_map = conditioning['map_feat']
             real_agents_feat_dicts = agents_feat_vecs_to_dicts(real_agents)
             img = visualize_scene_feat(real_agents_feat_dicts, real_map)
-            pred_fake = torch.sigmoid(self.netD(conditioning, real_agents_feat_dicts)).item()
+            pred_fake = torch.sigmoid(self.netD(conditioning, real_agents)).item()
             visuals_dict[f'map_{map_id}_real_fake_{int(100*pred_fake)}'] = img
             for i_generator_run in range(n_generator_runs):
                 fake_agents_feat_vecs = self.netG(conditioning)
