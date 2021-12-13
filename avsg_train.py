@@ -49,39 +49,52 @@ if __name__ == '__main__':
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
         for i, data in enumerate(dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
+            total_iters += 1
+            epoch_iter += 1
+
             if total_iters % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
 
-            is_valid = model.set_input(data)         # unpack data from dataset and apply preprocessing
+            # unpack data from dataset and apply preprocessing:
+            is_valid = model.set_input(data)
             if not is_valid:
                 # if the data sample is not valid to use
                 continue
-            total_iters += opt.batch_size
-            epoch_iter += opt.batch_size
-            model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
-            model.update_learning_rate()  # update learning rates *after* first step (https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate)
-            if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
+
+            # calculate loss functions, get gradients, update network weights:
+            model.optimize_parameters()
+
+            # update learning rates (must be after first model update step):
+            model.update_learning_rate()
+
+            # display images on visdom and save images to an HTML file:
+            if total_iters == 1 or total_iters % opt.display_freq == 0:
                 save_result = total_iters % opt.update_html_freq == 0
-                model.compute_visuals()
-                visualizer.display_current_results(model.get_current_visuals(), epoch, epoch_iter, save_result)
+                visuals_dict = model.get_visual_samples(dataset)
+                visualizer.display_current_results(visuals_dict, epoch, epoch_iter, save_result)
                 print(f'epoch {epoch}, epoch_iter {epoch_iter}, fig saved')
 
-            if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
+            # print training losses and save logging information to the disk:
+            if total_iters % opt.print_freq == 0:
                 losses = model.get_current_losses()
                 t_comp = (time.time() - iter_start_time) / opt.batch_size
                 visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
                 if opt.display_id > 0:
                     visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, losses)
 
-            if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
+            # cache our latest model every <save_latest_freq> iterations:
+            if total_iters % opt.save_latest_freq == 0:
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
                 save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
                 model.save_networks(save_suffix)
 
             iter_data_time = time.time()
-        if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs
+
+        # cache our model every <save_epoch_freq> epochs:
+        if epoch % opt.save_epoch_freq == 0:
             print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
             model.save_networks('latest')
             model.save_networks(epoch)
+
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))

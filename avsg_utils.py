@@ -1,4 +1,4 @@
-
+import numpy as np
 import torch
 #########################################################################################
 
@@ -46,3 +46,32 @@ def agents_feat_dicts_to_vecs(agent_feat_vec_coord_labels, agents_feat_dicts, de
     agents_feat_vecs = torch.stack(agents_feat_vecs)
     return agents_feat_vecs
 #########################################################################################
+
+
+def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, polygon_name_order, device):
+    # if there are too few agents in the scene - skip it
+    if len(scene_data['agents_feat']) < num_agents:
+        return False, None, None
+
+    # Map features - Move to device
+    map_feat = dict()
+    for poly_type in polygon_name_order:
+        map_feat[poly_type] = []
+        poly_elems = scene_data['map_feat'][poly_type]
+        map_feat[poly_type] = [poly_elem.to(device) for poly_elem in poly_elems]
+
+    # Agent features -
+    agent_dists_to_ego = [np.linalg.norm(agent_dict['centroid'][0, :]) for agent_dict in scene_data['agents_feat']]
+
+    # Change to vector form, Move to device
+    agents_feat_vecs = agents_feat_dicts_to_vecs(agent_feat_vec_coord_labels,
+                                                 scene_data['agents_feat'],
+                                                 device)
+    agents_dists_order = np.argsort(agent_dists_to_ego)
+
+    # n_agents = np.random.randint(low=self.min_num_agents, high=self.max_num_agents+1)
+    n_agents = num_agents
+    agents_feat_vecs = agents_feat_vecs[agents_dists_order[:n_agents]]
+    conditioning = {'map_feat': map_feat, 'n_agents': n_agents}
+    real_agents = agents_feat_vecs
+    return True, real_agents, conditioning

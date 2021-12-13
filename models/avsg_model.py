@@ -21,7 +21,7 @@ from .base_model import BaseModel
 from . import networks
 from collections import OrderedDict
 from avsg_visualization_utils import visualize_scene_feat
-from avsg_utils import agents_feat_vecs_to_dicts, agents_feat_dicts_to_vecs
+from avsg_utils import agents_feat_vecs_to_dicts, agents_feat_dicts_to_vecs,pre_process_scene_data
 #########################################################################################
 
 
@@ -123,8 +123,8 @@ class AvsgModel(BaseModel):
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
         self.loss_names = ['G_GAN', 'D_real', 'D_fake']  # = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
 
-        # specify the images you want to save and display. The program will call base_model.get_current_visuals to save and display these images.
-        self.visual_names = ['fake_agents', 'real_agents']
+        # # specify the images you want to save and display. The program will call base_model.get_current_visuals to save and display these images.
+        # self.visual_names = ['fake_agents', 'real_agents']
 
         # specify the models you want to save to the disk.
         # The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
@@ -164,32 +164,15 @@ class AvsgModel(BaseModel):
         """
         assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
 
+        is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.num_agents,
+                                                                     self.agent_feat_vec_coord_labels,
+                                                                     self.polygon_name_order, self.device)
         # if there are too few agents in the scene - skip it
-        if len(scene_data['agents_feat']) < self.num_agents:
+        if not is_valid:
             return False
 
-        # Map features - Move to device
-        map_feat = dict()
-        for poly_type in self.polygon_name_order:
-            map_feat[poly_type] = []
-            poly_elems = scene_data['map_feat'][poly_type]
-            map_feat[poly_type] = [poly_elem.to(self.device) for poly_elem in poly_elems]
-
-        # Agent features -
-
-        agent_dists_to_ego = [np.linalg.norm(agent_dict['centroid'][0, :]) for agent_dict in scene_data['agents_feat']]
-
-        # Change to vector form, Move to device
-        agents_feat_vecs = agents_feat_dicts_to_vecs(self.agent_feat_vec_coord_labels,
-                                                     scene_data['agents_feat'],
-                                                     self.device)
-        agents_dists_order = np.argsort(agent_dists_to_ego)
-
-        # n_agents = np.random.randint(low=self.min_num_agents, high=self.max_num_agents+1)
-        n_agents = self.num_agents
-        agents_feat_vecs = agents_feat_vecs[agents_dists_order[:n_agents]]
-        self.conditioning = {'map_feat': map_feat, 'n_agents': n_agents}
-        self.real_agents = agents_feat_vecs
+        self.conditioning = conditioning
+        self.real_agents = real_agents
 
         return True
     #########################################################################################
@@ -251,14 +234,44 @@ class AvsgModel(BaseModel):
 
     #########################################################################################
 
-    def get_current_visuals(self):
+    def get_visual_samples(self, dataset):
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
-        visual_ret = OrderedDict()
-        for name in self.visual_names:
-            if isinstance(name, str):
-                # Generate image:
-                agents_feat_vecs_ = getattr(self, name)
-                agents_feat_dicts = agents_feat_vecs_to_dicts(agents_feat_vecs_)
-                visual_ret[name] = visualize_scene_feat(agents_feat_dicts, self.conditioning['map_feat'])
-        return visual_ret
+        visuals_dict = OrderedDict()
+        n_maps = 3
+        n_generator_runs = 6
+        map_id = 1
+
+        for scene_data in dataset:
+            is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.num_agents,
+                                                                         self.agent_feat_vec_coord_labels,
+                                                                         self.polygon_name_order, self.device)
+            if not is_valid:
+                continue
+            real_map = conditioning['map_feat']
+            real_agents_feat_dicts = agents_feat_vecs_to_dicts(real_agents)
+            img = visualize_scene_feat(real_agents_feat_dicts, real_map)
+            visuals_dict[f'map_{map_id}_real_agents'] = img
+            for i_generator_run in range(n_generator_runs):
+                fake_agents_feat_vecs = self.netG(conditioning)
+                fake_agents_feat_dicts = agents_feat_vecs_to_dicts(fake_agents_feat_vecs)
+                img = visualize_scene_feat(fake_agents_feat_dicts, real_map)
+                pred_fake = self.netD(conditioning, fake_agents_feat_vecs)
+                visuals_dict[f'map_{map_id}_fake_agents_#{i_generator_run+1}, pred_fake {pred_fake}'] = img
+            map_id += 1
+            if map_id > n_maps:
+                break
+        return visuals_dict
     #########################################################################################
+
+    #
+    # def get_current_visuals(self):
+    #     """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
+    #     visual_ret = OrderedDict()
+    #     for name in self.visual_names:
+    #         if isinstance(name, str):
+    #             # Generate image:
+    #             agents_feat_vecs_ = getattr(self, name)
+    #             agents_feat_dicts = agents_feat_vecs_to_dicts(agents_feat_vecs_)
+    #             visual_ret[name] = visualize_scene_feat(agents_feat_dicts, self.conditioning['map_feat'])
+    #     return visual_ret
+    # #########################################################################################

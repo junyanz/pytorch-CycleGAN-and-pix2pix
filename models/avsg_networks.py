@@ -312,11 +312,6 @@ class AgentsDecoderGRU(nn.Module):
                 prev_hidden=prev_hidden,
                 prev_agent_feat=prev_agent_feat)
             prev_hidden = next_hidden
-
-
-            attn_scores = next_hidden
-
-
             prev_agent_feat = agent_feat
             agents_feat_vec_list.append(agent_feat)
         return agents_feat_vec_list
