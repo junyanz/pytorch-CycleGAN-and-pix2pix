@@ -388,7 +388,8 @@ class SceneGenerator(nn.Module):
         map_feat = conditioning['map_feat']
         n_agents = conditioning['n_agents']
         map_latent = self.map_enc(map_feat)
-        latent_noise = torch.randn(self.dim_latent_scene_noise, device=self.device)
+        latent_noise_std = torch.std(map_latent)
+        latent_noise = torch.randn(self.dim_latent_scene_noise, device=self.device) * latent_noise_std
         scene_latent = torch.concat([map_latent, latent_noise], dim=0)
         scene_latent = self.scene_embedder_out(scene_latent)
         agents_feat_vec_list = self.agents_dec(scene_latent, n_agents)
