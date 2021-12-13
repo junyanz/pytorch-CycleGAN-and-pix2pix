@@ -71,7 +71,7 @@ if __name__ == '__main__':
             if total_iters == 1 or total_iters % opt.display_freq == 0:
                 save_result = total_iters % opt.update_html_freq == 0
                 visuals_dict = model.get_visual_samples(dataset)
-                visualizer.display_current_results(visuals_dict, epoch, epoch_iter, save_result)
+                visualizer.display_current_results(visuals_dict, epoch, epoch_iter, save_result, file_type='jpg')
                 print(f'epoch {epoch}, epoch_iter {epoch_iter}, fig saved')
 
             # print training losses and save logging information to the disk:

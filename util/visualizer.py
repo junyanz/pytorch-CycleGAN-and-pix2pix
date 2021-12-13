@@ -18,7 +18,7 @@ else:
     VisdomExceptionBase = ConnectionError
 
 
-def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256, use_wandb=False):
+def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256, use_wandb=False, file_type='png'):
     """Save images to the disk.
 
     Parameters:
@@ -39,7 +39,7 @@ def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256, use_w
     ims_dict = {}
     for label, im_data in visuals.items():
         im = util.tensor2im(im_data)
-        image_name = '%s_%s.png' % (name, label)
+        image_name = f'{name}_{label}.{file_type}'
         save_path = os.path.join(image_dir, image_name)
         util.save_image(im, save_path, aspect_ratio=aspect_ratio)
         ims.append(image_name)
@@ -111,7 +111,7 @@ class Visualizer():
         print('Command: %s' % cmd)
         Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
 
-    def display_current_results(self, visuals, epoch, epoch_iter, save_result):
+    def display_current_results(self, visuals, epoch, epoch_iter, save_result, file_type='png'):
         """Display current results on visdom; save current results to an HTML file.
 
         Parameters:
@@ -195,7 +195,7 @@ class Visualizer():
             # save images to the disk
             for label, image in visuals.items():
                 image_numpy = util.tensor2im(image)
-                img_path = os.path.join(self.img_dir, f'e{epoch}_i{epoch_iter}_{label}.png')
+                img_path = os.path.join(self.img_dir, f'e{epoch}_i{epoch_iter}_{label}.{file_type}')
                 util.save_image(image_numpy, img_path)
 
             # update website
@@ -206,7 +206,7 @@ class Visualizer():
 
                 for label, image_numpy in visuals.items():
                     image_numpy = util.tensor2im(image)
-                    img_path = f'e{ind[0]}_i{ind[1]}_{label}.png'
+                    img_path = f'e{ind[0]}_i{ind[1]}_{label}.{file_type}'
                     ims.append(img_path)
                     txts.append(label)
                     links.append(img_path)
