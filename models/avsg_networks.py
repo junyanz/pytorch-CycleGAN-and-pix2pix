@@ -248,12 +248,12 @@ class DecoderUnit(nn.Module):
         self.input_mlp = MLP(d_in=dim_out + dim_hid,
                              d_out=dim_hid,
                              d_hid=dim_hid,
-                             n_layers=3,
+                             n_layers=opt.gru_in_layers,
                              device=self.device)
         self.out_mlp = MLP(d_in=dim_hid,
                            d_out=dim_out,
                            d_hid=dim_hid,
-                           n_layers=3,
+                           n_layers=opt.gru_out_layers,
                            device=self.device)
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         assert self.agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y', 'yaw_cos', 'yaw_sin',
