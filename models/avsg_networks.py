@@ -217,9 +217,10 @@ class MapEncoder(nn.Module):
         map_latent = self.poly_types_aggregator(poly_types_latents)
         return map_latent
 
+
 #########################################################################################
 def project_to_agent_feat(raw_vec):
- # Project the generator output to the feature vectors domain:
+    # Project the generator output to the feature vectors domain:
     agent_feat = torch.cat([
         # Coordinates 0,1 are centroid x,y - no need to project
         raw_vec[0:2],
@@ -231,6 +232,7 @@ def project_to_agent_feat(raw_vec):
         F.softmax(raw_vec[7:10], dim=0)
     ])
     return agent_feat
+
 
 #########################################################################################
 
@@ -296,7 +298,6 @@ class AgentsDecoderGRU(nn.Module):
                                         dim_out=self.dim_agent_feat_vec)
 
     def forward(self, scene_latent, n_agents):
-
         prev_hidden = scene_latent
         attn_scores = torch.ones_like(prev_hidden)
         prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
@@ -341,13 +342,12 @@ class AgentsDecoderMLP(nn.Module):
                            device=self.device)
 
     def forward(self, scene_latent, n_agents):
-
         assert n_agents == self.num_agents
         out_vec = self.decoder(scene_latent)
 
         agents_feat_vec_list = []
         for i_agent in range(n_agents):
-            output_feat = out_vec[i_agent*self.dim_agent_feat_vec:(i_agent+1)*self.dim_agent_feat_vec]
+            output_feat = out_vec[i_agent * self.dim_agent_feat_vec:(i_agent + 1) * self.dim_agent_feat_vec]
             # Project the generator output to the feature vectors domain:
             agent_feat = project_to_agent_feat(output_feat)
             agents_feat_vec_list.append(agent_feat)

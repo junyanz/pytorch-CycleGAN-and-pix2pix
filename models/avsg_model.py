@@ -57,7 +57,7 @@ class AvsgModel(BaseModel):
                                      ],
                             type=list)
         parser.add_argument('--agents_decoder_model', type=str,
-                            default='MLP')  # 'GRU' | 'MLP'
+                            default='GRU')  # 'GRU' | 'MLP'
         parser.set_defaults(netG='SceneGenerator')
         if is_train:
             parser.set_defaults(gan_mode='vanilla', netD='SceneDiscriminator')
