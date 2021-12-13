@@ -77,13 +77,19 @@ class AvsgModel(BaseModel):
             parser.add_argument('--dim_latent_polygon_elem', type=int, default=64, help='')
             parser.add_argument('--dim_latent_polygon_type', type=int, default=128, help='')
             parser.add_argument('--kernel_size_conv_polygon', type=int, default=5, help='')
-            parser.add_argument('--n_conv_layers_polygon', type=int, default=5, help='')
-            parser.add_argument('--n_point_net_layers', type=int, default=5, help='PointNet layers number')
+
             parser.add_argument('--max_points_per_poly', type=int, default=20,
                                 help='Maximal number of points per polygon element')
 
-            parser.add_argument('--gru_in_layers', type=int, default=5, help='')
-            parser.add_argument('--gru_out_layers', type=int, default=5, help='')
+            parser.add_argument('--n_conv_layers_polygon', type=int, default=3, help='')
+            parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
+            parser.add_argument('--gru_in_layers', type=int, default=3, help='')
+            parser.add_argument('--gru_out_layers', type=int, default=3, help='')
+            parser.add_argument('--n_discr_out_mlp_layers', type=int, default=3, help='')
+            parser.add_argument('--n_discr_pointnet_layers', type=int, default=3, help='')
+            parser.add_argument('--n_layers_poly_types_aggregator', type=int, default=3, help='')
+            parser.add_argument('--n_layers_sets_aggregator', type=int, default=3, help='')
+            parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
 
             parser.add_argument('--num_agents', type=int, default=4,   help=' number of agents in a scene')
             # parser.add_argument('--max_num_agents', type=int, default=6,

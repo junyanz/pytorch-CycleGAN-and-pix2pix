@@ -168,7 +168,6 @@ class MapEncoder(nn.Module):
         self.closed_polygon_types = opt.closed_polygon_types
         self.dim_latent_polygon_elem = opt.dim_latent_polygon_elem
         n_polygon_types = len(opt.polygon_name_order)
-        self.n_point_net_layers = 3
         self.dim_latent_polygon_type = opt.dim_latent_polygon_type
         self.dim_latent_map = opt.dim_latent_map
         self.poly_encoder = nn.ModuleDict()
@@ -183,12 +182,12 @@ class MapEncoder(nn.Module):
             self.sets_aggregators[poly_type] = PointNet(d_in=self.dim_latent_polygon_elem,
                                                         d_out=self.dim_latent_polygon_type,
                                                         d_hid=self.dim_latent_polygon_type,
-                                                        n_layers=self.n_point_net_layers,
+                                                        n_layers=opt.n_layers_sets_aggregator,
                                                         device=self.device)
         self.poly_types_aggregator = MLP(d_in=self.dim_latent_polygon_type * n_polygon_types,
                                          d_out=self.dim_latent_map,
                                          d_hid=self.dim_latent_map,
-                                         n_layers=3,
+                                         n_layers=opt.n_layers_poly_types_aggregator,
                                          device=self.device)
 
     def forward(self, map_feat):
@@ -368,7 +367,7 @@ class SceneGenerator(nn.Module):
         self.scene_embedder_out = MLP(d_in=self.dim_latent_scene_noise + self.dim_latent_map,
                                       d_out=self.dim_latent_scene,
                                       d_hid=self.dim_latent_scene,
-                                      n_layers=3,
+                                      n_layers=opt.n_layers_scene_embedder_out,
                                       device=self.device)
         if opt.agents_decoder_model == 'GRU':
             self.agents_dec = AgentsDecoderGRU(opt, self.device)
@@ -411,12 +410,12 @@ class SceneDiscriminator(nn.Module):
         self.agents_enc = PointNet(d_in=self.dim_agent_feat_vec,
                                    d_out=self.dim_latent_all_agents,
                                    d_hid=self.dim_latent_all_agents,
-                                   n_layers=3,
+                                   n_layers=opt.n_discr_pointnet_layers,
                                    device=self.device)
         self.out_mlp = MLP(d_in=self.dim_latent_map + self.dim_latent_all_agents,
                            d_out=1,
                            d_hid=self.dim_latent_scene,
-                           n_layers=3,
+                           n_layers=opt.n_discr_out_mlp_layers,
                            device=self.device)
 
     def forward(self, conditioning, agents_feat_vecs):
