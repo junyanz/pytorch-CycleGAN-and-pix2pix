@@ -254,12 +254,18 @@ class DecoderUnit(nn.Module):
                            d_hid=dim_hid,
                            n_layers=opt.gru_out_layers,
                            device=self.device)
+        self.attn_mlp = MLP(d_in=dim_hid,
+                           d_out=dim_hid,
+                           d_hid=dim_hid,
+                           n_layers=opt.gru_attn_layers,
+                           device=self.device)
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         assert self.agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y', 'yaw_cos', 'yaw_sin',
                                                     'extent_length', 'extent_width', 'speed',
                                                     'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
 
-    def forward(self, context_vec, prev_hidden, attn_scores, prev_agent_feat):
+    def forward(self, context_vec, prev_hidden, prev_agent_feat):
+        attn_scores = self.attn_mlp(prev_hidden)
         # the input layer takes in the attention-applied context concatenated with the previous out features
         attn_weights = F.softmax(attn_scores, dim=0)
         attn_applied = attn_weights * context_vec
@@ -297,18 +303,20 @@ class AgentsDecoderGRU(nn.Module):
                                         dim_out=self.dim_agent_feat_vec)
 
     def forward(self, scene_latent, n_agents):
-        prev_hidden = scene_latent
-        attn_scores = torch.ones_like(prev_hidden)
+        prev_hidden = torch.ones(self.dim_latent_scene, device=self.device)
         prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
         agents_feat_vec_list = []
         for i_agent in range(n_agents):
             agent_feat, next_hidden = self.decoder_unit(
                 context_vec=scene_latent,
                 prev_hidden=prev_hidden,
-                attn_scores=attn_scores,
                 prev_agent_feat=prev_agent_feat)
             prev_hidden = next_hidden
+
+
             attn_scores = next_hidden
+
+
             prev_agent_feat = agent_feat
             agents_feat_vec_list.append(agent_feat)
         return agents_feat_vec_list

@@ -85,6 +85,7 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
             parser.add_argument('--gru_in_layers', type=int, default=3, help='')
             parser.add_argument('--gru_out_layers', type=int, default=3, help='')
+            parser.add_argument('--gru_attn_layers', type=int, default=3, help='')
             parser.add_argument('--n_discr_out_mlp_layers', type=int, default=3, help='')
             parser.add_argument('--n_discr_pointnet_layers', type=int, default=3, help='')
             parser.add_argument('--n_layers_poly_types_aggregator', type=int, default=3, help='')
