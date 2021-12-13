@@ -303,7 +303,7 @@ class AgentsDecoderGRU(nn.Module):
                                         dim_out=self.dim_agent_feat_vec)
 
     def forward(self, scene_latent, n_agents):
-        prev_hidden = torch.ones(self.dim_latent_scene, device=self.device)
+        prev_hidden = scene_latent
         prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
         agents_feat_vec_list = []
         for i_agent in range(n_agents):

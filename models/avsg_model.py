@@ -65,8 +65,8 @@ class AvsgModel(BaseModel):
                                 lr=0.002,
                                 lr_policy='step',
                                 lr_decay_iters=10000,
-                                display_freq=2000,
-                                update_html_freq=2000)
+                                display_freq=200,
+                                update_html_freq=200)
 
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
             parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
