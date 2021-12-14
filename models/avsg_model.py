@@ -63,6 +63,7 @@ class AvsgModel(BaseModel):
             parser.set_defaults(gan_mode='vanilla', netD='SceneDiscriminator')
             parser.set_defaults(n_epochs=10000,
                                 lr=0.002,
+                                gan_mode='wgan',
                                 lr_policy='step',
                                 lr_decay_iters=10000,
                                 display_freq=200,
