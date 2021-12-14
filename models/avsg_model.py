@@ -25,7 +25,6 @@ from avsg_utils import agents_feat_vecs_to_dicts, agents_feat_dicts_to_vecs,pre_
 #########################################################################################
 
 
-
 class AvsgModel(BaseModel):
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
@@ -96,10 +95,7 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
 
             parser.add_argument('--num_agents', type=int, default=4,   help=' number of agents in a scene')
-            # parser.add_argument('--max_num_agents', type=int, default=6,
-            #                     help='Maximal number of agents in a scene')
-            # parser.add_argument('--min_num_agents', type=int, default=2,
-            #                     help='Minimal number of agents in a scene')
+
         return parser
 
     #########################################################################################
@@ -119,15 +115,10 @@ class AvsgModel(BaseModel):
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
 
         self.num_agents = opt.num_agents
-        # self.max_num_agents = opt.max_num_agents
-        # self.min_num_agents = opt.min_num_agents
 
         # specify the training losses you want to print out.
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
-
-        # # specify the images you want to save and display. The program will call base_model.get_current_visuals to save and display these images.
-        # self.visual_names = ['fake_agents', 'real_agents']
 
         # specify the models you want to save to the disk.
         # The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
