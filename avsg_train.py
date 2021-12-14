@@ -1,7 +1,7 @@
 """General-purpose training script for image-to-image translation.
 
 * To run training:
-$ python -m avsg_train.py
+$ python -m avsg_train
  --dataset_mode avsg  --model avsg --dataroot datasets/avsg_data/l5kit_sample.pkl
 
 * Replace l5kit_sample.pkl with l5kit_train.pkl or l5kit_train_full.pkl for larger datasets

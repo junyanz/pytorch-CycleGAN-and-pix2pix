@@ -65,7 +65,8 @@ class AvsgModel(BaseModel):
                                 lr_policy='step',
                                 lr_decay_iters=1000,
                                 display_freq=200,
-                                update_html_freq=200)
+                                update_html_freq=200,
+                                display_id=0)
 
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='GRU')  # 'GRU' | 'MLP'
