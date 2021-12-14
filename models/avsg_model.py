@@ -56,18 +56,20 @@ class AvsgModel(BaseModel):
                                      'is_PEDESTRIAN',  # [9]  0 or 1
                                      ],
                             type=list)
-        parser.add_argument('--agents_decoder_model', type=str,
-                            default='GRU')  # 'GRU' | 'MLP'
-        parser.set_defaults(netG='SceneGenerator')
+
         if is_train:
-            parser.set_defaults(gan_mode='vanilla', netD='SceneDiscriminator')
-            parser.set_defaults(n_epochs=10000,
+            parser.set_defaults(gan_mode='lsgan',      # 'the type of GAN objective. [vanilla| lsgan | wgangp]. vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
+                                netD='SceneDiscriminator',
+                                netG='SceneGenerator',
+                                n_epochs=10000,
                                 lr=0.002,
-                                gan_mode='vanilla', # 'the type of GAN objective. [vanilla| lsgan | wgangp]. vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
                                 lr_policy='step',
-                                lr_decay_iters=10000,
+                                lr_decay_iters=1000,
                                 display_freq=200,
                                 update_html_freq=200)
+
+            parser.add_argument('--agents_decoder_model', type=str,
+                                default='GRU')  # 'GRU' | 'MLP'
 
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
             parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
