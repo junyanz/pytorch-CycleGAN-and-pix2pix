@@ -63,7 +63,7 @@ class AvsgModel(BaseModel):
             parser.set_defaults(gan_mode='vanilla', netD='SceneDiscriminator')
             parser.set_defaults(n_epochs=10000,
                                 lr=0.002,
-                                gan_mode='wgangp',
+                                gan_mode='vanilla', # 'the type of GAN objective. [vanilla| lsgan | wgangp]. vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
                                 lr_policy='step',
                                 lr_decay_iters=10000,
                                 display_freq=200,
