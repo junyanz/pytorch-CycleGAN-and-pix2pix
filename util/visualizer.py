@@ -67,6 +67,7 @@ class Visualizer():
         Step 3: create an HTML object for saveing HTML filters
         Step 4: create a logging file to store training losses
         """
+
         self.opt = opt  # cache the option
         self.display_id = opt.display_id
         self.use_html = opt.isTrain and not opt.no_html
@@ -75,7 +76,6 @@ class Visualizer():
         self.port = opt.display_port
         self.saved = False
         self.use_wandb = opt.use_wandb
-        self.wandb_table = None
         self.current_fig_index = (0, 0)
         self.plotted_inds = []
         self.ncols = opt.display_ncols
@@ -112,7 +112,7 @@ class Visualizer():
         print('Command: %s' % cmd)
         Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
 
-    def display_current_results(self, visuals, epoch, epoch_iter, save_result, file_type='png', wandb_rows_data=[]):
+    def display_current_results(self, visuals, epoch, epoch_iter, save_result, file_type='png', wandb_logs=None):
         """Display current results on visdom; save current results to an HTML file.
 
         Parameters:
@@ -180,13 +180,10 @@ class Visualizer():
         # ==========================================================================
 
         if self.use_wandb:
-            if not self.wandb_table:
-                self.wandb_table = wandb.Table(columns=list(wandb_rows_data[0].keys()))
-            for row_data in wandb_rows_data:
-                self.wandb_table.add_data(*list(row_data.values()))
             if fig_index != self.current_fig_index:
-                self.wandb_run.log({"Result": self.wandb_table})
                 self.current_fig_index = fig_index
+                for log_label, log_data in wandb_logs.items():
+                    self.wandb_run.log({log_label: log_data})
 
         # ==========================================================================
 

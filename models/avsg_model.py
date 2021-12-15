@@ -247,9 +247,10 @@ class AvsgModel(BaseModel):
         n_generator_runs = opt.vis_n_generator_runs
         
         map_id = 1
-        wandb_rows_data = []
+        wandb_logs = dict()
 
         for scene_data in dataset:
+            log_label = f"Epoch {epoch}, iteration {epoch_iter}, Map #{map_id}"
             is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.num_agents,
                                                                          self.agent_feat_vec_coord_labels,
                                                                          self.polygon_name_order, self.device)
@@ -260,26 +261,22 @@ class AvsgModel(BaseModel):
             img = visualize_scene_feat(real_agents_feat_dicts, real_map)
             pred_fake = torch.sigmoid(self.netD(conditioning, real_agents)).item()
             visuals_dict[f'map_{map_id}_real_fake_{int(100*pred_fake)}'] = img
-
             if use_wandb:
-                wandb_rows_data.append({'epoch': epoch, 'epoch_iter': epoch_iter, 'map_id': map_id,
-                                        'real_agents': wandb.Image(img),
-                                        'D_fake(real)': f'{int(100 * pred_fake)}%'})
-
+                wandb_logs[log_label] = [wandb.Image(img, caption=f'real_agents, D_fake={pred_fake:.2}')]
 
             for i_generator_run in range(n_generator_runs):
                 fake_agents_feat_vecs = self.netG(conditioning)
                 fake_agents_feat_dicts = agents_feat_vecs_to_dicts(fake_agents_feat_vecs)
                 img = visualize_scene_feat(fake_agents_feat_dicts, real_map)
                 pred_fake = torch.sigmoid(self.netD(conditioning, fake_agents_feat_vecs)).item()
-                visuals_dict[f'map_{map_id}_gen_{i_generator_run+1}_PredFake={int(100*pred_fake)}'] = img
+                visuals_dict[f'map_{map_id}_gen_{i_generator_run+1}_D_fake={pred_fake:.2}'] = img
                 if use_wandb:
-                    wandb_rows_data[-1][f'gen_agents_#{i_generator_run+1}'] = wandb.Image(img)
-                    wandb_rows_data[-1][f'D_fake(gen#{i_generator_run+1})'] = f'{int(100 * pred_fake)}%'
+                    wandb_logs[log_label].append(
+                        wandb.Image(img, caption=f'gen_agents_#{i_generator_run+1}, D_fake={pred_fake:.2}'))
             map_id += 1
             if map_id > n_maps:
                 break
 
-        return visuals_dict, wandb_rows_data
+        return visuals_dict, wandb_logs
     #########################################################################################
 
