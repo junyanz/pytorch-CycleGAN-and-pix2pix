@@ -69,6 +69,7 @@ class AvsgModel(BaseModel):
                                 update_html_freq=200,
                                 display_id=0)
 
+
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='GRU')  # 'GRU' | 'MLP'
 
@@ -96,6 +97,10 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_layers_sets_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
 
+
+            parser.add_argument('--vis_n_maps', type=int, default=3, help='')
+            parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
+    
             parser.add_argument('--num_agents', type=int, default=4,   help=' number of agents in a scene')
 
         return parser
@@ -232,12 +237,15 @@ class AvsgModel(BaseModel):
 
     #########################################################################################
 
-    def get_visual_samples(self, dataset, use_wandb, epoch, epoch_iter):
+    def get_visual_samples(self, dataset, opt, epoch, epoch_iter):
 
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
         visuals_dict = {}
-        n_maps = 2
-        n_generator_runs = 3
+        use_wandb = opt.use_wandb
+        
+        n_maps = opt.vis_n_maps
+        n_generator_runs = opt.vis_n_generator_runs
+        
         map_id = 1
         wandb_rows_data = []
 
