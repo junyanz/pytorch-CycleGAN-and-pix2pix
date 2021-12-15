@@ -22,8 +22,9 @@ from . import networks
 from avsg_visualization_utils import visualize_scene_feat
 from avsg_utils import agents_feat_vecs_to_dicts, agents_feat_dicts_to_vecs, pre_process_scene_data
 import wandb
-#########################################################################################
 
+
+#########################################################################################
 
 
 class AvsgModel(BaseModel):
@@ -58,7 +59,8 @@ class AvsgModel(BaseModel):
                             type=list)
 
         if is_train:
-            parser.set_defaults(gan_mode='lsgan',      # 'the type of GAN objective. [vanilla| lsgan | wgangp]. vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
+            parser.set_defaults(gan_mode='lsgan',
+                                # 'the type of GAN objective. [vanilla| lsgan | wgangp]. vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
                                 netD='SceneDiscriminator',
                                 netG='SceneGenerator',
                                 n_epochs=10000,
@@ -69,11 +71,10 @@ class AvsgModel(BaseModel):
                                 update_html_freq=200,
                                 display_id=0)
 
-
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='GRU')  # 'GRU' | 'MLP'
 
-            parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
+            parser.add_argument('--lambda_L1', type=float, default=10000.0, help='weight for L1 loss')
             parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_all_agents', type=int, default=256, help='')
@@ -97,11 +98,10 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_layers_sets_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
 
-
             parser.add_argument('--vis_n_maps', type=int, default=3, help='')
             parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
-    
-            parser.add_argument('--num_agents', type=int, default=4,   help=' number of agents in a scene')
+
+            parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
 
         return parser
 
@@ -177,6 +177,7 @@ class AvsgModel(BaseModel):
         self.real_agents = real_agents
 
         return True
+
     #########################################################################################
 
     def forward(self):
@@ -219,6 +220,7 @@ class AvsgModel(BaseModel):
         self.loss_G = self.loss_G_GAN + self.loss_G_L1
 
         self.loss_G.backward()
+
     #########################################################################################
 
     def optimize_parameters(self):
@@ -242,10 +244,10 @@ class AvsgModel(BaseModel):
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
         visuals_dict = {}
         use_wandb = opt.use_wandb
-        
+
         n_maps = opt.vis_n_maps
         n_generator_runs = opt.vis_n_generator_runs
-        
+
         map_id = 1
         wandb_logs = dict()
 
@@ -260,7 +262,7 @@ class AvsgModel(BaseModel):
             real_agents_feat_dicts = agents_feat_vecs_to_dicts(real_agents)
             img = visualize_scene_feat(real_agents_feat_dicts, real_map)
             pred_fake = torch.sigmoid(self.netD(conditioning, real_agents)).item()
-            visuals_dict[f'map_{map_id}_real_fake_{int(100*pred_fake)}'] = img
+            visuals_dict[f'map_{map_id}_real_fake_{int(100 * pred_fake)}'] = img
             if use_wandb:
                 wandb_logs[log_label] = [wandb.Image(img, caption=f'real_agents, D_fake={pred_fake:.2}')]
 
@@ -269,14 +271,13 @@ class AvsgModel(BaseModel):
                 fake_agents_feat_dicts = agents_feat_vecs_to_dicts(fake_agents_feat_vecs)
                 img = visualize_scene_feat(fake_agents_feat_dicts, real_map)
                 pred_fake = torch.sigmoid(self.netD(conditioning, fake_agents_feat_vecs)).item()
-                visuals_dict[f'map_{map_id}_gen_{i_generator_run+1}_D_fake={pred_fake:.2}'] = img
+                visuals_dict[f'map_{map_id}_gen_{i_generator_run + 1}_D_fake={pred_fake:.2}'] = img
                 if use_wandb:
                     wandb_logs[log_label].append(
-                        wandb.Image(img, caption=f'gen_agents_#{i_generator_run+1}, D_fake={pred_fake:.2}'))
+                        wandb.Image(img, caption=f'gen_agents_#{i_generator_run + 1}, D_fake={pred_fake:.2}'))
             map_id += 1
             if map_id > n_maps:
                 break
 
         return visuals_dict, wandb_logs
     #########################################################################################
-
