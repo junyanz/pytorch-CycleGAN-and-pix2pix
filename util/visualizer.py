@@ -186,6 +186,7 @@ class Visualizer():
                 self.wandb_table.add_data(*list(row_data.values()))
             if fig_index != self.current_fig_index:
                 self.wandb_run.log({"Result": self.wandb_table})
+                self.current_fig_index = fig_index
 
         # ==========================================================================
 
