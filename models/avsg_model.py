@@ -15,14 +15,15 @@ You need to implement the following functions:
     <forward>: Run forward pass. This will be called by both <optimize_parameters> and <test>.
     <optimize_parameters>: Update network weights; it will be called in every training iteration.
 """
-import numpy as np
+
 import torch
 from .base_model import BaseModel
 from . import networks
-from collections import OrderedDict
 from avsg_visualization_utils import visualize_scene_feat
-from avsg_utils import agents_feat_vecs_to_dicts, agents_feat_dicts_to_vecs,pre_process_scene_data
+from avsg_utils import agents_feat_vecs_to_dicts, agents_feat_dicts_to_vecs, pre_process_scene_data
+import wandb
 #########################################################################################
+
 
 
 class AvsgModel(BaseModel):
@@ -112,6 +113,7 @@ class AvsgModel(BaseModel):
         - define loss function, visualization images, model names, and optimizers
         """
         BaseModel.__init__(self, opt, is_image_data=False)  # call the initialization method of BaseModel
+        self.use_wandb = opt.use_wandb
         self.polygon_name_order = opt.polygon_name_order
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
 
@@ -230,12 +232,14 @@ class AvsgModel(BaseModel):
 
     #########################################################################################
 
-    def get_visual_samples(self, dataset):
+    def get_visual_samples(self, dataset, use_wandb, epoch, epoch_iter):
+
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
-        visuals_dict = OrderedDict()
-        n_maps = 3
-        n_generator_runs = 6
+        visuals_dict = {}
+        n_maps = 2
+        n_generator_runs = 3
         map_id = 1
+        wandb_rows_data = []
 
         for scene_data in dataset:
             is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.num_agents,
@@ -248,27 +252,26 @@ class AvsgModel(BaseModel):
             img = visualize_scene_feat(real_agents_feat_dicts, real_map)
             pred_fake = torch.sigmoid(self.netD(conditioning, real_agents)).item()
             visuals_dict[f'map_{map_id}_real_fake_{int(100*pred_fake)}'] = img
+
+            if use_wandb:
+                wandb_rows_data.append({'epoch': epoch, 'epoch_iter': epoch_iter, 'map_id': map_id,
+                                        'real_agents': wandb.Image(img),
+                                        'D_fake(real)': f'{int(100 * pred_fake)}%'})
+
+
             for i_generator_run in range(n_generator_runs):
                 fake_agents_feat_vecs = self.netG(conditioning)
                 fake_agents_feat_dicts = agents_feat_vecs_to_dicts(fake_agents_feat_vecs)
                 img = visualize_scene_feat(fake_agents_feat_dicts, real_map)
                 pred_fake = torch.sigmoid(self.netD(conditioning, fake_agents_feat_vecs)).item()
                 visuals_dict[f'map_{map_id}_gen_{i_generator_run+1}_PredFake={int(100*pred_fake)}'] = img
+                if use_wandb:
+                    wandb_rows_data[-1][f'gen_agents_#{i_generator_run+1}'] = wandb.Image(img)
+                    wandb_rows_data[-1][f'D_fake(gen#{i_generator_run+1})'] = f'{int(100 * pred_fake)}%'
             map_id += 1
             if map_id > n_maps:
                 break
-        return visuals_dict
+
+        return visuals_dict, wandb_rows_data
     #########################################################################################
 
-    #
-    # def get_current_visuals(self):
-    #     """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
-    #     visual_ret = OrderedDict()
-    #     for name in self.visual_names:
-    #         if isinstance(name, str):
-    #             # Generate image:
-    #             agents_feat_vecs_ = getattr(self, name)
-    #             agents_feat_dicts = agents_feat_vecs_to_dicts(agents_feat_vecs_)
-    #             visual_ret[name] = visualize_scene_feat(agents_feat_dicts, self.conditioning['map_feat'])
-    #     return visual_ret
-    # #########################################################################################

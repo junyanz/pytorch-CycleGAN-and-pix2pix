@@ -70,8 +70,9 @@ if __name__ == '__main__':
             # display images on visdom and save images to an HTML file:
             if total_iters == 1 or total_iters % opt.display_freq == 0:
                 save_result = total_iters % opt.update_html_freq == 0
-                visuals_dict = model.get_visual_samples(dataset)
-                visualizer.display_current_results(visuals_dict, epoch, epoch_iter, save_result, file_type='jpg')
+                visuals_dict, wandb_rows_data = model.get_visual_samples(dataset, opt.use_wandb, epoch, epoch_iter)
+                visualizer.display_current_results(visuals_dict, epoch, epoch_iter, save_result,
+                                                   file_type='jpg', wandb_rows_data=wandb_rows_data)
                 print(f'epoch {epoch}, epoch_iter {epoch_iter}, fig saved')
 
             # print training losses and save logging information to the disk:
