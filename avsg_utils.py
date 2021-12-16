@@ -69,9 +69,10 @@ def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, 
                                                  device)
     agents_dists_order = np.argsort(agent_dists_to_ego)
 
-    # n_agents = np.random.randint(low=self.min_num_agents, high=self.max_num_agents+1)
-    n_agents = num_agents
-    agents_feat_vecs = agents_feat_vecs[agents_dists_order[:n_agents]]
-    conditioning = {'map_feat': map_feat, 'n_agents': n_agents}
+    agents_inds = agents_dists_order[:num_agents]  # take the closest agent to the ego
+    np.random.shuffle(agents_inds)  # shuffle so that the ego won't always be first
+
+    agents_feat_vecs = agents_feat_vecs[agents_inds]
+    conditioning = {'map_feat': map_feat, 'n_agents': num_agents}
     real_agents = agents_feat_vecs
     return True, real_agents, conditioning
