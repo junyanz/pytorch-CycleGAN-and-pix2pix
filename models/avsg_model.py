@@ -25,7 +25,9 @@ import wandb
 import time
 import datetime
 from util.util import strfdelta
-from models.networks  import cal_gradient_penalty
+from models.networks import cal_gradient_penalty
+
+
 #########################################################################################
 
 
@@ -61,7 +63,7 @@ class AvsgModel(BaseModel):
                             type=list)
 
         if is_train:
-            parser.set_defaults(gan_mode='wgangp', # 'the type of GAN objective. [vanilla| lsgan | wgangp].
+            parser.set_defaults(gan_mode='wgangp',  # 'the type of GAN objective. [vanilla| lsgan | wgangp].
                                 # vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
                                 netD='SceneDiscriminator',
                                 netG='SceneGenerator',
@@ -130,7 +132,7 @@ class AvsgModel(BaseModel):
 
         # specify the training losses you want to print out.
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
-        self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
+        self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake', 'D_grad_penalty']
 
         # specify the models you want to save to the disk.
         # The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
@@ -207,15 +209,16 @@ class AvsgModel(BaseModel):
         pred_real = self.netD(self.conditioning, self.real_agents)
         self.loss_D_real = self.criterionGAN(pred_real, True)
 
-        # combine loss and calculate gradients
-        self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
-
         if self.gan_mode == 'wgangp':
-            grad_penalty = cal_gradient_penalty(self.netD, self.conditioning,
-                                                self.real_agents, fake_agents_detached,
-                                                self.device, type='mixed',
-                                                constant=1.0, lambda_gp=self.lambda_gp)
-            self.loss_D += grad_penalty
+            self.loss_D_grad_penalty = cal_gradient_penalty(self.netD, self.conditioning,
+                                                            self.real_agents, fake_agents_detached,
+                                                            self.device, type='mixed',
+                                                            constant=1.0, lambda_gp=self.lambda_gp)
+        else:
+            self.loss_D_grad_penalty = 0
+
+        # combine loss and calculate gradients
+        self.loss_D = 0.5 * (self.loss_D_fake + self.loss_D_real) + self.loss_D_grad_penalty
 
         self.loss_D.backward()
 
@@ -272,7 +275,7 @@ class AvsgModel(BaseModel):
             table_columns += list(info_dict.keys())
             table_data_row += list(info_dict.values())
             table_data_rows = [table_data_row]
-            wandb_logs[f"Epoch {epoch}, iteration {epoch_iter}"] =\
+            wandb_logs[f"Epoch {epoch}, iteration {epoch_iter}"] = \
                 wandb.Table(columns=table_columns, data=table_data_rows)
 
         for scene_data in dataset:
