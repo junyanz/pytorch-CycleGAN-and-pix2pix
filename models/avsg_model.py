@@ -160,6 +160,8 @@ class AvsgModel(BaseModel):
             self.optimizers.append(self.optimizer_D)
             # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
             self.gan_mode = opt.gan_mode
+            self.lambda_gp = opt.lambda_gp
+
     #########################################################################################
 
     def set_input(self, scene_data):
