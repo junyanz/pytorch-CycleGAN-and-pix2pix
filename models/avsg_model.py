@@ -20,11 +20,12 @@ import torch
 from .base_model import BaseModel
 from . import networks
 from avsg_visualization_utils import visualize_scene_feat
-from avsg_utils import agents_feat_vecs_to_dicts, agents_feat_dicts_to_vecs, pre_process_scene_data
+from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data
 import wandb
 import time
 import datetime
 from util.util import strfdelta
+from models.networks  import cal_gradient_penalty
 #########################################################################################
 
 
@@ -60,8 +61,8 @@ class AvsgModel(BaseModel):
                             type=list)
 
         if is_train:
-            parser.set_defaults(gan_mode='lsgan',
-                                # 'the type of GAN objective. [vanilla| lsgan | wgangp]. vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
+            parser.set_defaults(gan_mode='wgangp', # 'the type of GAN objective. [vanilla| lsgan | wgangp].
+                                # vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
                                 netD='SceneDiscriminator',
                                 netG='SceneGenerator',
                                 n_epochs=10000,
@@ -75,7 +76,9 @@ class AvsgModel(BaseModel):
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='GRU')  # 'GRU' | 'MLP'
 
-            parser.add_argument('--lambda_L1', type=float, default=10000.0, help='weight for L1 loss')
+            parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
+            parser.add_argument('--lambda_gp', type=float, default=100.0, help='weight for gradient penalty in WGANGP')
+
             parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_all_agents', type=int, default=256, help='')
@@ -156,7 +159,7 @@ class AvsgModel(BaseModel):
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
             # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
-
+            self.gan_mode = opt.gan_mode
     #########################################################################################
 
     def set_input(self, scene_data):
@@ -204,6 +207,14 @@ class AvsgModel(BaseModel):
 
         # combine loss and calculate gradients
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
+
+        if self.gan_mode == 'wgangp':
+            grad_penalty = cal_gradient_penalty(self.netD, self.conditioning,
+                                                self.real_agents, fake_agents_detached,
+                                                self.device, type='mixed',
+                                                constant=1.0, lambda_gp=self.lambda_gp)
+            self.loss_D += grad_penalty
+
         self.loss_D.backward()
 
     #########################################################################################
