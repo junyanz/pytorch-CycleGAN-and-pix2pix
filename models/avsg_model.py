@@ -22,8 +22,9 @@ from . import networks
 from avsg_visualization_utils import visualize_scene_feat
 from avsg_utils import agents_feat_vecs_to_dicts, agents_feat_dicts_to_vecs, pre_process_scene_data
 import wandb
-
-
+import time
+import datetime
+from util.util import strfdelta
 #########################################################################################
 
 
@@ -239,7 +240,7 @@ class AvsgModel(BaseModel):
 
     #########################################################################################
 
-    def get_visual_samples(self, dataset, opt, epoch, epoch_iter):
+    def get_visual_samples(self, dataset, opt, epoch, epoch_iter, run_start_time):
 
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
         visuals_dict = {}
@@ -250,6 +251,16 @@ class AvsgModel(BaseModel):
 
         map_id = 1
         wandb_logs = dict()
+        if use_wandb:
+            runtime = strfdelta(datetime.timedelta(seconds=time.time() - run_start_time), '%H:%M:%S')
+            table_columns = ['Runtime']
+            table_data_row = [runtime]
+            info_dict = self.get_current_losses()
+            table_columns += list(info_dict.keys())
+            table_data_row += list(info_dict.values())
+            table_data_rows = [table_data_row]
+            wandb_logs[f"Epoch {epoch}, iteration {epoch_iter}"] =\
+                wandb.Table(columns=table_columns, data=table_data_rows)
 
         for scene_data in dataset:
             log_label = f"Epoch {epoch}, iteration {epoch_iter}, Map #{map_id}"
