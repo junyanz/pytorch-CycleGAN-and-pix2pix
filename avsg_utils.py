@@ -85,7 +85,6 @@ def get_agents_descriptions(agents_feat_dicts):
         x, y = ag['centroid']
         yaw_deg = np.degrees(ag['yaw'])
         length, width = ag['extent']
-        degree_sign = u'\N{DEGREE SIGN}'
         if ag['agent_label_id'] == 0:
             type_label = 'Car'
         elif ag['agent_label_id'] == 1:
@@ -95,5 +94,5 @@ def get_agents_descriptions(agents_feat_dicts):
         else:
             raise ValueError
         txt_descript.append(
-            f"Agent{i}: {type_label}, ({x:.1f}, {y:.1f}), {yaw_deg:.1f}{degree_sign}, [{length:.1f}X{width:.1f}]")
+            f"#{i}, {type_label}, ({x:.1f},{y:.1f}), {yaw_deg:.1f}\u00B0, {length:.1f}\u00D7{width:.1f}")
     return txt_descript
