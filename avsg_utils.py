@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+
+
 #########################################################################################
 
 
@@ -17,6 +19,8 @@ def agents_feat_vecs_to_dicts(agents_feat_vecs):
             agent_feat_dict[key] = agent_feat_dict[key].detach().cpu().numpy()
         agents_feat_dicts.append(agent_feat_dict)
     return agents_feat_dicts
+
+
 #########################################################################################
 
 
@@ -45,14 +49,25 @@ def agents_feat_dicts_to_vecs(agent_feat_vec_coord_labels, agents_feat_dicts, de
         agents_feat_vecs.append(agent_feat_vec)
     agents_feat_vecs = torch.stack(agents_feat_vecs)
     return agents_feat_vecs
+
+
 #########################################################################################
 
 
 def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, polygon_name_order, device):
+    # We assume this order of coordinates:
+    assert agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y',
+                                           'yaw_cos', 'yaw_sin',
+                                           'extent_length', 'extent_width', 'speed',
+                                           'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
+    agents_feat_vecs = []
+
     # if there are too few agents in the scene - skip it
     if len(scene_data['agents_feat']) < num_agents:
         return False, None, None
-
+    # --------------------------------------
+    # Filter out the selected agents
+    # --------------------------------------
     # Map features - Move to device
     map_feat = dict()
     for poly_type in polygon_name_order:
@@ -71,11 +86,32 @@ def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, 
 
     agents_inds = agents_dists_order[:num_agents]  # take the closest agent to the ego
     np.random.shuffle(agents_inds)  # shuffle so that the ego won't always be first
-
     agents_feat_vecs = agents_feat_vecs[agents_inds]
+
+    # --------------------------------------
+    # Random augmentation: rotation & translation
+    # --------------------------------------
+    aug_rot = np.random.rand(1).squeeze() * 2 * np.pi
+    rot_mat = np.array([[np.cos(aug_rot), -np.sin(aug_rot)],
+                        [np.sin(aug_rot), np.cos(aug_rot)]])
+    rot_mat = torch.from_numpy(rot_mat).to(device=device, dtype=torch.float32)
+
+    trans_std = 10  # [m]
+    aug_trans = np.random.rand(2) * trans_std
+
+
+    for ag in agents_feat_vecs:
+        # Rotate the centroid (x,y)
+        ag[:2] = rot_mat @ ag[:2]
+        # Rotate the yaw angle (in unit vec form)
+        ag[2:4] = rot_mat @ ag[2:4]w
+        # Translate centroid
+
     conditioning = {'map_feat': map_feat, 'n_agents': num_agents}
     real_agents = agents_feat_vecs
     return True, real_agents, conditioning
+
+
 #########################################################################################
 
 
@@ -96,3 +132,4 @@ def get_agents_descriptions(agents_feat_dicts):
         txt_descript.append(
             f"#{i}, {type_label}, ({x:.1f},{y:.1f}), {yaw_deg:.1f}\u00B0, {length:.1f}\u00D7{width:.1f}")
     return txt_descript
+#########################################################################################
