@@ -20,7 +20,7 @@ import torch
 from .base_model import BaseModel
 from . import networks
 from avsg_visualization_utils import visualize_scene_feat
-from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data
+from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions
 import wandb
 import time
 import datetime
@@ -291,7 +291,9 @@ class AvsgModel(BaseModel):
             pred_fake = torch.sigmoid(self.netD(conditioning, real_agents)).item()
             visuals_dict[f'map_{map_id}_real_fake_{int(100 * pred_fake)}'] = img
             if use_wandb:
-                wandb_logs[log_label] = [wandb.Image(img, caption=f'real_agents, D_fake={pred_fake:.2}')]
+                caption = f'real_agents\nD_fake={pred_fake:.2}\n'
+                caption += '\n'.join(get_agents_descriptions(real_agents_feat_dicts))
+                wandb_logs[log_label] = [wandb.Image(img, caption=caption)]
 
             for i_generator_run in range(n_generator_runs):
                 fake_agents_feat_vecs = self.netG(conditioning)
@@ -300,8 +302,10 @@ class AvsgModel(BaseModel):
                 pred_fake = torch.sigmoid(self.netD(conditioning, fake_agents_feat_vecs)).item()
                 visuals_dict[f'map_{map_id}_gen_{i_generator_run + 1}_D_fake={pred_fake:.2}'] = img
                 if use_wandb:
+                    caption = f'gen_agents_#{i_generator_run + 1}\nD_fake={pred_fake:.2}\n'
+                    caption += '\n'.join(get_agents_descriptions(fake_agents_feat_dicts))
                     wandb_logs[log_label].append(
-                        wandb.Image(img, caption=f'gen_agents_#{i_generator_run + 1}, D_fake={pred_fake:.2}'))
+                        wandb.Image(img, caption=caption))
             map_id += 1
             if map_id > n_maps:
                 break

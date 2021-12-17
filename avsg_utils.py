@@ -76,3 +76,24 @@ def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, 
     conditioning = {'map_feat': map_feat, 'n_agents': num_agents}
     real_agents = agents_feat_vecs
     return True, real_agents, conditioning
+#########################################################################################
+
+
+def get_agents_descriptions(agents_feat_dicts):
+    txt_descript = []
+    for i, ag in enumerate(agents_feat_dicts):
+        x, y = ag['centroid']
+        yaw_deg = np.degrees(ag['yaw'])
+        length, width = ag['extent']
+        degree_sign = u'\N{DEGREE SIGN}'
+        if ag['agent_label_id'] == 0:
+            type_label = 'Car'
+        elif ag['agent_label_id'] == 1:
+            type_label = 'Cyclist'
+        elif ag['agent_label_id'] == 2:
+            type_label = 'Pedestrian'
+        else:
+            raise ValueError
+        txt_descript.append(
+            f"Agent{i}: {type_label}, ({x:.1f}, {y:.1f}), {yaw_deg:.1f}{degree_sign}, [{length:.1f}X{width:.1f}]")
+    return txt_descript
