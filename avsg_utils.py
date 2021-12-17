@@ -96,9 +96,8 @@ def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, 
                         [np.sin(aug_rot), np.cos(aug_rot)]])
     rot_mat = torch.from_numpy(rot_mat).to(device=device, dtype=torch.float32)
 
-    trans_std = 10  # [m]
-    aug_trans = np.random.rand(2) * trans_std
-
+    pos_shift_std = 50  # [m]
+    pos_shift = torch.rand(2, device=device) * pos_shift_std
 
     for ag in agents_feat_vecs:
         # Rotate the centroid (x,y)
@@ -106,6 +105,14 @@ def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, 
         # Rotate the yaw angle (in unit vec form)
         ag[2:4] = rot_mat @ ag[2:4]
         # Translate centroid
+        ag[:2] += pos_shift
+
+    for poly_type in map_feat.keys():
+        for i_elem, poly_elem in enumerate(map_feat[poly_type]):
+            for i_point in range(poly_elem.shape[1]):
+                poly_elem[0, i_point, :] = rot_mat @ poly_elem[0, i_point, :]
+            map_feat[poly_type][i_elem] = poly_elem
+            poly_elem += pos_shift
 
     conditioning = {'map_feat': map_feat, 'n_agents': num_agents}
     real_agents = agents_feat_vecs
