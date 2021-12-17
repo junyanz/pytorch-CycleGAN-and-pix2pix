@@ -104,7 +104,7 @@ def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, 
         # Rotate the centroid (x,y)
         ag[:2] = rot_mat @ ag[:2]
         # Rotate the yaw angle (in unit vec form)
-        ag[2:4] = rot_mat @ ag[2:4]w
+        ag[2:4] = rot_mat @ ag[2:4]
         # Translate centroid
 
     conditioning = {'map_feat': map_feat, 'n_agents': num_agents}
