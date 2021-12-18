@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.avsg_net_moudules import MLP
 #########################################################################33
-
+#########################################################################33
 
 def get_agents_decoder(opt, device):
 
@@ -47,6 +47,7 @@ class AgentsDecoderLstm(nn.Module):
 
     def __init__(self, opt, device):
         super(AgentsDecoderLstm, self).__init__()
+        self.use_bias_flag = False
         self.device = device
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
@@ -55,13 +56,15 @@ class AgentsDecoderLstm(nn.Module):
         self.lstm = nn.LSTM(input_size=self.dim_latent_scene,
                             batch_first=True,
                             hidden_size=self.dim_agents_decoder_hid,
-                            num_layers=opt.lst_num_layers)
+                            num_layers=opt.lst_num_layers,
+                            bias=self.use_bias_flag)
           # input to self.lstm should be of size [batch_size x num_agents x n_feat]
         self.out_mlp = MLP(d_in=self.dim_latent_scene,
                            d_out=self.dim_agent_feat_vec,
                            d_hid=self.dim_latent_scene,
                            n_layers=opt.gru_out_layers,
-                           device=self.device)
+                           device=self.device,
+                           bias=self.use_bias_flag)
 
     def forward(self, scene_latent, n_agents):
 

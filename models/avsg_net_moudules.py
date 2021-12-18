@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 class MLP(nn.Module):
 
-    def __init__(self, d_in, d_out, d_hid, n_layers, device):
+    def __init__(self, d_in, d_out, d_hid, n_layers, device, bias=True):
         super(MLP, self).__init__()
         assert n_layers >= 1
         self.device = device
@@ -20,10 +20,10 @@ class MLP(nn.Module):
         for i_layer in range(n_layers - 1):
             layer_d_in = layer_dims[i_layer]
             layer_d_out = layer_dims[i_layer + 1]
-            modules_list.append(nn.Linear(layer_d_in, layer_d_out, device=self.device))
+            modules_list.append(nn.Linear(layer_d_in, layer_d_out, bias=bias, device=self.device))
             modules_list.append(nn.LayerNorm(layer_d_out, device=self.device))
             modules_list.append(nn.ReLU())
-        modules_list.append(nn.Linear(layer_dims[-2], d_out, device=self.device))
+        modules_list.append(nn.Linear(layer_dims[-2], d_out, bias=bias, device=self.device))
         self.net = nn.Sequential(*modules_list)
         self.layer_dims = layer_dims
 
