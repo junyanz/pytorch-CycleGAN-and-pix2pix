@@ -1,12 +1,27 @@
-
 import torch
 from torch import linalg as LA
 import torch.nn as nn
 import torch.nn.functional as F
 from models.avsg_net_moudules import MLP
+#########################################################################33
 
 
+def get_agents_decoder(opt, device):
+
+    assert opt.agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y', 'yaw_cos', 'yaw_sin',
+                                                'extent_length', 'extent_width', 'speed',
+                                                'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
+    if opt.agents_decoder_model == 'GRU':
+        return AgentsDecoderGRU(opt, device)
+    elif opt.agents_decoder_model == 'GRU_attn':
+        return AgentsDecoderGRUAttn(opt, device)
+    elif opt.agents_decoder_model == 'MLP':
+        return AgentsDecoderMLP(opt, device)
+    else:
+        raise NotImplementedError
 #########################################################################################
+
+
 def project_to_agent_feat(raw_vec):
     # Project the generator output to the feature vectors domain:
     agent_feat = torch.cat([
@@ -42,15 +57,73 @@ class DecoderUnit(nn.Module):
                            d_hid=dim_hid,
                            n_layers=opt.gru_out_layers,
                            device=self.device)
-        self.attn_mlp = MLP(d_in=dim_hid,
-                           d_out=dim_hid,
+
+    def forward(self, context_vec, prev_hidden):
+
+
+        gru_input = context_vec
+        gru_input = self.input_mlp(gru_input)
+        gru_input = F.relu(gru_input)
+        hidden = self.gru(gru_input.unsqueeze(0), prev_hidden.unsqueeze(0))
+        hidden = hidden[0]
+        output_feat = self.out_mlp(hidden)
+
+        # Project the generator output to the feature vectors domain:
+        agent_feat = project_to_agent_feat(output_feat)
+        return agent_feat, hidden
+#########################################################################################
+
+
+class AgentsDecoderGRU(nn.Module):
+
+    def __init__(self, opt, device):
+        super(AgentsDecoderGRU, self).__init__()
+        self.device = device
+        self.dim_latent_scene = opt.dim_latent_scene
+        self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
+        self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
+        self.num_agents = opt.num_agents
+        self.decoder_unit = DecoderUnit(opt,
+                                        dim_context=self.dim_latent_scene,
+                                        dim_out=self.dim_agent_feat_vec)
+
+    def forward(self, scene_latent, n_agents):
+        prev_hidden = scene_latent
+        agents_feat_vec_list = []
+        for i_agent in range(n_agents):
+            agent_feat, next_hidden = self.decoder_unit(
+                context_vec=scene_latent,
+                prev_hidden=prev_hidden)
+            prev_hidden = next_hidden
+            agents_feat_vec_list.append(agent_feat)
+        return agents_feat_vec_list
+#########################################################################################
+
+
+class DecoderUnitAttn(nn.Module):
+
+    def __init__(self, opt, dim_context, dim_out):
+        super(DecoderUnitAttn, self).__init__()
+        dim_hid = dim_context
+        self.device = opt.device
+        self.dim_hid = dim_hid
+        self.dim_out = dim_out
+        self.gru = nn.GRUCell(dim_hid, dim_hid)
+        self.input_mlp = MLP(d_in=dim_hid,
+                             d_out=dim_hid,
+                             d_hid=dim_hid,
+                             n_layers=opt.gru_in_layers,
+                             device=self.device)
+        self.out_mlp = MLP(d_in=dim_hid,
+                           d_out=dim_out,
                            d_hid=dim_hid,
-                           n_layers=opt.gru_attn_layers,
+                           n_layers=opt.gru_out_layers,
                            device=self.device)
-        self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
-        assert self.agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y', 'yaw_cos', 'yaw_sin',
-                                                    'extent_length', 'extent_width', 'speed',
-                                                    'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
+        self.attn_mlp = MLP(d_in=dim_hid,
+                            d_out=dim_hid,
+                            d_hid=dim_hid,
+                            n_layers=opt.gru_attn_layers,
+                            device=self.device)
 
     def forward(self, context_vec, prev_hidden):
         attn_scores = self.attn_mlp(prev_hidden)
@@ -67,10 +140,12 @@ class DecoderUnit(nn.Module):
         # Project the generator output to the feature vectors domain:
         agent_feat = project_to_agent_feat(output_feat)
         return agent_feat, hidden
+
+
 #########################################################################################
 
 
-class AgentsDecoderGRU(nn.Module):
+class AgentsDecoderGRUAttn(nn.Module):
     # based on:
     # * Show, Attend and Tell: Neural Image Caption Generation with Visual Attention  https://arxiv.org/abs/1502.03044\
     # * https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning
@@ -78,14 +153,14 @@ class AgentsDecoderGRU(nn.Module):
     # * https://towardsdatascience.com/image-captions-with-attention-in-tensorflow-step-by-step-927dad3569fa
 
     def __init__(self, opt, device):
-        super(AgentsDecoderGRU, self).__init__()
+        super(AgentsDecoderGRUAttn, self).__init__()
         self.device = device
         self.dim_latent_scene = opt.dim_latent_scene
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.num_agents = opt.num_agents
-        self.decoder_unit = DecoderUnit(opt,
+        self.decoder_unit = DecoderUnitAttn(opt,
                                         dim_context=self.dim_latent_scene,
                                         dim_out=self.dim_agent_feat_vec)
 
@@ -138,6 +213,5 @@ class AgentsDecoderMLP(nn.Module):
             agent_feat = project_to_agent_feat(output_feat)
             agents_feat_vec_list.append(agent_feat)
         return agents_feat_vec_list
-
 
 #########

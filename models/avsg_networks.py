@@ -1,9 +1,8 @@
-
 import torch
 import torch.nn as nn
 from models.avsg_net_moudules import MLP, PointNet
 from models.avsg_map_encoder import MapEncoder
-from models.avsg_agents_decoder import AgentsDecoderGRU, AgentsDecoderMLP
+from models.avsg_agents_decoder import get_agents_decoder
 
 ##############################################################################################
 
@@ -21,12 +20,8 @@ class SceneGenerator(nn.Module):
                                       d_hid=self.dim_latent_scene,
                                       n_layers=opt.n_layers_scene_embedder_out,
                                       device=self.device)
-        if opt.agents_decoder_model == 'GRU':
-            self.agents_dec = AgentsDecoderGRU(opt, self.device)
-        elif opt.agents_decoder_model == 'MLP':
-            self.agents_dec = AgentsDecoderMLP(opt, self.device)
-        else:
-            raise ValueError
+        self.agents_dec = get_agents_decoder(opt, self.device)
+
         # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
         self.batch_size = opt.batch_size
         if self.batch_size != 1:
