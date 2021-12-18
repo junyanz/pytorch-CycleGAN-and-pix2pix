@@ -244,7 +244,7 @@ class DecoderUnit(nn.Module):
         self.dim_hid = dim_hid
         self.dim_out = dim_out
         self.gru = nn.GRUCell(dim_hid, dim_hid)
-        self.input_mlp = MLP(d_in=dim_out + dim_hid,
+        self.input_mlp = MLP(d_in=dim_hid,
                              d_out=dim_hid,
                              d_hid=dim_hid,
                              n_layers=opt.gru_in_layers,
