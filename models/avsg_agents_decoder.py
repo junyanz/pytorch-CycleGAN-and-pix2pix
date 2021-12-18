@@ -11,6 +11,8 @@ def get_agents_decoder(opt, device):
     assert opt.agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y', 'yaw_cos', 'yaw_sin',
                                                 'extent_length', 'extent_width', 'speed',
                                                 'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
+    if opt.agents_decoder_model == 'LSTM':
+        return AgentsDecoderLstm(opt, device)
     if opt.agents_decoder_model == 'GRU':
         return AgentsDecoderGRU(opt, device)
     elif opt.agents_decoder_model == 'GRU_attn':
@@ -23,6 +25,7 @@ def get_agents_decoder(opt, device):
 
 
 def project_to_agent_feat(raw_vec):
+    assert raw_vec.ndim == 1
     # Project the generator output to the feature vectors domain:
     agent_feat = torch.cat([
         # Coordinates 0,1 are centroid x,y - no need to project
@@ -37,11 +40,49 @@ def project_to_agent_feat(raw_vec):
     return agent_feat
 #########################################################################################
 
+#########################################################################################
 
-class DecoderUnit(nn.Module):
+
+class AgentsDecoderLstm(nn.Module):
+
+    def __init__(self, opt, device):
+        super(AgentsDecoderLstm, self).__init__()
+        self.device = device
+        self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
+        self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
+        self.num_agents = opt.num_agents
+        self.dim_latent_scene = opt.dim_latent_scene
+        self.lstm = nn.LSTM(input_size=self.dim_latent_scene,
+                            batch_first=True,
+                            hidden_size=self.dim_agents_decoder_hid,
+                            num_layers=opt.lst_num_layers)
+          # input to self.lstm should be of size [batch_size x num_agents x n_feat]
+        self.out_mlp = MLP(d_in=self.dim_latent_scene,
+                           d_out=self.dim_agent_feat_vec,
+                           d_hid=self.dim_latent_scene,
+                           n_layers=opt.gru_out_layers,
+                           device=self.device)
+
+    def forward(self, scene_latent, n_agents):
+
+        # input to self.lstm should be of size [batch_size x num_agents x n_feat]
+        in_seq = scene_latent.repeat([1, n_agents, 1])
+        out = self.lstm(in_seq)
+        outs, (hn, cn) = out
+        agents_feat_vec_list = []
+        for i_agent in range(self.num_agents):
+            out_agent = self.out_mlp(outs[0, i_agent, :])
+            # Project the generator output to the feature vectors domain:
+            agent_feat = project_to_agent_feat(out_agent)
+            agents_feat_vec_list.append(agent_feat)
+        agents_feat_vecs = torch.stack(agents_feat_vec_list)
+        return agents_feat_vecs
+#########################################################################################
+
+class DecoderUnitGru(nn.Module):
 
     def __init__(self, opt, dim_context, dim_out):
-        super(DecoderUnit, self).__init__()
+        super(DecoderUnitGru, self).__init__()
         dim_hid = dim_context
         self.device = opt.device
         self.dim_hid = dim_hid
@@ -60,9 +101,7 @@ class DecoderUnit(nn.Module):
 
     def forward(self, context_vec, prev_hidden):
 
-
-        gru_input = context_vec
-        gru_input = self.input_mlp(gru_input)
+        gru_input = self.input_mlp(context_vec)
         gru_input = F.relu(gru_input)
         hidden = self.gru(gru_input.unsqueeze(0), prev_hidden.unsqueeze(0))
         hidden = hidden[0]
@@ -83,9 +122,9 @@ class AgentsDecoderGRU(nn.Module):
         self.dim_agents_decoder_hid = opt.dim_agents_decoder_hid
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.num_agents = opt.num_agents
-        self.decoder_unit = DecoderUnit(opt,
-                                        dim_context=self.dim_latent_scene,
-                                        dim_out=self.dim_agent_feat_vec)
+        self.decoder_unit = DecoderUnitGru(opt,
+                                           dim_context=self.dim_latent_scene,
+                                           dim_out=self.dim_agent_feat_vec)
 
     def forward(self, scene_latent, n_agents):
         prev_hidden = scene_latent
@@ -96,14 +135,15 @@ class AgentsDecoderGRU(nn.Module):
                 prev_hidden=prev_hidden)
             prev_hidden = next_hidden
             agents_feat_vec_list.append(agent_feat)
-        return agents_feat_vec_list
+        agents_feat_vecs = torch.stack(agents_feat_vec_list)
+        return agents_feat_vecs
 #########################################################################################
 
 
-class DecoderUnitAttn(nn.Module):
+class DecoderUnitGRUAttn(nn.Module):
 
     def __init__(self, opt, dim_context, dim_out):
-        super(DecoderUnitAttn, self).__init__()
+        super(DecoderUnitGRUAttn, self).__init__()
         dim_hid = dim_context
         self.device = opt.device
         self.dim_hid = dim_hid
@@ -129,8 +169,7 @@ class DecoderUnitAttn(nn.Module):
         attn_scores = self.attn_mlp(prev_hidden)
         # the input layer takes in the attention-applied context concatenated with the previous out features
         attn_weights = F.softmax(attn_scores, dim=0)
-        attn_applied = attn_weights * context_vec
-        gru_input = attn_applied
+        gru_input = attn_weights * context_vec
         gru_input = self.input_mlp(gru_input)
         gru_input = F.relu(gru_input)
         hidden = self.gru(gru_input.unsqueeze(0), prev_hidden.unsqueeze(0))
@@ -160,9 +199,9 @@ class AgentsDecoderGRUAttn(nn.Module):
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.num_agents = opt.num_agents
-        self.decoder_unit = DecoderUnitAttn(opt,
-                                        dim_context=self.dim_latent_scene,
-                                        dim_out=self.dim_agent_feat_vec)
+        self.decoder_unit = DecoderUnitGRUAttn(opt,
+                                               dim_context=self.dim_latent_scene,
+                                               dim_out=self.dim_agent_feat_vec)
 
     def forward(self, scene_latent, n_agents):
         prev_hidden = scene_latent
@@ -173,7 +212,8 @@ class AgentsDecoderGRUAttn(nn.Module):
                 prev_hidden=prev_hidden)
             prev_hidden = next_hidden
             agents_feat_vec_list.append(agent_feat)
-        return agents_feat_vec_list
+        agents_feat_vecs = torch.stack(agents_feat_vec_list)
+        return agents_feat_vecs
 
 
 # # Sample hard categorical using "Straight-through" , returns one-hot vector
@@ -212,6 +252,7 @@ class AgentsDecoderMLP(nn.Module):
             # Project the generator output to the feature vectors domain:
             agent_feat = project_to_agent_feat(output_feat)
             agents_feat_vec_list.append(agent_feat)
-        return agents_feat_vec_list
+        agents_feat_vecs = torch.stack(agents_feat_vec_list)
+        return agents_feat_vecs
 
 #########

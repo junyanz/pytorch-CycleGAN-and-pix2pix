@@ -77,7 +77,7 @@ class AvsgModel(BaseModel):
                                 display_id=0)
 
             parser.add_argument('--agents_decoder_model', type=str,
-                                default='GRU')  #  'GRU_attn' |'GRU' | 'MLP'
+                                default='LSTM')  #  | 'MLP' | 'LSTM' | 'GRU' | 'GRU_attn'
 
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
             parser.add_argument('--lambda_gp', type=float, default=100.0, help='weight for gradient penalty in WGANGP')
@@ -104,6 +104,7 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_layers_poly_types_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_sets_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
+            parser.add_argument('--lst_num_layers', type=int, default=3, help='')
 
             parser.add_argument('--vis_n_maps', type=int, default=3, help='')
             parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
