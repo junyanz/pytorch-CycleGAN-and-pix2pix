@@ -264,12 +264,12 @@ class DecoderUnit(nn.Module):
                                                     'extent_length', 'extent_width', 'speed',
                                                     'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
 
-    def forward(self, context_vec, prev_hidden, prev_agent_feat):
+    def forward(self, context_vec, prev_hidden):
         attn_scores = self.attn_mlp(prev_hidden)
         # the input layer takes in the attention-applied context concatenated with the previous out features
         attn_weights = F.softmax(attn_scores, dim=0)
         attn_applied = attn_weights * context_vec
-        gru_input = torch.cat([attn_applied, prev_agent_feat])
+        gru_input = attn_applied
         gru_input = self.input_mlp(gru_input)
         gru_input = F.relu(gru_input)
         hidden = self.gru(gru_input.unsqueeze(0), prev_hidden.unsqueeze(0))
@@ -304,15 +304,12 @@ class AgentsDecoderGRU(nn.Module):
 
     def forward(self, scene_latent, n_agents):
         prev_hidden = scene_latent
-        prev_agent_feat = torch.zeros(self.dim_agent_feat_vec, device=self.device)
         agents_feat_vec_list = []
         for i_agent in range(n_agents):
             agent_feat, next_hidden = self.decoder_unit(
                 context_vec=scene_latent,
-                prev_hidden=prev_hidden,
-                prev_agent_feat=prev_agent_feat)
+                prev_hidden=prev_hidden)
             prev_hidden = next_hidden
-            prev_agent_feat = agent_feat
             agents_feat_vec_list.append(agent_feat)
         return agents_feat_vec_list
 
