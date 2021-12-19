@@ -46,25 +46,26 @@ class AgentsDecoderLstm(nn.Module):
         super(AgentsDecoderLstm, self).__init__()
         self.device = device
         self.dim_hid = opt.agents_dec_dim_hid
-        self.dim_latent_map = opt.dim_latent_map
-        self.dim_in = self.dim_agent_noise + self.dim_latent_map
+        self.dim_in = opt.dim_agent_noise + opt.dim_latent_map
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.num_agents = opt.num_agents
         self.n_stacked = opt.agents_dec_n_stacked_rnns
         self.lstm = nn.LSTM(input_size=self.dim_in,
-                            proj_size=self.dim_agent_feat_vec,  # output per step dim
                             hidden_size=self.dim_hid,
-                            batch_first=True,
                             num_layers=opt.agents_dec_n_stacked_rnns,
-                            bias=opt.agents_dec_use_bias)  # disabling the bias gives more variation per step
+                            bias=bool(opt.agents_dec_use_bias),
+                            batch_first=True,
+                            proj_size=self.dim_agent_feat_vec)
           # input to self.lstm should be of size [batch_size x num_agents x n_feat]
 
 
-    def forward(self, map_latent, latent_noise):
-
+    def forward(self, map_latent: torch.Tensor, latent_noise: torch.Tensor):
+        map_latent = map_latent.unsqueeze(0)   # add batch dim
+        latent_noise = latent_noise.unsqueeze(0)   # add batch dim
         # input to self.lstm should be of size [batch_size x num_agents x n_feat]
-        in_seq = torch.cat(map_latent.repeat([1, self.self.num_agents, 1]),
-                           latent_noise)
+        in_seq = torch.cat([map_latent.repeat([1, self.num_agents, 1]),
+                           latent_noise],
+                           dim=2)
         out = self.lstm(in_seq)
         outs, (hn, cn) = out
         agents_feat_vec_list = []
