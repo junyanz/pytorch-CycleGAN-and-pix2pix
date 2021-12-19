@@ -106,9 +106,11 @@ class AvsgModel(BaseModel):
             parser.add_argument('--agents_dec_out_layers', type=int, default=3, help='')
             parser.add_argument('--agents_dec_n_stacked_rnns', type=int, default=3, help='')
             parser.add_argument('--agents_dec_dim_hid', type=int, default=512, help='')
+            parser.add_argument('--agents_dec_use_bias', type=int, default=1)
+            parser.add_argument('--agents_dec_mlp_n_layers', type=int, default=4)
 
 
-            parser.add_argument('--vis_n_maps', type=int, default=3, help='')
+            parser.add_argument('--vis_n_maps', type=int, default=2, help='')
             parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
 
             parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')

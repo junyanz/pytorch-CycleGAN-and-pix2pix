@@ -56,7 +56,7 @@ class AgentsDecoderLstm(nn.Module):
                             hidden_size=self.dim_hid,
                             batch_first=True,
                             num_layers=opt.agents_dec_n_stacked_rnns,
-                            bias=False)  # disabling the bias gives more variation per step
+                            bias=opt.agents_dec_use_bias)  # disabling the bias gives more variation per step
           # input to self.lstm should be of size [batch_size x num_agents x n_feat]
 
 
@@ -96,9 +96,9 @@ class AgentsDecoderMLP(nn.Module):
         self.decoder = MLP(d_in=self.d_in,
                            d_out=self.d_out,
                            d_hid=self.agents_dec_dim_hid,
-                           n_layers=4,
+                           n_layers=opt.agents_dec_mlp_n_layers,
                            device=self.device,
-                           bias=False)
+                           bias=opt.agents_dec_use_bias)
 
     def forward(self, map_latent, latent_noise):
         latent_noise_f = torch.flatten(latent_noise)
