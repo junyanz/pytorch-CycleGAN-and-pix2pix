@@ -79,8 +79,8 @@ class AvsgModel(BaseModel):
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='LSTM')  #  | 'MLP' | 'LSTM'
 
-            parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
-            parser.add_argument('--lambda_gp', type=float, default=100.0, help='weight for gradient penalty in WGANGP')
+            parser.add_argument('--lambda_L1', type=float, default=0.5, help='weight for L1 loss')
+            parser.add_argument('--lambda_gp', type=float, default=0.5, help='weight for gradient penalty in WGANGP')
 
             parser.add_argument('--dim_agent_noise', type=int, default=16, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=256, help='Scene latent noise dimension')
