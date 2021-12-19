@@ -13,6 +13,7 @@ class SceneGenerator(nn.Module):
         self.device = opt.device
         self.dim_latent_map = opt.dim_latent_map
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
+        self.dim_agent_noise = opt.dim_agent_noise
         self.map_enc = MapEncoder(opt)
         self.agents_dec = get_agents_decoder(opt, self.device)
         # Debug - print parameter names:  [x[0] for x in self.named_parameters()]
