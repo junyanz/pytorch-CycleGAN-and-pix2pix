@@ -21,7 +21,6 @@ class AvsgCheckMapEncModel(BaseModel):
         parser.add_argument('--data_eval', type=str, default='', help='Path for evaluation dataset file')
 
         parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
-        parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
         parser.add_argument('--dim_latent_map', type=int, default=256, help='')
         parser.add_argument('--dim_latent_polygon_elem', type=int, default=64, help='')
         parser.add_argument('--dim_latent_polygon_type', type=int, default=128, help='')

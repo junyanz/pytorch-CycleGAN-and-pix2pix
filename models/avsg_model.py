@@ -82,11 +82,9 @@ class AvsgModel(BaseModel):
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
             parser.add_argument('--lambda_gp', type=float, default=100.0, help='weight for gradient penalty in WGANGP')
 
-            parser.add_argument('--dim_latent_scene_noise', type=int, default=256, help='Scene latent noise dimension')
+            parser.add_argument('--dim_agent_noise', type=int, default=16, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=256, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_all_agents', type=int, default=256, help='')
-            parser.add_argument('--dim_latent_scene', type=int, default=512, help='')
-            parser.add_argument('--dim_agents_decoder_hid', type=int, default=512, help='')
             parser.add_argument('--dim_latent_polygon_elem', type=int, default=64, help='')
             parser.add_argument('--dim_latent_polygon_type', type=int, default=128, help='')
             parser.add_argument('--kernel_size_conv_polygon', type=int, default=5, help='')
@@ -96,8 +94,6 @@ class AvsgModel(BaseModel):
 
             parser.add_argument('--n_conv_layers_polygon', type=int, default=3, help='')
             parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
-            parser.add_argument('--gru_in_layers', type=int, default=3, help='')
-            parser.add_argument('--gru_out_layers', type=int, default=3, help='')
             parser.add_argument('--gru_attn_layers', type=int, default=3, help='')
             parser.add_argument('--n_discr_out_mlp_layers', type=int, default=3, help='')
             parser.add_argument('--n_discr_pointnet_layers', type=int, default=3, help='')
@@ -105,6 +101,12 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_layers_sets_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
             parser.add_argument('--lst_num_layers', type=int, default=3, help='')
+            # Agents decoder options
+            parser.add_argument('--agents_dec_in_layers', type=int, default=3, help='')
+            parser.add_argument('--agents_dec_out_layers', type=int, default=3, help='')
+            parser.add_argument('--agents_dec_n_stacked_rnns', type=int, default=3, help='')
+            parser.add_argument('--agents_dec_dim_hid', type=int, default=512, help='')
+
 
             parser.add_argument('--vis_n_maps', type=int, default=3, help='')
             parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
@@ -151,8 +153,7 @@ class AvsgModel(BaseModel):
         if self.isTrain:
             # define a discriminator; conditional GANs need to take both input and output images;
             # Therefore, #channels for D is input_nc + output_nc
-            discriminator_in_nc = opt.dim_latent_scene
-            self.netD = networks.define_D(opt, discriminator_in_nc, self.gpu_ids)
+            self.netD = networks.define_D(opt, self.gpu_ids)
 
         if self.isTrain:
             # define loss functions

@@ -6,7 +6,7 @@ https://github.com/lyft/l5kit/blob/master/l5kit/l5kit/planning/vectorized/open_l
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.avsg_net_moudules import MLP, PointNet
+from models.avsg_moudules import MLP, PointNet
 
 class PolygonEncoder(nn.Module):
 

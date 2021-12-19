@@ -165,7 +165,7 @@ def define_G(opt, gpu_ids=None):
     return init_net(net, opt.init_type, opt.init_gain, gpu_ids)
 
 
-def define_D(opt, discriminator_in_nc, gpu_ids=None):
+def define_D(opt, discriminator_in_nc=1,  gpu_ids=None):
     """Create a discriminator
 
     Parameters:
