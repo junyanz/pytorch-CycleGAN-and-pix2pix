@@ -14,6 +14,7 @@ You need to implement the following functions:
 from data.base_dataset import BaseDataset, get_transform
 import pickle
 
+
 class AvsgDataset(BaseDataset):
     """A template dataset class for you to implement custom datasets."""
 
@@ -47,7 +48,8 @@ class AvsgDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         with open(opt.dataroot, 'rb') as fid:
             self.dataset = pickle.loads(fid.read())
-            print('Loaded file ', opt.dataroot)
+            print('Loaded dataset file ', opt.dataroot)
+
         # get the image paths of your dataset;
         # define the default transform function. You can use <base_dataset.get_transform>; You can also define your custom transform function
         # self.transform = get_transform(opt)

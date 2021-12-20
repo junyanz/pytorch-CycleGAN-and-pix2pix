@@ -15,16 +15,18 @@ You need to implement the following functions:
     <forward>: Run forward pass. This will be called by both <optimize_parameters> and <test>.
     <optimize_parameters>: Update network weights; it will be called in every training iteration.
 """
-
+import time
+import pickle
+import datetime
+from util.util import strfdelta
+import os
 import torch
+import wandb
+
 from .base_model import BaseModel
 from . import networks
 from avsg_visualization_utils import visualize_scene_feat
-from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions, agents_feats_stats
-import wandb
-import time
-import datetime
-from util.util import strfdelta
+from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions, calc_agents_feats_stats
 from models.networks import cal_gradient_penalty
 
 
@@ -145,8 +147,6 @@ class AvsgModel(BaseModel):
         else:  # during test time, only load G
             self.model_names = ['G']
 
-        opt.device = self.device
-
         # define networks
         self.netG = networks.define_G(opt, self.gpu_ids)
         if self.isTrain:
@@ -167,8 +167,19 @@ class AvsgModel(BaseModel):
             self.gan_mode = opt.gan_mode
             self.lambda_gp = opt.lambda_gp
 
-            self.agent_feat_mean, self.agent_feat_std =\
-                agents_feats_stats(dataset, self.agent_feat_vec_coord_labels, self.device, self.num_agents, self.polygon_name_order)
+            # Get agents features statistics
+            feat_stats_file = opt.dataroot.replace('.pkl', '_feat_stats.pkl')
+            if not os.path.isfile(feat_stats_file):
+                print(f'{feat_stats_file} not found, calculating agents features statistics...')
+                self.agent_feat_mean, self.agent_feat_std = calc_agents_feats_stats(
+                    dataset, opt.agent_feat_vec_coord_labels, opt.device, opt.num_agents, opt.polygon_name_order)
+                print(f'done calculating, saving {feat_stats_file}')
+                with open(feat_stats_file, 'wb') as handle:
+                    pickle.dump([self.agent_feat_mean, self.agent_feat_std], handle, protocol=pickle.HIGHEST_PROTOCOL)
+            else:
+                with open(feat_stats_file, 'rb') as fid:
+                    self.agent_feat_mean, self.agent_feat_std = pickle.loads(fid.read())
+                    print('Loaded agents features statistics file ', feat_stats_file)
             self.agent_feat_to_nrm = self.agent_feat_std > 1e-10
     #########################################################################################
 
@@ -207,7 +218,7 @@ class AvsgModel(BaseModel):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         # generate the output of the generator given the input map
         self.fake_agents = self.netG(self.conditioning)
-        self.nrm_fake_agents = self.get_normalized_agent_feat(self.fake_agents )
+        self.nrm_fake_agents = self.get_normalized_agent_feat(self.fake_agents)
 
     #########################################################################################
 

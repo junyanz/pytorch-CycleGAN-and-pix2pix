@@ -30,10 +30,12 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
+import torch
 
 if __name__ == '__main__':
     run_start_time = time.time()
     opt = TrainOptions(is_image_data=False).parse()   # get training options
+    opt.device = torch.device('cuda:{}'.format(opt.gpu_ids[0])) if opt.gpu_ids else torch.device('cpu')  # get device name: CPU or GPU
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(dataset)    # get the number of images in the dataset.
     print('The number of training samples = %d' % dataset_size)

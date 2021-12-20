@@ -61,31 +61,19 @@ def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, 
                                            'extent_length', 'extent_width', 'speed',
                                            'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
 
+    is_valid, agents_feat_vecs = filter_and_preprocess_agent_feat(scene_data['agents_feat'],
+                                                                  num_agents, agent_feat_vec_coord_labels, device)
+
     # if there are too few agents in the scene - skip it
-    if len(scene_data['agents_feat']) < num_agents:
+    if not is_valid:
         return False, None, None
-    # --------------------------------------
-    # Filter out the selected agents
-    # --------------------------------------
+
     # Map features - Move to device
     map_feat = dict()
     for poly_type in polygon_name_order:
         map_feat[poly_type] = []
         poly_elems = scene_data['map_feat'][poly_type]
         map_feat[poly_type] = [poly_elem.to(device) for poly_elem in poly_elems]
-
-    # Agent features -
-    agent_dists_to_ego = [np.linalg.norm(agent_dict['centroid'][0, :]) for agent_dict in scene_data['agents_feat']]
-
-    # Change to vector form, Move to device
-    agents_feat_vecs = agents_feat_dicts_to_vecs(agent_feat_vec_coord_labels,
-                                                 scene_data['agents_feat'],
-                                                 device)
-    agents_dists_order = np.argsort(agent_dists_to_ego)
-
-    agents_inds = agents_dists_order[:num_agents]  # take the closest agent to the ego
-    np.random.shuffle(agents_inds)  # shuffle so that the ego won't always be first
-    agents_feat_vecs = agents_feat_vecs[agents_inds]
 
     # --------------------------------------
     # Random augmentation: rotation & translation
@@ -121,6 +109,39 @@ def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, 
 #########################################################################################
 
 
+def filter_and_preprocess_agent_feat(agent_feat, num_agents, agent_feat_vec_coord_labels, device):
+    # We assume this order of coordinates:
+    assert agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y',
+                                           'yaw_cos', 'yaw_sin',
+                                           'extent_length', 'extent_width', 'speed',
+                                           'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
+
+    # if there are too few agents in the scene - skip it
+    if len(agent_feat) < num_agents:
+        return False, None
+    # --------------------------------------
+    # Filter out the selected agents
+    # --------------------------------------
+
+    # Agent features -
+    agent_dists_to_ego = [np.linalg.norm(agent_dict['centroid'][0, :]) for agent_dict in agent_feat]
+
+    # Change to vector form, Move to device
+    agents_feat_vecs = agents_feat_dicts_to_vecs(agent_feat_vec_coord_labels,
+                                                 agent_feat,
+                                                 device)
+    agents_dists_order = np.argsort(agent_dists_to_ego)
+
+    agents_inds = agents_dists_order[:num_agents]  # take the closest agent to the ego
+    np.random.shuffle(agents_inds)  # shuffle so that the ego won't always be first
+    agents_feat_vecs = agents_feat_vecs[agents_inds]
+
+    return True, agents_feat_vecs
+
+
+#########################################################################################
+
+
 def get_agents_descriptions(agents_feat_dicts):
     txt_descript = []
     for i, ag in enumerate(agents_feat_dicts):
@@ -142,29 +163,29 @@ def get_agents_descriptions(agents_feat_dicts):
 
 #########################################################################################
 
-def agents_feats_stats(dataset, agent_feat_vec_coord_labels, device, num_agents, polygon_name_order):
+def calc_agents_feats_stats(dataset, agent_feat_vec_coord_labels, device, num_agents, polygon_name_order):
     ##### Find data normalization parameters
 
     dim_agent_feat_vec = len(agent_feat_vec_coord_labels)
     sum_agent_feat = torch.zeros(dim_agent_feat_vec, device=device)
     count = 0
-    for scene_data in dataset:
-        is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, num_agents,
-                                                                     agent_feat_vec_coord_labels,
-                                                                     polygon_name_order, device)
+    for scene in dataset:
+        agents_feat_dict = scene['agents_feat']
+        is_valid, agents_feat_vec = filter_and_preprocess_agent_feat(agents_feat_dict, num_agents, agent_feat_vec_coord_labels, device)
         if is_valid:
-            sum_agent_feat += real_agents.sum(dim=0)  # sum all agents in the scene
-            count += real_agents.shape[0]  # count num agents summed
+            sum_agent_feat += agents_feat_vec.sum(dim=0)  # sum all agents in the scene
+            count += agents_feat_vec.shape[0]  # count num agents summed
     agent_feat_mean = sum_agent_feat / count  # avg across all agents in all scenes
+
     count = 0
     sum_sqr_div_agent_feat = torch.zeros(dim_agent_feat_vec, device=device)
-    for scene_data in dataset:
-        is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, num_agents,
-                                                                     agent_feat_vec_coord_labels,
-                                                                     polygon_name_order, device)
+    for scene in dataset:
+        agents_feat_dict = scene['agents_feat']
+        is_valid, agents_feat_vec = filter_and_preprocess_agent_feat(agents_feat_dict, num_agents, agent_feat_vec_coord_labels, device)
         if is_valid:
-            count += real_agents.shape[0]  # count num agents summed
+            count += agents_feat_vec.shape[0]  # count num agents summed
             sum_sqr_div_agent_feat += torch.sum(
-                torch.pow(real_agents - agent_feat_mean, 2), dim=0)  # sum all agents in the scene
+                torch.pow(agents_feat_vec - agent_feat_mean, 2), dim=0)  # sum all agents in the scene
     agent_feat_std = torch.sqrt(sum_sqr_div_agent_feat / count)
+
     return agent_feat_mean, agent_feat_std
