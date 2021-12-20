@@ -38,7 +38,7 @@ if __name__ == '__main__':
     dataset_size = len(dataset)    # get the number of images in the dataset.
     print('The number of training samples = %d' % dataset_size)
 
-    model = create_model(opt)      # create a model given opt.model and other options
+    model = create_model(opt, dataset)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations

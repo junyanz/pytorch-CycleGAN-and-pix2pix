@@ -20,7 +20,7 @@ import torch
 from .base_model import BaseModel
 from . import networks
 from avsg_visualization_utils import visualize_scene_feat
-from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions
+from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions, agents_feats_stats
 import wandb
 import time
 import datetime
@@ -77,7 +77,7 @@ class AvsgModel(BaseModel):
                                 display_id=0)
 
             parser.add_argument('--agents_decoder_model', type=str,
-                                default='LSTM')  #  | 'MLP' | 'LSTM'
+                                default='MLP')  #  | 'MLP' | 'LSTM'
 
             parser.add_argument('--lambda_L1', type=float, default=1., help='weight for L1 loss')
             parser.add_argument('--lambda_gp', type=float, default=1., help='weight for gradient penalty in WGANGP')
@@ -88,7 +88,6 @@ class AvsgModel(BaseModel):
             parser.add_argument('--dim_latent_polygon_elem', type=int, default=64, help='')
             parser.add_argument('--dim_latent_polygon_type', type=int, default=128, help='')
             parser.add_argument('--kernel_size_conv_polygon', type=int, default=5, help='')
-
             parser.add_argument('--max_points_per_poly', type=int, default=20,
                                 help='Maximal number of points per polygon element')
 
@@ -109,18 +108,16 @@ class AvsgModel(BaseModel):
             parser.add_argument('--agents_dec_use_bias', type=int, default=1)
             parser.add_argument('--agents_dec_mlp_n_layers', type=int, default=4)
 
-
             parser.add_argument('--vis_n_maps', type=int, default=2, help='')
             parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
 
             parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
 
-
         return parser
 
     #########################################################################################
 
-    def __init__(self, opt):
+    def __init__(self, opt, dataset):
         """Initialize this model class.
 
         Parameters:
@@ -134,7 +131,7 @@ class AvsgModel(BaseModel):
         self.use_wandb = opt.use_wandb
         self.polygon_name_order = opt.polygon_name_order
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
-
+        self.dim_agent_feat_vec = len(self.agent_feat_vec_coord_labels)
         self.num_agents = opt.num_agents
 
         # specify the training losses you want to print out.
@@ -169,6 +166,11 @@ class AvsgModel(BaseModel):
             # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
             self.gan_mode = opt.gan_mode
             self.lambda_gp = opt.lambda_gp
+
+            self.mean_agent_feat, self.std_agent_feat =\
+                agents_feats_stats(dataset, self.agent_feat_vec_coord_labels, self.device, self.num_agents, self.polygon_name_order)
+            pass
+
 
     #########################################################################################
 

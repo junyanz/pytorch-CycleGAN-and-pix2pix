@@ -60,7 +60,6 @@ def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, 
                                            'yaw_cos', 'yaw_sin',
                                            'extent_length', 'extent_width', 'speed',
                                            'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
-    agents_feat_vecs = []
 
     # if there are too few agents in the scene - skip it
     if len(scene_data['agents_feat']) < num_agents:
@@ -139,4 +138,33 @@ def get_agents_descriptions(agents_feat_dicts):
         txt_descript.append(
             f"#{i}, {type_label}, ({x:.1f},{y:.1f}), {yaw_deg:.1f}\u00B0, {length:.1f}\u00D7{width:.1f}")
     return txt_descript
+
+
 #########################################################################################
+
+def agents_feats_stats(dataset, agent_feat_vec_coord_labels, device, num_agents, polygon_name_order):
+    ##### Find data normalization parameters
+
+    dim_agent_feat_vec = len(agent_feat_vec_coord_labels)
+    sum_agent_feat = torch.zeros(dim_agent_feat_vec, device=device)
+    count = 0
+    for scene_data in dataset:
+        is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, num_agents,
+                                                                     agent_feat_vec_coord_labels,
+                                                                     polygon_name_order, device)
+        if is_valid:
+            sum_agent_feat += real_agents.sum(dim=0)  # sum all agents in the scene
+            count += real_agents.shape[0]  # count num agents summed
+    mean_agent_feat = sum_agent_feat / count  # avg across all agents in all scenes
+    count = 0
+    sum_sqr_div_agent_feat = torch.zeros(dim_agent_feat_vec, device=device)
+    for scene_data in dataset:
+        is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, num_agents,
+                                                                     agent_feat_vec_coord_labels,
+                                                                     polygon_name_order, device)
+        if is_valid:
+            count += real_agents.shape[0]  # count num agents summed
+            sum_sqr_div_agent_feat += torch.sum(
+                torch.pow(real_agents - mean_agent_feat, 2), dim=0)  # sum all agents in the scene
+    std_agent_feat = torch.sqrt(sum_sqr_div_agent_feat / count)
+    return mean_agent_feat, std_agent_feat
