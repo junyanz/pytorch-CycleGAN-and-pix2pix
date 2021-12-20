@@ -155,7 +155,7 @@ def agents_feats_stats(dataset, agent_feat_vec_coord_labels, device, num_agents,
         if is_valid:
             sum_agent_feat += real_agents.sum(dim=0)  # sum all agents in the scene
             count += real_agents.shape[0]  # count num agents summed
-    mean_agent_feat = sum_agent_feat / count  # avg across all agents in all scenes
+    agent_feat_mean = sum_agent_feat / count  # avg across all agents in all scenes
     count = 0
     sum_sqr_div_agent_feat = torch.zeros(dim_agent_feat_vec, device=device)
     for scene_data in dataset:
@@ -165,6 +165,6 @@ def agents_feats_stats(dataset, agent_feat_vec_coord_labels, device, num_agents,
         if is_valid:
             count += real_agents.shape[0]  # count num agents summed
             sum_sqr_div_agent_feat += torch.sum(
-                torch.pow(real_agents - mean_agent_feat, 2), dim=0)  # sum all agents in the scene
-    std_agent_feat = torch.sqrt(sum_sqr_div_agent_feat / count)
-    return mean_agent_feat, std_agent_feat
+                torch.pow(real_agents - agent_feat_mean, 2), dim=0)  # sum all agents in the scene
+    agent_feat_std = torch.sqrt(sum_sqr_div_agent_feat / count)
+    return agent_feat_mean, agent_feat_std
