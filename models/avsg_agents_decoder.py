@@ -33,8 +33,7 @@ def project_to_agent_feat(raw_vec):
         # Coordinates 2,3 are yaw_cos, yaw_sin - project to unit circle
         raw_vec[2:4] / LA.vector_norm(raw_vec[2:4], ord=2),
         # Coordinates 4,5,6 are extent_length, extent_width, speed project to positive numbers
-        F.relu(raw_vec[4:7]),
-        # Note that softplus suffers from vanishing gradients - ReLU is better
+        F.softplus(raw_vec[4:7]),
         # Coordinates 7,8,9 are one-hot vector - project to 3-simplex
         F.softmax(raw_vec[7:10], dim=0)
     ])
