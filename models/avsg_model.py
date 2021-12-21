@@ -81,8 +81,8 @@ class AvsgModel(BaseModel):
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='MLP')  #  | 'MLP' | 'LSTM'
 
-            parser.add_argument('--lambda_L1', type=float, default=1., help='weight for L1 loss')
-            parser.add_argument('--lambda_gp', type=float, default=1., help='weight for gradient penalty in WGANGP')
+            parser.add_argument('--lambda_L1', type=float, default=100., help='weight for L1 loss')
+            parser.add_argument('--lambda_gp', type=float, default=100., help='weight for gradient penalty in WGANGP')
 
             parser.add_argument('--dim_agent_noise', type=int, default=16, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=256, help='Scene latent noise dimension')
@@ -119,7 +119,7 @@ class AvsgModel(BaseModel):
 
     #########################################################################################
 
-    def __init__(self, opt, dataset):
+    def __init__(self, opt):
         """Initialize this model class.
 
         Parameters:
@@ -130,6 +130,7 @@ class AvsgModel(BaseModel):
         - define loss function, visualization images, model names, and optimizers
         """
         BaseModel.__init__(self, opt, is_image_data=False)  # call the initialization method of BaseModel
+        opt.device = self.device
         self.use_wandb = opt.use_wandb
         self.polygon_name_order = opt.polygon_name_order
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
@@ -167,29 +168,12 @@ class AvsgModel(BaseModel):
             self.gan_mode = opt.gan_mode
             self.lambda_gp = opt.lambda_gp
 
-            # Get agents features statistics
-            feat_stats_file = opt.dataroot.replace('.pkl', '_feat_stats.pkl')
-            if not os.path.isfile(feat_stats_file):
-                print(f'{feat_stats_file} not found, calculating agents features statistics...')
-                self.agent_feat_mean, self.agent_feat_std = calc_agents_feats_stats(
-                    dataset, opt.agent_feat_vec_coord_labels, opt.device, opt.num_agents, opt.polygon_name_order)
-                print(f'done calculating, saving {feat_stats_file}')
-                with open(feat_stats_file, 'wb') as handle:
-                    pickle.dump([self.agent_feat_mean, self.agent_feat_std], handle, protocol=pickle.HIGHEST_PROTOCOL)
-            else:
-                with open(feat_stats_file, 'rb') as fid:
-                    self.agent_feat_mean, self.agent_feat_std = pickle.loads(fid.read())
-                    print('Loaded agents features statistics file ', feat_stats_file)
-            self.agent_feat_to_nrm = self.agent_feat_std > 1e-10
-    #########################################################################################
+            ## Debug
+            # print('calculating the statistics (mean & std) of the agents features...')
+            # from avsg_utils import calc_agents_feats_stats
+            # print(calc_agents_feats_stats(dataset, opt.agent_feat_vec_coord_labels, opt.device, opt.num_agents))
+            ##
 
-
-    def get_normalized_agent_feat(self, feat):
-        nrm_feat = torch.clone(feat)
-        nrm_feat[:, self.agent_feat_to_nrm] -= self.agent_feat_mean[self.agent_feat_to_nrm]
-        nrm_feat[:, self.agent_feat_to_nrm] /= self.agent_feat_std[self.agent_feat_to_nrm]
-        return nrm_feat
-    #########################################################################################
 
     def set_input(self, scene_data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.

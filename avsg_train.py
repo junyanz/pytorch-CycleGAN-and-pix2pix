@@ -35,12 +35,12 @@ import torch
 if __name__ == '__main__':
     run_start_time = time.time()
     opt = TrainOptions(is_image_data=False).parse()   # get training options
-    opt.device = torch.device('cuda:{}'.format(opt.gpu_ids[0])) if opt.gpu_ids else torch.device('cpu')  # get device name: CPU or GPU
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(dataset)    # get the number of images in the dataset.
     print('The number of training samples = %d' % dataset_size)
 
-    model = create_model(opt, dataset)      # create a model given opt.model and other options
+    model = create_model(opt)      # create a model given opt.model and other options
+    opt.device = model.device
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations

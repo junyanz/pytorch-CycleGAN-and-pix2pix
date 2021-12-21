@@ -189,3 +189,12 @@ def calc_agents_feats_stats(dataset, agent_feat_vec_coord_labels, device, num_ag
     agent_feat_std = torch.sqrt(sum_sqr_div_agent_feat / count)
 
     return agent_feat_mean, agent_feat_std
+    #########################################################################################
+    #
+    #
+    # def get_normalized_agent_feat(self, feat):
+    #     nrm_feat = torch.clone(feat)
+    #     nrm_feat[:, self.agent_feat_to_nrm] -= self.agent_feat_mean[self.agent_feat_to_nrm]
+    #     nrm_feat[:, self.agent_feat_to_nrm] /= self.agent_feat_std[self.agent_feat_to_nrm]
+    #     return nrm_feat
+    #########################################################################################
