@@ -192,8 +192,6 @@ class AvsgModel(BaseModel):
 
         self.conditioning = conditioning
         self.real_agents = real_agents
-        # Normalized features:
-        self.nrm_real_agents = self.get_normalized_agent_feat(real_agents)
         return True
 
     #########################################################################################
@@ -202,7 +200,6 @@ class AvsgModel(BaseModel):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         # generate the output of the generator given the input map
         self.fake_agents = self.netG(self.conditioning)
-        self.nrm_fake_agents = self.get_normalized_agent_feat(self.fake_agents)
 
     #########################################################################################
 
@@ -212,17 +209,17 @@ class AvsgModel(BaseModel):
         # Feed fake (generated) agents to discriminator and calculate its prediction loss
         # we use conditional GANs; we need to feed both input and output to the discriminator
         # stop backprop to the generator by detaching fake_B
-        nrm_fake_agents_detached = self.nrm_fake_agents.detach()
-        pred_fake = self.netD(self.conditioning, nrm_fake_agents_detached)
+        fake_agents_detached = self.fake_agents.detach()
+        pred_fake = self.netD(self.conditioning, fake_agents_detached)
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
 
         # Feed real (loaded from data) agents to discriminator and calculate its prediction loss
-        pred_real = self.netD(self.conditioning, self.nrm_real_agents)
+        pred_real = self.netD(self.conditioning, self.real_agents)
         self.loss_D_real = self.criterionGAN(pred_real, True)
 
         if self.gan_mode == 'wgangp':
             self.loss_D_grad_penalty = cal_gradient_penalty(self.netD, self.conditioning,
-                                                            self.real_agents, nrm_fake_agents_detached,
+                                                            self.real_agents, fake_agents_detached,
                                                             self.device, type='mixed',
                                                             constant=1.0, lambda_gp=self.lambda_gp)
         else:
@@ -238,11 +235,11 @@ class AvsgModel(BaseModel):
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
         #  the generator should fool the discriminator
-        pred_fake = self.netD(self.conditioning, self.nrm_fake_agents)
+        pred_fake = self.netD(self.conditioning, self.fake_agents)
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
 
         # Second, we want G(map) = map, since the generator acts also as an encoder-decoder for the map
-        self.loss_G_L1 = self.criterionL1(self.nrm_fake_agents, self.nrm_real_agents) * self.opt.lambda_L1
+        self.loss_G_L1 = self.criterionL1(self.fake_agents, self.real_agents) * self.opt.lambda_L1
 
         # combine loss and calculate gradients
         self.loss_G = self.loss_G_GAN + self.loss_G_L1

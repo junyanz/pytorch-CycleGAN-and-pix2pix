@@ -162,7 +162,6 @@ def define_G(opt, gpu_ids=None):
         net = SceneGenerator(opt)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % opt.netG)
-    assert hasattr(net, 'module')
     return init_net(net, opt.init_type, opt.init_gain, gpu_ids)
 
 
@@ -211,7 +210,6 @@ def define_D(opt, discriminator_in_nc=1,  gpu_ids=None):
         net = SceneDiscriminator(opt)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % opt.netD)
-    assert hasattr(net, 'module')
     return init_net(net, opt.init_type, opt.init_gain, gpu_ids)
 
 
