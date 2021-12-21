@@ -54,7 +54,11 @@ def agents_feat_dicts_to_vecs(agent_feat_vec_coord_labels, agents_feat_dicts, de
 #########################################################################################
 
 
-def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, polygon_name_order, device):
+def pre_process_scene_data(scene_data, opt):
+    num_agents = opt.num_agents
+    agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
+    polygon_name_order = opt.polygon_name_order
+    device = opt.device
     # We assume this order of coordinates:
     assert agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y',
                                            'yaw_cos', 'yaw_sin',
@@ -75,32 +79,36 @@ def pre_process_scene_data(scene_data, num_agents, agent_feat_vec_coord_labels, 
         poly_elems = scene_data['map_feat'][poly_type]
         map_feat[poly_type] = [poly_elem.to(device) for poly_elem in poly_elems]
 
-    # --------------------------------------
-    # Random augmentation: rotation & translation
-    # --------------------------------------
-    aug_rot = np.random.rand(1).squeeze() * 2 * np.pi
-    rot_mat = np.array([[np.cos(aug_rot), -np.sin(aug_rot)],
-                        [np.sin(aug_rot), np.cos(aug_rot)]])
-    rot_mat = torch.from_numpy(rot_mat).to(device=device, dtype=torch.float32)
+    if opt.augmentation_type == 'none':
+        pass
+    elif opt.augmentation_type == 'rotate_and_translate':
+        # --------------------------------------
+        # Random augmentation: rotation & translation
+        # --------------------------------------
+        aug_rot = np.random.rand(1).squeeze() * 2 * np.pi
+        rot_mat = np.array([[np.cos(aug_rot), -np.sin(aug_rot)],
+                            [np.sin(aug_rot), np.cos(aug_rot)]])
+        rot_mat = torch.from_numpy(rot_mat).to(device=device, dtype=torch.float32)
 
-    pos_shift_std = 50  # [m]
-    pos_shift = torch.rand(2, device=device) * pos_shift_std
+        pos_shift_std = 50  # [m]
+        pos_shift = torch.rand(2, device=device) * pos_shift_std
 
-    for ag in agents_feat_vecs:
-        # Rotate the centroid (x,y)
-        ag[:2] = rot_mat @ ag[:2]
-        # Rotate the yaw angle (in unit vec form)
-        ag[2:4] = rot_mat @ ag[2:4]
-        # Translate centroid
-        ag[:2] += pos_shift
+        for ag in agents_feat_vecs:
+            # Rotate the centroid (x,y)
+            ag[:2] = rot_mat @ ag[:2]
+            # Rotate the yaw angle (in unit vec form)
+            ag[2:4] = rot_mat @ ag[2:4]
+            # Translate centroid
+            ag[:2] += pos_shift
 
-    for poly_type in map_feat.keys():
-        for i_elem, poly_elem in enumerate(map_feat[poly_type]):
-            for i_point in range(poly_elem.shape[1]):
-                poly_elem[0, i_point, :] = rot_mat @ poly_elem[0, i_point, :]
-            map_feat[poly_type][i_elem] = poly_elem
-            poly_elem += pos_shift
-
+        for poly_type in map_feat.keys():
+            for i_elem, poly_elem in enumerate(map_feat[poly_type]):
+                for i_point in range(poly_elem.shape[1]):
+                    poly_elem[0, i_point, :] = rot_mat @ poly_elem[0, i_point, :]
+                map_feat[poly_type][i_elem] = poly_elem
+                poly_elem += pos_shift
+    else:
+        raise NotImplementedError(f'Unrecognized opt.augmentation_type  {opt.augmentation_type}')
     conditioning = {'map_feat': map_feat, 'n_agents': num_agents}
     real_agents = agents_feat_vecs
     return True, real_agents, conditioning

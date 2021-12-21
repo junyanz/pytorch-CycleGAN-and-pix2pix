@@ -115,6 +115,8 @@ class AvsgModel(BaseModel):
 
             parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
 
+            parser.add_argument('--augmentation_type', type=str, default='none', help=" 'none', 'rotate_and_translate'")
+
         return parser
 
     #########################################################################################
@@ -136,7 +138,7 @@ class AvsgModel(BaseModel):
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(self.agent_feat_vec_coord_labels)
         self.num_agents = opt.num_agents
-
+        self.opt = opt
         # specify the training losses you want to print out.
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake', 'D_grad_penalty']
@@ -183,9 +185,7 @@ class AvsgModel(BaseModel):
         """
         assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
 
-        is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.num_agents,
-                                                                     self.agent_feat_vec_coord_labels,
-                                                                     self.polygon_name_order, self.device)
+        is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.opt)
         # if there are too few agents in the scene - skip it
         if not is_valid:
             return False
@@ -290,9 +290,7 @@ class AvsgModel(BaseModel):
 
         for scene_data in dataset:
             log_label = f"Epoch {epoch}, iteration {epoch_iter}, Map #{map_id}"
-            is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.num_agents,
-                                                                         self.agent_feat_vec_coord_labels,
-                                                                         self.polygon_name_order, self.device)
+            is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.opt)
             if not is_valid:
                 continue
             real_map = conditioning['map_feat']
