@@ -96,14 +96,11 @@ def visualize_scene_feat(agents_feat, map_feat):
         extents = [af['extent'] for af in agents_feat]
         plot_rectangles(ax, centroids[1:], extents[1:], yaws[1:], label='non-ego', facecolor='saddlebrown')
         plot_rectangles(ax, [centroids[0]], [extents[0]], [yaws[0]], label='ego', facecolor='red')
-
         valid = speed > 1e-4
-        ax.quiver(X[valid], Y[valid], U[valid], V[valid], units='xy', color='black', width=0.5)
-
+        if valid.any():
+            ax.quiver(X[valid], Y[valid], U[valid], V[valid], units='xy', color='black', width=0.5)
     ax.grid()
     plt.legend()
-    # plt.show()
-
     canvas = plt.gca().figure.canvas
     canvas.draw()
     data = np.frombuffer(canvas.tostring_rgb(), dtype=np.uint8)

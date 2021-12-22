@@ -106,12 +106,14 @@ def pre_process_scene_data(scene_data, opt):
                 for i_point in range(poly_elem.shape[1]):
                     poly_elem[0, i_point, :] = rot_mat @ poly_elem[0, i_point, :]
                 map_feat[poly_type][i_elem] = poly_elem
-                poly_elem += pos_shift
+                map_feat[poly_type][i_elem] += pos_shift
     elif opt.augmentation_type == 'Gaussian_data':
-
         # Replace all the agent features data to gaussian samples... for debug
         agents_feat_vecs = agents_feat_vecs * 0 + torch.randn_like(agents_feat_vecs)
-
+        # Set zero to all map features
+        for poly_type in map_feat.keys():
+            for i_elem, poly_elem in enumerate(map_feat[poly_type]):
+                map_feat[poly_type][i_elem] *= 0.
         ####### Debug ###
         # import matplotlib.pyplot as plt
         # n_bins = 10
