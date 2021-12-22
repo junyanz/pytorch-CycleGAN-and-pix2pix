@@ -58,17 +58,12 @@ if __name__ == '__main__':
             if total_iters % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
 
+
             # unpack data from dataset and apply preprocessing:
             is_valid = model.set_input(data)
             if not is_valid:
                 # if the data sample is not valid to use
                 continue
-
-            # calculate loss functions, get gradients, update network weights:
-            model.optimize_parameters()
-
-            # update learning rates (must be after first model update step):
-            model.update_learning_rate()
 
             # display images on visdom and save images to an HTML file:
             if total_iters == 1 or total_iters % opt.display_freq == 0:
@@ -76,8 +71,13 @@ if __name__ == '__main__':
                 visuals_dict, wandb_logs = model.get_visual_samples(dataset, opt, epoch, epoch_iter, run_start_time)
                 visualizer.display_current_results(visuals_dict, epoch, epoch_iter, save_result,
                                                    file_type='jpg', wandb_logs=wandb_logs)
+                print(f'Figure saved. epoch #{epoch}, epoch_iter #{epoch_iter}, total_iter #{total_iters}')
 
-                print(f'epoch {epoch}, epoch_iter {epoch_iter}, fig saved')
+            # calculate loss functions, get gradients, update network weights:
+            model.optimize_parameters()
+
+            # update learning rates (must be after first model update step):
+            model.update_learning_rate()
 
             # print training losses and save logging information to the disk:
             if total_iters % opt.print_freq == 0:

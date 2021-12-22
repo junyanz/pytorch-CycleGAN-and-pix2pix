@@ -115,7 +115,7 @@ class AvsgModel(BaseModel):
 
             parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
 
-            parser.add_argument('--augmentation_type', type=str, default='rotate_and_translate',
+            parser.add_argument('--augmentation_type', type=str, default='Gaussian_data',
                                 help=" 'none' | 'rotate_and_translate' | 'Gaussian_data' ")
 
         return parser
@@ -127,7 +127,7 @@ class AvsgModel(BaseModel):
 
         Parameters:
             opt -- training/test options
-
+///
         A few things can be done here.
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
@@ -276,9 +276,11 @@ class AvsgModel(BaseModel):
         n_maps = opt.vis_n_maps
         n_generator_runs = opt.vis_n_generator_runs
 
+        show_loss = epoch > 1 or epoch_iter > 1
+
         map_id = 1
         wandb_logs = dict()
-        if use_wandb:
+        if use_wandb and show_loss:
             runtime = strfdelta(datetime.timedelta(seconds=time.time() - run_start_time), '%H:%M:%S')
             table_columns = ['Runtime']
             table_data_row = [runtime]
