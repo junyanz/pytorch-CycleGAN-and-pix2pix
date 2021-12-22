@@ -115,7 +115,8 @@ class AvsgModel(BaseModel):
 
             parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
 
-            parser.add_argument('--augmentation_type', type=str, default='none', help=" 'none', 'rotate_and_translate'")
+            parser.add_argument('--augmentation_type', type=str, default='Gaussian_data',
+                                help=" 'none' | 'rotate_and_translate' | 'Gaussian_data' ")
 
         return parser
 

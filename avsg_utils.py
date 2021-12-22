@@ -107,6 +107,21 @@ def pre_process_scene_data(scene_data, opt):
                     poly_elem[0, i_point, :] = rot_mat @ poly_elem[0, i_point, :]
                 map_feat[poly_type][i_elem] = poly_elem
                 poly_elem += pos_shift
+    elif opt.augmentation_type == 'Gaussian_data':
+
+        # Replace all the agent features data to gaussian samples... for debug
+        agents_feat_vecs = agents_feat_vecs * 0 + torch.randn_like(agents_feat_vecs)
+
+        ####### Debug ###
+        # import matplotlib.pyplot as plt
+        # n_bins = 10
+        # hist, bin_edges = torch.histogram(agents_feat_vecs, bins=n_bins)
+        # plt.bar(0.5 * (bin_edges[1:] + bin_edges[:-1]), hist, align='center')
+        # plt.xlabel('Bins')
+        # plt.ylabel('Frequency')
+        # plt.show()
+        ####### Debug ###
+
     else:
         raise NotImplementedError(f'Unrecognized opt.augmentation_type  {opt.augmentation_type}')
     conditioning = {'map_feat': map_feat, 'n_agents': num_agents}
