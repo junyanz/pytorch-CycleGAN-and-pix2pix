@@ -65,7 +65,7 @@ class AvsgModel(BaseModel):
                             type=list)
 
         if is_train:
-            parser.set_defaults(gan_mode='wgangp',  # 'the type of GAN objective. [vanilla| lsgan | wgangp].
+            parser.set_defaults(gan_mode='vanilla',  # 'the type of GAN objective. [vanilla| lsgan | wgangp].
                                 # vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
                                 netD='SceneDiscriminator',
                                 netG='SceneGenerator',
@@ -85,10 +85,10 @@ class AvsgModel(BaseModel):
             parser.add_argument('--lambda_gp', type=float, default=100., help='weight for gradient penalty in WGANGP')
 
             parser.add_argument('--dim_agent_noise', type=int, default=16, help='Scene latent noise dimension')
-            parser.add_argument('--dim_latent_map', type=int, default=256, help='Scene latent noise dimension')
-            parser.add_argument('--dim_latent_all_agents', type=int, default=256, help='')
-            parser.add_argument('--dim_latent_polygon_elem', type=int, default=64, help='')
-            parser.add_argument('--dim_latent_polygon_type', type=int, default=128, help='')
+            parser.add_argument('--dim_latent_map', type=int, default=32, help='Scene latent noise dimension')
+            parser.add_argument('--dim_discr_agents_enc', type=int, default=16, help='')
+            parser.add_argument('--dim_latent_polygon_elem', type=int, default=8, help='')
+            parser.add_argument('--dim_latent_polygon_type', type=int, default=16, help='')
             parser.add_argument('--kernel_size_conv_polygon', type=int, default=5, help='')
             parser.add_argument('--max_points_per_poly', type=int, default=20,
                                 help='Maximal number of points per polygon element')

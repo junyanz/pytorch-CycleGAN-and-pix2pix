@@ -42,17 +42,17 @@ class SceneDiscriminator(nn.Module):
         self.device = opt.device
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
-        self.dim_latent_all_agents = opt.dim_latent_all_agents
+        self.dim_discr_agents_enc = opt.dim_discr_agents_enc
         self.dim_latent_map = opt.dim_latent_map
         self.map_enc = MapEncoder(opt)
         self.agents_enc = PointNet(d_in=self.dim_agent_feat_vec,
-                                   d_out=self.dim_latent_all_agents,
-                                   d_hid=self.dim_latent_all_agents,
+                                   d_out=self.dim_discr_agents_enc,
+                                   d_hid=self.dim_discr_agents_enc,
                                    n_layers=opt.n_discr_pointnet_layers,
                                    device=self.device)
-        self.out_mlp = MLP(d_in=self.dim_latent_map + self.dim_latent_all_agents,
+        self.out_mlp = MLP(d_in=self.dim_latent_map + self.dim_discr_agents_enc,
                            d_out=1,
-                           d_hid=self.dim_latent_all_agents,
+                           d_hid=self.dim_discr_agents_enc,
                            n_layers=opt.n_discr_out_mlp_layers,
                            device=self.device)
 
