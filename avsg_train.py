@@ -5,8 +5,15 @@ $ python -m avsg_train
  --dataset_mode avsg  --model avsg --dataroot datasets/avsg_data/l5kit_sample.pkl
 
 * Replace l5kit_sample.pkl with l5kit_train.pkl or l5kit_train_full.pkl for larger datasets
+
 * To run only on CPU add: --gpu_ids -1
+
+* To yse wandb logging,
+run $ wandb login
+and add run parameter --use_wandb
+
 * To limit the datasets size --max_dataset_size 1000
+
 * Name the experiment with --name
 
 * Run visdom before training by $ python -m visdom.server
@@ -57,7 +64,6 @@ if __name__ == '__main__':
 
             if total_iters % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
-
 
             # unpack data from dataset and apply preprocessing:
             is_valid = model.set_input(data)

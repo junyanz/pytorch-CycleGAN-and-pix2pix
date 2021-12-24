@@ -45,11 +45,13 @@ class AvsgModel(BaseModel):
         Returns:
             the modified parser.
         """
+
+        # Map features
         parser.add_argument('--polygon_name_order', type=list,
                             default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
         parser.add_argument('--closed_polygon_types', type=list,
                             default=['crosswalks'], help='')
-
+        # Agents features
         parser.add_argument('--agent_feat_vec_coord_labels',
                             default=['centroid_x',  # [0]  Real number
                                      'centroid_y',  # [1]  Real number
@@ -63,7 +65,14 @@ class AvsgModel(BaseModel):
                                      'is_PEDESTRIAN',  # [9]  0 or 1
                                      ],
                             type=list)
+        parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
 
+        # Data processing
+        parser.add_argument('--augmentation_type', type=str, default='rotate_and_translate',
+                            help=" 'none' | 'rotate_and_translate' | 'Gaussian_data' ")
+
+
+        # General model settings
         if is_train:
             parser.set_defaults(gan_mode='vanilla',  # 'the type of GAN objective. [vanilla| lsgan | wgangp].
                                 # vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
@@ -113,10 +122,6 @@ class AvsgModel(BaseModel):
             parser.add_argument('--vis_n_maps', type=int, default=2, help='')
             parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
 
-            parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
-
-            parser.add_argument('--augmentation_type', type=str, default='Gaussian_data',
-                                help=" 'none' | 'rotate_and_translate' | 'Gaussian_data' ")
 
         return parser
 
