@@ -105,16 +105,15 @@ class AvsgModel(BaseModel):
             parser.add_argument('--dim_latent_polygon_type', type=int, default=16, help='')
             parser.add_argument('--kernel_size_conv_polygon', type=int, default=5, help='')
             parser.add_argument('--n_conv_layers_polygon', type=int, default=3, help='')
-
-            # ~~~~ discriminator encoder settings
-            parser.add_argument('--dim_discr_agents_enc', type=int, default=16, help='')
-
-            parser.add_argument('--n_discr_out_mlp_layers', type=int, default=3, help='')
-            parser.add_argument('--n_discr_pointnet_layers', type=int, default=3, help='')
             parser.add_argument('--n_layers_poly_types_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_sets_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
             parser.add_argument('--lst_num_layers', type=int, default=3, help='')
+
+            # ~~~~ discriminator encoder settings
+            parser.add_argument('--dim_discr_agents_enc', type=int, default=16, help='')
+            parser.add_argument('--n_discr_out_mlp_layers', type=int, default=3, help='')
+            parser.add_argument('--n_discr_pointnet_layers', type=int, default=3, help='')
 
             # ~~~~   Agents decoder options
             parser.add_argument('--agents_dec_in_layers', type=int, default=3, help='')

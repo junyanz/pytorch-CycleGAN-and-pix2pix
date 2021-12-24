@@ -8,28 +8,78 @@ class AvsgCheckMapEncModel(BaseModel):
     def modify_commandline_options(parser, is_train=True):
         """Add new dataset-specific options, and rewrite default values for existing options.
         """
-        parser.set_defaults(lr=0.002, lr_policy='step', lr_decay_iters=1000)
-
-        parser.add_argument('--polygon_name_order', type=list,
-                            default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
-
-        parser.add_argument('--closed_polygon_types', type=list,
-                            default=['crosswalks'], help='')
-
-        parser.set_defaults(gan_mode='vanilla')
-
         parser.add_argument('--data_eval', type=str, default='', help='Path for evaluation dataset file')
 
-        parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
-        parser.add_argument('--dim_latent_map', type=int, default=256, help='')
-        parser.add_argument('--dim_latent_polygon_elem', type=int, default=64, help='')
-        parser.add_argument('--dim_latent_polygon_type', type=int, default=128, help='')
-        parser.add_argument('--kernel_size_conv_polygon', type=int, default=5, help='')
-        parser.add_argument('--n_conv_layers_polygon', type=int, default=3, help='')
-        parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
+        # ~~~~  Map features
+        parser.add_argument('--polygon_name_order', type=list,
+                            default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
+        parser.add_argument('--closed_polygon_types', type=list,
+                            default=['crosswalks'], help='')
         parser.add_argument('--max_points_per_poly', type=int, default=20,
                             help='Maximal number of points per polygon element')
+        # ~~~~  Agents features
+        parser.add_argument('--agent_feat_vec_coord_labels',
+                            default=['centroid_x',  # [0]  Real number
+                                     'centroid_y',  # [1]  Real number
+                                     'yaw_cos',  # [2]  in range [-1,1],  sin(yaw)^2 + cos(yaw)^2 = 1
+                                     'yaw_sin',  # [3]  in range [-1,1],  sin(yaw)^2 + cos(yaw)^2 = 1
+                                     'extent_length',  # [4] Real positive
+                                     'extent_width',  # [5] Real positive
+                                     'speed',  # [6] Real non-negative
+                                     'is_CAR',  # [7] 0 or 1
+                                     'is_CYCLIST',  # [8] 0 or 1
+                                     'is_PEDESTRIAN',  # [9]  0 or 1
+                                     ],
+                            type=list)
+        parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
 
+        # ~~~~  Data processing
+        parser.add_argument('--augmentation_type', type=str, default='rotate_and_translate',
+                            help=" 'none' | 'rotate_and_translate' | 'Gaussian_data' ")
+
+        # ~~~~  General model settings
+        if is_train:
+            parser.set_defaults(gan_mode='vanilla',  # 'the type of GAN objective. [vanilla| lsgan | wgangp].
+                                # vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
+                                netD='SceneDiscriminator',
+                                netG='SceneGenerator')
+            parser.add_argument('--agents_decoder_model', type=str,
+                                default='MLP')  # | 'MLP' | 'LSTM'
+
+        if is_train:
+            # ~~~~  Training optimization settings
+            parser.set_defaults(
+                n_epochs=1000,
+                lr=0.02,
+                lr_policy='constant',  # [linear | step | plateau | cosine | constant]
+                lr_decay_iters=1000,  # if lr_policy==step'
+                lr_decay_factor=0.9,  # if lr_policy==step'
+            )
+            parser.add_argument('--lambda_L1', type=float, default=100., help='weight for L1 loss')
+            parser.add_argument('--lambda_gp', type=float, default=100., help='weight for gradient penalty in WGANGP')
+
+            # ~~~~ general model settings
+            parser.add_argument('--dim_agent_noise', type=int, default=16, help='Scene latent noise dimension')
+            parser.add_argument('--dim_latent_map', type=int, default=32, help='Scene latent noise dimension')
+            parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
+
+            # ~~~~ map encoder settings
+            parser.add_argument('--dim_latent_polygon_elem', type=int, default=8, help='')
+            parser.add_argument('--dim_latent_polygon_type', type=int, default=16, help='')
+            parser.add_argument('--kernel_size_conv_polygon', type=int, default=5, help='')
+            parser.add_argument('--n_conv_layers_polygon', type=int, default=3, help='')
+            parser.add_argument('--n_layers_poly_types_aggregator', type=int, default=3, help='')
+            parser.add_argument('--n_layers_sets_aggregator', type=int, default=3, help='')
+            parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
+            parser.add_argument('--lst_num_layers', type=int, default=3, help='')
+
+            # ~~~~ Display settings
+            parser.set_defaults(
+                display_freq=200,
+                update_html_freq=200,
+                display_id=0)
+            parser.add_argument('--vis_n_maps', type=int, default=2, help='')
+            parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
 
         return parser
 
