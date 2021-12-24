@@ -80,7 +80,7 @@ class AvsgModel(BaseModel):
                                 netG='SceneGenerator',
                                 n_epochs=1000,
                                 lr=0.02,
-                                lr_policy='step',  # [linear | step | plateau | cosine]
+                                lr_policy='constant',  # [linear | step | plateau | cosine | constant]
                                 lr_decay_iters=1000,  # if lr_policy==step'
                                 lr_decay_factor=0.9,  # if lr_policy==step'
                                 display_freq=200,
