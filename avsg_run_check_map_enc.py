@@ -20,8 +20,6 @@ if __name__ == '__main__':
 
 
     opt = TrainOptions(is_image_data=False).parse()  # get training options
-    n_epoch = opt.epoch_count
-    print('Number of training epochs: ', n_epoch)
     assert os.path.isfile(opt.data_eval)
     train_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(train_dataset)  # get the number of images in the dataset.
@@ -29,13 +27,15 @@ if __name__ == '__main__':
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
 
+    n_epochs = opt.n_epochs
+    print('Number of training epochs: ', n_epochs)
     ##########
     # Train
     #########
     iter_print_freq = 20
     start_time = time.time()
     total_iter = 0
-    for i_epoch in range(n_epoch):
+    for i_epoch in range(n_epochs):
         for i_batch, data in enumerate(train_dataset):
             model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters()  # calculate loss functions, get gradients, update network weights
