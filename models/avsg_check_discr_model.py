@@ -127,7 +127,7 @@ class AvsgCheckDiscrModel(BaseModel):
             raise NotImplementedError
 
     def forward(self):
-        self.prediction = self.netD(self.real_agents)
+        self.prediction = self.netD(self.conditioning, self.real_agents)
 
     def backward(self):
         self.loss = self.loss_criterion(self.prediction, self.ground_truth)
