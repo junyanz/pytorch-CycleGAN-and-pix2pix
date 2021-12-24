@@ -26,7 +26,8 @@ import wandb
 from .base_model import BaseModel
 from . import networks
 from avsg_visualization_utils import visualize_scene_feat
-from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions, calc_agents_feats_stats
+from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions, \
+    calc_agents_feats_stats
 from models.networks import cal_gradient_penalty
 
 
@@ -46,12 +47,14 @@ class AvsgModel(BaseModel):
             the modified parser.
         """
 
-        # Map features
+        # ~~~~  Map features
         parser.add_argument('--polygon_name_order', type=list,
                             default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
         parser.add_argument('--closed_polygon_types', type=list,
                             default=['crosswalks'], help='')
-        # Agents features
+        parser.add_argument('--max_points_per_poly', type=int, default=20,
+                            help='Maximal number of points per polygon element')
+        # ~~~~  Agents features
         parser.add_argument('--agent_feat_vec_coord_labels',
                             default=['centroid_x',  # [0]  Real number
                                      'centroid_y',  # [1]  Real number
@@ -67,61 +70,68 @@ class AvsgModel(BaseModel):
                             type=list)
         parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
 
-        # Data processing
+        # ~~~~  Data processing
         parser.add_argument('--augmentation_type', type=str, default='rotate_and_translate',
                             help=" 'none' | 'rotate_and_translate' | 'Gaussian_data' ")
 
-
-        # General model settings
+        # ~~~~  General model settings
         if is_train:
             parser.set_defaults(gan_mode='vanilla',  # 'the type of GAN objective. [vanilla| lsgan | wgangp].
                                 # vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
                                 netD='SceneDiscriminator',
-                                netG='SceneGenerator',
-                                n_epochs=1000,
-                                lr=0.02,
-                                lr_policy='constant',  # [linear | step | plateau | cosine | constant]
-                                lr_decay_iters=1000,  # if lr_policy==step'
-                                lr_decay_factor=0.9,  # if lr_policy==step'
-                                display_freq=200,
-                                update_html_freq=200,
-                                display_id=0)
-
+                                netG='SceneGenerator')
             parser.add_argument('--agents_decoder_model', type=str,
-                                default='MLP')  #  | 'MLP' | 'LSTM'
+                                default='MLP')  # | 'MLP' | 'LSTM'
 
+        if is_train:
+            # ~~~~  Training optimization settings
+            parser.set_defaults(
+                n_epochs=1000,
+                lr=0.02,
+                lr_policy='constant',  # [linear | step | plateau | cosine | constant]
+                lr_decay_iters=1000,  # if lr_policy==step'
+                lr_decay_factor=0.9,  # if lr_policy==step'
+            )
             parser.add_argument('--lambda_L1', type=float, default=100., help='weight for L1 loss')
             parser.add_argument('--lambda_gp', type=float, default=100., help='weight for gradient penalty in WGANGP')
 
+            # ~~~~ general model settings
             parser.add_argument('--dim_agent_noise', type=int, default=16, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=32, help='Scene latent noise dimension')
-            parser.add_argument('--dim_discr_agents_enc', type=int, default=16, help='')
+            parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
+
+            # ~~~~ map encoder settings
             parser.add_argument('--dim_latent_polygon_elem', type=int, default=8, help='')
             parser.add_argument('--dim_latent_polygon_type', type=int, default=16, help='')
             parser.add_argument('--kernel_size_conv_polygon', type=int, default=5, help='')
-            parser.add_argument('--max_points_per_poly', type=int, default=20,
-                                help='Maximal number of points per polygon element')
-
             parser.add_argument('--n_conv_layers_polygon', type=int, default=3, help='')
-            parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
-            parser.add_argument('--gru_attn_layers', type=int, default=3, help='')
+
+            # ~~~~ discriminator encoder settings
+            parser.add_argument('--dim_discr_agents_enc', type=int, default=16, help='')
+
             parser.add_argument('--n_discr_out_mlp_layers', type=int, default=3, help='')
             parser.add_argument('--n_discr_pointnet_layers', type=int, default=3, help='')
             parser.add_argument('--n_layers_poly_types_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_sets_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
             parser.add_argument('--lst_num_layers', type=int, default=3, help='')
-            # Agents decoder options
+
+            # ~~~~   Agents decoder options
             parser.add_argument('--agents_dec_in_layers', type=int, default=3, help='')
             parser.add_argument('--agents_dec_out_layers', type=int, default=3, help='')
             parser.add_argument('--agents_dec_n_stacked_rnns', type=int, default=3, help='')
             parser.add_argument('--agents_dec_dim_hid', type=int, default=512, help='')
             parser.add_argument('--agents_dec_use_bias', type=int, default=1)
             parser.add_argument('--agents_dec_mlp_n_layers', type=int, default=4)
+            parser.add_argument('--gru_attn_layers', type=int, default=3, help='')
 
+            # ~~~~ Display settings
+            parser.set_defaults(
+                display_freq=200,
+                update_html_freq=200,
+                display_id=0)
             parser.add_argument('--vis_n_maps', type=int, default=2, help='')
             parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
-
 
         return parser
 
@@ -181,7 +191,6 @@ class AvsgModel(BaseModel):
             # from avsg_utils import calc_agents_feats_stats
             # print(calc_agents_feats_stats(dataset, opt.agent_feat_vec_coord_labels, opt.device, opt.num_agents))
             ##
-
 
     def set_input(self, scene_data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
