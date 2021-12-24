@@ -1,6 +1,6 @@
 import torch
 from models.base_model import BaseModel
-from models import avsg_networks
+from models import networks
 from avsg_utils import pre_process_scene_data
 
 class AvsgCheckDiscrModel(BaseModel):
@@ -92,9 +92,8 @@ class AvsgCheckDiscrModel(BaseModel):
         opt.device = self.device
         self.polygon_name_order = opt.polygon_name_order
         self.task_name = opt.task_name
-        self.map_enc = avsg_networks.MapEncoder(opt)
-        # out layer, in case of scalar regression:
-        self.out_layer = torch.nn.Linear(in_features=opt.dim_latent_map, out_features=1, device=self.device)
+        self.netD = networks.define_D(opt, self.gpu_ids)
+
 
         self.loss_criterion = torch.nn.L1Loss()
         print('Map encoder parameters: ', [p[0] for p in self.map_enc.named_parameters()])
@@ -112,7 +111,7 @@ class AvsgCheckDiscrModel(BaseModel):
         self.map_feat = conditioning['map_feat']
 
         if self.task_name == 'predict_feat_sum':
-            self.ground_truth = torch.ones(1, device=self.device) * n_lane_mid_elem
+            self.ground_truth = real_agents.sum()
         else:
             raise NotImplementedError
 

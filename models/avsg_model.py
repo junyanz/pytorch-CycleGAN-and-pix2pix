@@ -26,8 +26,7 @@ import wandb
 from .base_model import BaseModel
 from . import networks
 from avsg_visualization_utils import visualize_scene_feat
-from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions, \
-    calc_agents_feats_stats
+from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions
 from models.networks import cal_gradient_penalty
 
 
@@ -168,8 +167,6 @@ class AvsgModel(BaseModel):
         # define networks
         self.netG = networks.define_G(opt, self.gpu_ids)
         if self.isTrain:
-            # define a discriminator; conditional GANs need to take both input and output images;
-            # Therefore, #channels for D is input_nc + output_nc
             self.netD = networks.define_D(opt, self.gpu_ids)
 
         if self.isTrain:
