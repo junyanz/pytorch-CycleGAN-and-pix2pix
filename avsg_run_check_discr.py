@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
 
     opt = TrainOptions(is_image_data=False).parse()  # get training options
-    assert opt.model == 'avsg_check_map_enc'
+    assert opt.model == 'avsg_check_discr'
     assert os.path.isfile(opt.data_eval)
     train_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(train_dataset)  # get the number of images in the dataset.

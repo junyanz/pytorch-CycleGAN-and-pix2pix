@@ -109,7 +109,6 @@ class AvsgModel(BaseModel):
             parser.add_argument('--n_layers_poly_types_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_sets_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
-            parser.add_argument('--lst_num_layers', type=int, default=3, help='')
 
             # ~~~~ discriminator encoder settings
             parser.add_argument('--dim_discr_agents_enc', type=int, default=16, help='')
@@ -185,7 +184,6 @@ class AvsgModel(BaseModel):
             # Our program will automatically call <model.setup> to define schedulers, load networks, and print networks
             self.gan_mode = opt.gan_mode
             self.lambda_gp = opt.lambda_gp
-
             ## Debug
             # print('calculating the statistics (mean & std) of the agents features...')
             # from avsg_utils import calc_agents_feats_stats
@@ -194,21 +192,17 @@ class AvsgModel(BaseModel):
 
     def set_input(self, scene_data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
-
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
         assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
-
         is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.opt)
         # if there are too few agents in the scene - skip it
         if not is_valid:
             return False
-
         self.conditioning = conditioning
         self.real_agents = real_agents
         return True
-
     #########################################################################################
 
     def forward(self):

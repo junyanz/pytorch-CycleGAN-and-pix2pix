@@ -3,13 +3,15 @@ from models.base_model import BaseModel
 from models import avsg_networks
 from avsg_utils import pre_process_scene_data
 
-class AvsgCheckMapEncModel(BaseModel):
+class AvsgCheckDiscrModel(BaseModel):
 
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
         """Add new dataset-specific options, and rewrite default values for existing options.
         """
         parser.add_argument('--data_eval', type=str, default='', help='Path for evaluation dataset file')
+        parser.add_argument('--task_name', type=str, default='predict_feat_sum', help='')
+
 
         # ~~~~  Map features
         parser.add_argument('--polygon_name_order', type=list,
@@ -35,7 +37,7 @@ class AvsgCheckMapEncModel(BaseModel):
         parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
 
         # ~~~~  Data processing
-        parser.add_argument('--augmentation_type', type=str, default='rotate_and_translate',
+        parser.add_argument('--augmentation_type', type=str, default='Gaussian_data',
                             help=" 'none' | 'rotate_and_translate' | 'Gaussian_data' ")
 
         # ~~~~  General model settings
@@ -89,6 +91,7 @@ class AvsgCheckMapEncModel(BaseModel):
 
         opt.device = self.device
         self.polygon_name_order = opt.polygon_name_order
+        self.task_name = opt.task_name
         self.map_enc = avsg_networks.MapEncoder(opt)
         # out layer, in case of scalar regression:
         self.out_layer = torch.nn.Linear(in_features=opt.dim_latent_map, out_features=1, device=self.device)
@@ -108,9 +111,10 @@ class AvsgCheckMapEncModel(BaseModel):
         self.real_agents = real_agents
         self.map_feat = conditioning['map_feat']
 
-        # the task -  scalar regression of the number of lanes:
-        n_lane_mid_elem = len(self.map_feat['lanes_mid'])
-        self.ground_truth = torch.ones(1, device=self.device) * n_lane_mid_elem
+        if self.task_name == 'predict_feat_sum':
+            self.ground_truth = torch.ones(1, device=self.device) * n_lane_mid_elem
+        else:
+            raise NotImplementedError
 
     def forward(self):
         map_latent = self.map_enc(self.map_feat)
