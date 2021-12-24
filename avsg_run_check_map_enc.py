@@ -32,17 +32,20 @@ if __name__ == '__main__':
     ##########
     # Train
     #########
+    iter_print_freq = 20
     start_time = time.time()
+    total_iter = 0
     for i_epoch in range(n_epoch):
         for i_batch, data in enumerate(train_dataset):
             model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters()  # calculate loss functions, get gradients, update network weights
             model.update_learning_rate()  # update learning rates *after* first step (https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate)
-            if i_batch % 20 == 0:
+            if total_iter % iter_print_freq == 0:
                 model.set_input(data)
                 model.forward()  # run inference
                 loss = model.loss_criterion(model.prediction, model.ground_truth)
-                print(f'Epoch {i_epoch}, batch {i_batch}, loss {loss}')
+                print(f'Epoch {i_epoch}, batch {i_batch}, total_iter {total_iter},  loss {loss}')
+            total_iter += 1
         print(f'End of epoch {i_epoch}, elapsed time {time.time() - start_time}')
 
     ##########
