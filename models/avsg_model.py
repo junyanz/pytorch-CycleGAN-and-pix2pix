@@ -91,8 +91,9 @@ class AvsgModel(BaseModel):
                 lr_decay_iters=1000,  # if lr_policy==step'
                 lr_decay_factor=0.9,  # if lr_policy==step'
             )
-            parser.add_argument('--lambda_L1', type=float, default=100., help='weight for L1 loss')
+            parser.add_argument('--lambda_reconstruct', type=float, default=100., help='weight for reconstruct_loss ')
             parser.add_argument('--lambda_gp', type=float, default=100., help='weight for gradient penalty in WGANGP')
+            parser.add_argument('--reconstruct_loss_type', type=str, default='MSE', help=" 'L1' | 'MSE' ")
 
             # ~~~~ general model settings
             parser.add_argument('--dim_agent_noise', type=int, default=16, help='Scene latent noise dimension')
@@ -172,7 +173,12 @@ class AvsgModel(BaseModel):
         if self.isTrain:
             # define loss functions
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)
-            self.criterionL1 = torch.nn.L1Loss()
+            if opt.reconstruct_loss_type == 'L1':
+                self.criterionL1 = torch.nn.L1Loss()
+            elif opt.reconstruct_loss_type == 'MSE':
+                self.criterionL1 = torch.nn.MSELoss()
+            else:
+                raise NotImplementedError
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
             self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -245,7 +251,7 @@ class AvsgModel(BaseModel):
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
 
         # Second, we want G(map) = map, since the generator acts also as an encoder-decoder for the map
-        self.loss_G_L1 = self.criterionL1(self.fake_agents, self.real_agents) * self.opt.lambda_L1
+        self.loss_G_L1 = self.criterionL1(self.fake_agents, self.real_agents) * self.opt.lambda_reconstruct
 
         # combine loss and calculate gradients
         self.loss_G = self.loss_G_GAN + self.loss_G_L1

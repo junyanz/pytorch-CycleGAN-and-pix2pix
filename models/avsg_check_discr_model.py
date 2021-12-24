@@ -37,7 +37,7 @@ class AvsgCheckDiscrModel(BaseModel):
         parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
 
         # ~~~~  Data processing
-        parser.add_argument('--augmentation_type', type=str, default='Gaussian_data',
+        parser.add_argument('--augmentation_type', type=str, default='rotate_and_translate',
                             help=" 'none' | 'rotate_and_translate' | 'Gaussian_data' ")
 
         # ~~~~  General model settings
@@ -48,7 +48,6 @@ class AvsgCheckDiscrModel(BaseModel):
                                 netG='SceneGenerator')
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='MLP')  # | 'MLP' | 'LSTM'
-            parser.add_argument('--use_layer_norm', type=int, default=1, help='0 or 1')
 
         if is_train:
             # ~~~~  Training optimization settings
@@ -59,13 +58,14 @@ class AvsgCheckDiscrModel(BaseModel):
                 lr_decay_iters=1000,  # if lr_policy==step'
                 lr_decay_factor=0.9,  # if lr_policy==step'
             )
-            parser.add_argument('--lambda_L1', type=float, default=100., help='weight for L1 loss')
+            parser.add_argument('--lambda_reconstruct', type=float, default=100., help='weight for reconstruct loss')
             parser.add_argument('--lambda_gp', type=float, default=100., help='weight for gradient penalty in WGANGP')
 
             # ~~~~ general model settings
             parser.add_argument('--dim_agent_noise', type=int, default=16, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=32, help='Scene latent noise dimension')
             parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
+            parser.add_argument('--use_layer_norm', type=int, default=1, help='0 or 1')
 
             # ~~~~ map encoder settings
             parser.add_argument('--dim_latent_polygon_elem', type=int, default=8, help='')
@@ -75,6 +75,20 @@ class AvsgCheckDiscrModel(BaseModel):
             parser.add_argument('--n_layers_poly_types_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_sets_aggregator', type=int, default=3, help='')
             parser.add_argument('--n_layers_scene_embedder_out', type=int, default=3, help='')
+
+            # ~~~~ discriminator encoder settings
+            parser.add_argument('--dim_discr_agents_enc', type=int, default=16, help='')
+            parser.add_argument('--n_discr_out_mlp_layers', type=int, default=3, help='')
+            parser.add_argument('--n_discr_pointnet_layers', type=int, default=3, help='')
+
+            # ~~~~   Agents decoder options
+            parser.add_argument('--agents_dec_in_layers', type=int, default=3, help='')
+            parser.add_argument('--agents_dec_out_layers', type=int, default=3, help='')
+            parser.add_argument('--agents_dec_n_stacked_rnns', type=int, default=3, help='')
+            parser.add_argument('--agents_dec_dim_hid', type=int, default=512, help='')
+            parser.add_argument('--agents_dec_use_bias', type=int, default=1)
+            parser.add_argument('--agents_dec_mlp_n_layers', type=int, default=4)
+            parser.add_argument('--gru_attn_layers', type=int, default=3, help='')
 
             # ~~~~ Display settings
             parser.set_defaults(
@@ -88,16 +102,13 @@ class AvsgCheckDiscrModel(BaseModel):
 
     def __init__(self, opt):
         BaseModel.__init__(self, opt, is_image_data=False)
-
         opt.device = self.device
         self.polygon_name_order = opt.polygon_name_order
         self.task_name = opt.task_name
         self.netD = networks.define_D(opt, self.gpu_ids)
-
-
-        self.loss_criterion = torch.nn.L1Loss()
-        print('Map encoder parameters: ', [p[0] for p in self.map_enc.named_parameters()])
-        self.optimizer = torch.optim.Adam(self.map_enc.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+        self.loss_criterion = torch.nn.MSELoss()
+        print('Discriminator parameters: ', [p[0] for p in self.netD.named_parameters()])
+        self.optimizer = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
         self.optimizers.append(self.optimizer)
 
     def set_input(self, scene_data):
@@ -116,8 +127,7 @@ class AvsgCheckDiscrModel(BaseModel):
             raise NotImplementedError
 
     def forward(self):
-        map_latent = self.map_enc(self.map_feat)
-        self.prediction = self.out_layer(map_latent)
+        self.prediction = self.netD(self.real_agents)
 
     def backward(self):
         self.loss = self.loss_criterion(self.prediction, self.ground_truth)

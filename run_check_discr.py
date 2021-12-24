@@ -1,7 +1,7 @@
 ''''
 
 Run using:
- $ python -m avsg_run_check_map_enc.py
+ $ python -m run_check_map_enc.py
  --dataset_mode avsg  --model avsg_check_map_enc --dataroot datasets/avsg_data/l5kit_train.pkl --data_eval datasets/avsg_data/l5kit_validation.pkl
 * To change dataset files change --dataroot and --data_eval
 * To run only on CPU add: --gpu_ids -1
@@ -15,10 +15,7 @@ from data import create_dataset
 from models import create_model
 from options.train_options import TrainOptions
 
-
 if __name__ == '__main__':
-
-
     opt = TrainOptions(is_image_data=False).parse()  # get training options
     assert opt.model == 'avsg_check_discr'
     assert os.path.isfile(opt.data_eval)
