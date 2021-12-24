@@ -98,7 +98,7 @@ class AgentsDecoderMLP(nn.Module):
                            d_out=self.d_out,
                            d_hid=self.agents_dec_dim_hid,
                            n_layers=opt.agents_dec_mlp_n_layers,
-                           device=self.device,
+                           opt=opt,
                            bias=opt.agents_dec_use_bias)
 
     def forward(self, map_latent, latent_noise):

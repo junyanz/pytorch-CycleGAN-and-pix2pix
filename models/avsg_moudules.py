@@ -7,10 +7,11 @@ import torch.nn.functional as F
 
 class MLP(nn.Module):
 
-    def __init__(self, d_in, d_out, d_hid, n_layers, device, bias=True):
+    def __init__(self, d_in, d_out, d_hid, n_layers, opt, bias=True):
         super(MLP, self).__init__()
         assert n_layers >= 1
-        self.device = device
+        self.device = opt.device
+        self.use_layer_norm = opt.use_layer_norm
         self.d_in = d_in
         self.d_out = d_out
         self.d_hid = d_hid
@@ -21,7 +22,8 @@ class MLP(nn.Module):
             layer_d_in = layer_dims[i_layer]
             layer_d_out = layer_dims[i_layer + 1]
             modules_list.append(nn.Linear(layer_d_in, layer_d_out, bias=bias, device=self.device))
-            modules_list.append(nn.LayerNorm(layer_d_out, device=self.device))
+            if self.use_layer_norm:
+                modules_list.append(nn.LayerNorm(layer_d_out, device=self.device))
             modules_list.append(nn.ReLU())
         modules_list.append(nn.Linear(layer_dims[-2], d_out, bias=bias, device=self.device))
         self.net = nn.Sequential(*modules_list)
@@ -36,9 +38,10 @@ class MLP(nn.Module):
 
 class PointNet(nn.Module):
 
-    def __init__(self, d_in, d_out, d_hid, n_layers, device):
+    def __init__(self, d_in, d_out, d_hid, n_layers, opt):
         super(PointNet, self).__init__()
-        self.device = device
+        self.device = opt.device
+        self.use_layer_norm = opt.use_layer_norm
         self.n_layers = n_layers
         self.d_in = d_in
         self.d_out = d_out
@@ -50,15 +53,16 @@ class PointNet(nn.Module):
             # each layer the function that operates on each element in the set x is
             # f(x) = ReLu(A x + B * (sum over all non x elements) )
             layer_dims = (self.layer_dims[i_layer + 1], self.layer_dims[i_layer])
-            self.matA[i_layer] = nn.Parameter(torch.zeros(layer_dims, device=device, requires_grad=True))
-            self.matB[i_layer] = nn.Parameter(torch.zeros(layer_dims, device=device, requires_grad=True))
+            self.matA[i_layer] = nn.Parameter(torch.zeros(layer_dims, device=self.device, requires_grad=True))
+            self.matB[i_layer] = nn.Parameter(torch.zeros(layer_dims, device=self.device, requires_grad=True))
             self.register_parameter(name=f'matA_{i_layer}', param=self.matA[i_layer])
             self.register_parameter(name=f'matB_{i_layer}', param=self.matB[i_layer])
             # PyTorch's default initialization:
             nn.init.kaiming_uniform_(self.matA[i_layer], a=math.sqrt(5))
             nn.init.kaiming_uniform_(self.matB[i_layer], a=math.sqrt(5))
         self.out_layer = nn.Linear(d_hid, d_out, device=self.device)
-        self.layer_normalizer = nn.LayerNorm(d_hid, device=self.device)
+        if self.use_layer_norm:
+            self.layer_normalizer = nn.LayerNorm(d_hid, device=self.device)
 
     def forward(self, in_set):
         """'
@@ -84,7 +88,8 @@ class PointNet(nn.Module):
                 h_new = matA @ h_elem + matB @ sum_without_elem
                 h_new_lst.append(h_new)
             h = torch.stack(h_new_lst)
-            h = self.layer_normalizer(h)
+            if self.use_layer_norm:
+                h = self.layer_normalizer(h)
             h = F.relu(h)
         # apply permutation invariant aggregation over all elements
         # max-pooling in our case

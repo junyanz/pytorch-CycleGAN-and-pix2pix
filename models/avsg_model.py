@@ -99,6 +99,7 @@ class AvsgModel(BaseModel):
             parser.add_argument('--dim_agent_noise', type=int, default=16, help='Scene latent noise dimension')
             parser.add_argument('--dim_latent_map', type=int, default=32, help='Scene latent noise dimension')
             parser.add_argument('--n_point_net_layers', type=int, default=3, help='PointNet layers number')
+            parser.add_argument('--use_layer_norm', type=int, default=1, help='0 or 1')
 
             # ~~~~ map encoder settings
             parser.add_argument('--dim_latent_polygon_elem', type=int, default=8, help='')

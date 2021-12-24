@@ -49,12 +49,12 @@ class SceneDiscriminator(nn.Module):
                                    d_out=self.dim_discr_agents_enc,
                                    d_hid=self.dim_discr_agents_enc,
                                    n_layers=opt.n_discr_pointnet_layers,
-                                   device=self.device)
+                                   opt=opt)
         self.out_mlp = MLP(d_in=self.dim_latent_map + self.dim_discr_agents_enc,
                            d_out=1,
                            d_hid=self.dim_discr_agents_enc,
                            n_layers=opt.n_discr_out_mlp_layers,
-                           device=self.device)
+                           opt=opt)
 
     def forward(self, conditioning, agents_feat_vecs):
         """Standard forward."""

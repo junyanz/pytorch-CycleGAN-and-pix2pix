@@ -89,12 +89,12 @@ class MapEncoder(nn.Module):
                                                         d_out=self.dim_latent_polygon_type,
                                                         d_hid=self.dim_latent_polygon_type,
                                                         n_layers=opt.n_layers_sets_aggregator,
-                                                        device=self.device)
+                                                        opt=opt)
         self.poly_types_aggregator = MLP(d_in=self.dim_latent_polygon_type * n_polygon_types,
                                          d_out=self.dim_latent_map,
                                          d_hid=self.dim_latent_map,
                                          n_layers=opt.n_layers_poly_types_aggregator,
-                                         device=self.device)
+                                         opt=opt)
 
     def forward(self, map_feat):
         """Standard forward

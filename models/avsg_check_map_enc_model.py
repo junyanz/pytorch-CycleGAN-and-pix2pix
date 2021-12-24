@@ -45,6 +45,7 @@ class AvsgCheckMapEncModel(BaseModel):
                                 netG='SceneGenerator')
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='MLP')  # | 'MLP' | 'LSTM'
+            parser.add_argument('--use_layer_norm', type=int, default=1, help='0 or 1')
 
         if is_train:
             # ~~~~  Training optimization settings
