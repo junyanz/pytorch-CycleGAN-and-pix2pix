@@ -52,6 +52,7 @@ if __name__ == '__main__':
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations
     t_data = 0
+    start_time = time.time()
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()    # timer for data loading per iteration
@@ -77,7 +78,7 @@ if __name__ == '__main__':
                 visuals_dict, wandb_logs = model.get_visual_samples(dataset, opt, epoch, epoch_iter, run_start_time)
                 visualizer.display_current_results(visuals_dict, epoch, epoch_iter, save_result,
                                                    file_type='jpg', wandb_logs=wandb_logs)
-                print(f'Figure saved. epoch #{epoch}, epoch_iter #{epoch_iter}, total_iter #{total_iters}')
+                print(f'Figure saved. epoch #{epoch}, epoch_iter #{epoch_iter}, total_iter #{total_iters:.2}')
 
             # calculate loss functions, get gradients, update network weights:
             model.optimize_parameters()
@@ -107,5 +108,4 @@ if __name__ == '__main__':
             model.save_networks('latest')
             model.save_networks(epoch)
 
-
-        print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
+        print(f'End of epoch {epoch}/{opt.n_epochs + opt.n_epochs_decay}, epoch run time {(time.time() - epoch_start_time):.2} sec')

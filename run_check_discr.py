@@ -2,7 +2,7 @@
 
 Run using:
  $ python -m run_check_map_enc.py
- --dataset_mode avsg  --model avsg_check_map_enc --dataroot datasets/avsg_data/l5kit_train.pkl --data_eval datasets/avsg_data/l5kit_validation.pkl
+ --dataset_mode avsg  --model avsg_check_discr --dataroot datasets/avsg_data/l5kit_train.pkl --data_eval datasets/avsg_data/l5kit_validation.pkl
 * To change dataset files change --dataroot and --data_eval
 * To run only on CPU add: --gpu_ids -1
 * To limit the datasets size --max_dataset_size 1000
@@ -42,9 +42,9 @@ if __name__ == '__main__':
                 model.set_input(data)
                 model.forward()  # run inference
                 loss = model.loss_criterion(model.prediction, model.ground_truth)
-                print(f'Epoch {i_epoch}, batch {i_batch}, total_iter {total_iter},  loss {loss}')
+                print(f'Epoch {i_epoch}, batch {i_batch}, total_iter {total_iter},  loss {loss:.2}')
             total_iter += 1
-        print(f'End of epoch {i_epoch}, elapsed time {time.time() - start_time}')
+        print(f'End of epoch {i_epoch}, elapsed time {(time.time() - start_time):.2}')
 
     ##########
     # Test

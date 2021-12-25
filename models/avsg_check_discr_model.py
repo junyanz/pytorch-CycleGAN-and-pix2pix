@@ -122,7 +122,7 @@ class AvsgCheckDiscrModel(BaseModel):
         self.map_feat = conditioning['map_feat']
 
         if self.task_name == 'predict_feat_sum':
-            self.ground_truth = real_agents.sum()
+            self.ground_truth = real_agents.sum().unsqueeze(dim=0)
         else:
             raise NotImplementedError
 
