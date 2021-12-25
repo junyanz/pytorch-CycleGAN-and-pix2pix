@@ -52,7 +52,7 @@ class AvsgCheckDiscrModel(BaseModel):
         if is_train:
             # ~~~~  Training optimization settings
             parser.set_defaults(
-                n_epochs=1000,
+                n_epochs=2,
                 lr=0.02,
                 lr_policy='constant',  # [linear | step | plateau | cosine | constant]
                 lr_decay_iters=1000,  # if lr_policy==step'
