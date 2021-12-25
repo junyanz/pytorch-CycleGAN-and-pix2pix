@@ -44,7 +44,7 @@ if __name__ == '__main__':
                 loss = model.loss_criterion(model.prediction, model.ground_truth)
                 print(f'Epoch {i_epoch}, batch {i_batch}, total_iter {total_iter},  loss {loss:.2}')
             total_iter += 1
-        print(f'End of epoch {i_epoch}, elapsed time {(time.time() - start_time):.2}')
+        print(f'End of epoch {i_epoch}, elapsed time {(time.time() - start_time):.2f}')
 
     ##########
     # Test

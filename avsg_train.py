@@ -78,7 +78,7 @@ if __name__ == '__main__':
                 visuals_dict, wandb_logs = model.get_visual_samples(dataset, opt, epoch, epoch_iter, run_start_time)
                 visualizer.display_current_results(visuals_dict, epoch, epoch_iter, save_result,
                                                    file_type='jpg', wandb_logs=wandb_logs)
-                print(f'Figure saved. epoch #{epoch}, epoch_iter #{epoch_iter}, total_iter #{total_iters:.2}')
+                print(f'Figure saved. epoch #{epoch}, epoch_iter #{epoch_iter}, total_iter #{total_iters}')
 
             # calculate loss functions, get gradients, update network weights:
             model.optimize_parameters()
@@ -108,4 +108,4 @@ if __name__ == '__main__':
             model.save_networks('latest')
             model.save_networks(epoch)
 
-        print(f'End of epoch {epoch}/{opt.n_epochs + opt.n_epochs_decay}, epoch run time {(time.time() - epoch_start_time):.2} sec')
+        print(f'End of epoch {epoch}/{opt.n_epochs + opt.n_epochs_decay}, epoch run time {(time.time() - epoch_start_time):.2f} sec')

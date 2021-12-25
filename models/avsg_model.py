@@ -292,15 +292,17 @@ class AvsgModel(BaseModel):
         map_id = 1
         wandb_logs = dict()
         if use_wandb and show_loss:
-            runtime = strfdelta(datetime.timedelta(seconds=time.time() - run_start_time), '%H:%M:%S')
-            table_columns = ['Runtime']
-            table_data_row = [runtime]
+            # Log all losses in charts:
             info_dict = self.get_current_losses()
-            table_columns += list(info_dict.keys())
-            table_data_row += list(info_dict.values())
+            wandb.log(info_dict)
+            # Show also in table of current vales:
+            run_time_str = strfdelta(datetime.timedelta(seconds=time.time() - run_start_time), '%H:%M:%S')
+            table_columns = ['Runtime'] + list(info_dict.keys())
+            table_data_row = [run_time_str] + list(info_dict.values())
             table_data_rows = [table_data_row]
             wandb_logs[f"Epoch {epoch}, iteration {epoch_iter}"] = \
                 wandb.Table(columns=table_columns, data=table_data_rows)
+
 
         for scene_data in dataset:
             log_label = f"Epoch {epoch}, iteration {epoch_iter}, Map #{map_id}"
