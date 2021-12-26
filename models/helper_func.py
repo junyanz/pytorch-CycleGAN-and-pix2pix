@@ -4,6 +4,22 @@ from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
 
+def run_validation(model, eval_dataset):
+    is_training = model.training
+    model.eval()
+    n_loss_calc = 0
+    loss_sum = 0
+    for i, data in enumerate(eval_dataset):
+        model.set_input(data)  # unpack data from data loader
+        model.forward()  # run inference
+        loss = model.loss_criterion(model.prediction, model.ground_truth)
+        loss_sum += loss
+        n_loss_calc += 1
+    loss_avg = loss_sum / n_loss_calc
+    if is_training:
+        model.train()
+    return loss_avg
+
 class Identity(nn.Module):
     def forward(self, x):
         return x
