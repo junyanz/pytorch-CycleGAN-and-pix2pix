@@ -4,12 +4,14 @@ from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
 
-def run_validation(model, eval_dataset):
-    is_training = model.training
+def run_validation(model, eval_dataset, n_batches=0):
+    is_training = model.isTrain
     model.eval()
     n_loss_calc = 0
     loss_sum = 0
-    for i, data in enumerate(eval_dataset):
+    for i_batch, data in enumerate(eval_dataset):
+        if n_batches and n_batches <= i_batch:
+            break
         model.set_input(data)  # unpack data from data loader
         model.forward()  # run inference
         loss = model.loss_criterion(model.prediction, model.ground_truth)

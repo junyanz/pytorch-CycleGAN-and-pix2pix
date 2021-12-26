@@ -37,7 +37,6 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
-import torch
 
 if __name__ == '__main__':
     run_start_time = time.time()
@@ -51,7 +50,6 @@ if __name__ == '__main__':
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations
-    t_data = 0
     start_time = time.time()
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
@@ -59,19 +57,13 @@ if __name__ == '__main__':
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
         for i, data in enumerate(dataset):  # inner loop within one epoch
-            iter_start_time = time.time()  # timer for computation per iteration
             total_iters += 1
             epoch_iter += 1
-
-            if total_iters % opt.print_freq == 0:
-                t_data = iter_start_time - iter_data_time
-
             # unpack data from dataset and apply preprocessing:
             is_valid = model.set_input(data)
             if not is_valid:
                 # if the data sample is not valid to use
                 continue
-
             # display images on visdom and save images to an HTML file:
             if total_iters == 1 or total_iters % opt.display_freq == 0:
                 save_result = total_iters % opt.update_html_freq == 0
@@ -82,15 +74,13 @@ if __name__ == '__main__':
 
             # calculate loss functions, get gradients, update network weights:
             model.optimize_parameters()
-
             # update learning rates (must be after first model update step):
             model.update_learning_rate()
 
             # print training losses and save logging information to the disk:
             if total_iters % opt.print_freq == 0:
                 losses = model.get_current_losses()
-                t_comp = (time.time() - iter_start_time) / opt.batch_size
-                visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
+                visualizer.print_current_losses(epoch, epoch_iter, losses)
                 if opt.display_id > 0:
                     visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, losses)
 
@@ -100,12 +90,11 @@ if __name__ == '__main__':
                 save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
                 model.save_networks(save_suffix)
 
-            iter_data_time = time.time()
-
         # cache our model every <save_epoch_freq> epochs:
         if epoch % opt.save_epoch_freq == 0:
             print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
             model.save_networks('latest')
             model.save_networks(epoch)
 
-        print(f'End of epoch {epoch}/{opt.n_epochs + opt.n_epochs_decay}, epoch run time {(time.time() - epoch_start_time):.2f} sec')
+        print(f'End of epoch {epoch}/{opt.n_epochs + opt.n_epochs_decay}'
+              f', epoch run time {(time.time() - epoch_start_time):.2f} sec')

@@ -38,9 +38,15 @@ if __name__ == '__main__':
     total_iter = 0
     for i_epoch in range(n_epochs):
         for i_batch, data in enumerate(train_dataset):
-            model.set_input(data)  # unpack data from dataset and apply preprocessing
-            model.optimize_parameters()  # calculate loss functions, get gradients, update network weights
-            model.update_learning_rate()  # update learning rates *after* first step (https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate)
+            # unpack data from dataset and apply preprocessing
+            is_valid = model.set_input(data)
+            if not is_valid:
+                # if the data sample is not valid to use
+                continue
+            # calculate loss functions, get gradients, update network weights
+            model.optimize_parameters()
+            # update learning rates *after* first step (https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate)
+            model.update_learning_rate()
             if total_iter % iter_print_freq == 0:
                 model.set_input(data)
                 model.forward()  # run inference
