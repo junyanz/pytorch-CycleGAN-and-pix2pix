@@ -120,11 +120,11 @@ class AvsgCheckDiscrModel(BaseModel):
         self.conditioning = conditioning
         self.real_agents = real_agents
         self.map_feat = conditioning['map_feat']
-
         if self.task_name == 'predict_feat_sum':
             self.ground_truth = real_agents.sum().unsqueeze(dim=0)
         else:
             raise NotImplementedError
+        return True
 
     def forward(self):
         self.prediction = self.netD(self.conditioning, self.real_agents)
