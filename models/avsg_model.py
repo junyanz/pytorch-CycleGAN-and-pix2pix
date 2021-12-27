@@ -90,6 +90,7 @@ class AvsgModel(BaseModel):
                 lr_policy='constant',  # [linear | step | plateau | cosine | constant]
                 lr_decay_iters=1000,  # if lr_policy==step'
                 lr_decay_factor=0.9,  # if lr_policy==step'
+                num_threads=0,  # threads for loading data, can increase to 4 for faster run if no mem issues
             )
             parser.add_argument('--lambda_reconstruct', type=float, default=100., help='weight for reconstruct_loss ')
             parser.add_argument('--lambda_gp', type=float, default=100., help='weight for gradient penalty in WGANGP')
