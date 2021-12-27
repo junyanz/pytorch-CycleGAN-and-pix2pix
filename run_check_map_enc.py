@@ -59,6 +59,7 @@ if __name__ == '__main__':
     ##########
     # Test
     ##########
+    del train_dataset
     model.eval()
     opt.dataroot = opt.data_eval
     eval_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
