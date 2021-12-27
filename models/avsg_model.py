@@ -81,6 +81,9 @@ class AvsgModel(BaseModel):
                                 netG='SceneGenerator')
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='MLP')  # | 'MLP' | 'LSTM'
+            parser.add_argument('--num_samples_pack', type=int,
+                                default=1)  # accumulate  m samples to classify with D (as in PacGAN)
+
 
         if is_train:
             # ~~~~  Training optimization settings
@@ -193,20 +196,26 @@ class AvsgModel(BaseModel):
             # from avsg_utils import calc_agents_feats_stats
             # print(calc_agents_feats_stats(dataset, opt.agent_feat_vec_coord_labels, opt.device, opt.num_agents))
             ##
+    #########################################################################################
+    def is_sample_valid(self, scene_data):
+        assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
+        agents_feat = scene_data['agents_feat']
+        # if there are too few agents in the scene - skip it
+        return len(agents_feat) <= self.num_agents
 
-    def set_input(self, scene_data):
+    #########################################################################################
+    def set_input(self, data_buffer):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
-        is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.opt)
-        # if there are too few agents in the scene - skip it
-        if not is_valid:
-            return False
-        self.conditioning = conditioning
-        self.real_agents = real_agents
-        return True
+        self.conditioning = []
+        self.real_agents = []
+        for i, scene_data in enumerate(data_buffer):
+            real_agents, map_feat, conditioning = pre_process_scene_data(scene_data, self.opt)
+            self.real_agents.append(real_agents)
+            self.conditioning.append(conditioning)
+
     #########################################################################################
 
     def forward(self):
@@ -307,10 +316,10 @@ class AvsgModel(BaseModel):
 
         for scene_data in dataset:
             log_label = f"Epoch {epoch}, iteration {epoch_iter}, Map #{map_id}"
-            is_valid, real_agents, conditioning = pre_process_scene_data(scene_data, self.opt)
-            if not is_valid:
+            if not self.is_sample_valid(scene_data):
+                # if the data sample is not valid to use - skip it
                 continue
-            real_map = conditioning['map_feat']
+            real_agents, real_map, conditioning = pre_process_scene_data(scene_data, self.opt)
             real_agents_feat_dicts = agents_feat_vecs_to_dicts(real_agents)
             img = visualize_scene_feat(real_agents_feat_dicts, real_map)
             pred_fake = torch.sigmoid(self.netD(conditioning, real_agents)).item()

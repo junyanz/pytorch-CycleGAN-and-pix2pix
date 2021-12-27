@@ -59,14 +59,23 @@ if __name__ == '__main__':
         iter_data_time = time.time()    # timer for data loading per iteration
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
-        for i, data in enumerate(dataset):  # inner loop within one epoch
+        data_buffer = []
+        for i, scene_data in enumerate(dataset):  # inner loop within one epoch
+
+            if not model.is_sample_valid(scene_data):
+                # if the data sample is not valid to use - skip it
+                continue
+            else:
+                data_buffer.append(scene_data)  # accumulate  m samples to classify with D (as in PacGAN)
+                if len(data_buffer) < opt.num_samples_pack:
+                    continue
+
             total_iters += 1
             epoch_iter += 1
+
             # unpack data from dataset and apply preprocessing:
-            is_valid = model.set_input(data)
-            if not is_valid:
-                # if the data sample is not valid to use
-                continue
+            model.set_input(data_buffer)
+
             # display images on visdom and save images to an HTML file:
             if total_iters == 1 or total_iters % opt.display_freq == 0:
                 save_result = total_iters % opt.update_html_freq == 0
