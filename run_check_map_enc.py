@@ -8,6 +8,7 @@ Run using:
 * To limit the datasets size --max_dataset_size 1000
 * Name the experiment with --name
 
+Note: if you get CUDA Uknown error, try $ apt-get install nvidia-modprobe
 '''
 import os
 import time
