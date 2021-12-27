@@ -42,10 +42,9 @@ class AvsgCheckDiscrModel(BaseModel):
 
         # ~~~~  General model settings
         if is_train:
-            parser.set_defaults(gan_mode='vanilla',  # 'the type of GAN objective. [vanilla| lsgan | wgangp].
-                                # vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
+            parser.set_defaults(
                                 netD='SceneDiscriminator',
-                                netG='SceneGenerator')
+                                )
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='MLP')  # | 'MLP' | 'LSTM'
 
@@ -59,8 +58,6 @@ class AvsgCheckDiscrModel(BaseModel):
                 lr_decay_factor=0.9,  # if lr_policy==step'
                 num_threads=0,  # threads for loading data, can increase to 4 for faster run if no mem issues
             )
-            parser.add_argument('--lambda_reconstruct', type=float, default=100., help='weight for reconstruct loss')
-            parser.add_argument('--lambda_gp', type=float, default=100., help='weight for gradient penalty in WGANGP')
 
             # ~~~~ general model settings
             parser.add_argument('--dim_agent_noise', type=int, default=16, help='Scene latent noise dimension')
