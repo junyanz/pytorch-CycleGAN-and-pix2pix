@@ -65,8 +65,11 @@ def pre_process_scene_data(scene_data, opt):
                                            'extent_length', 'extent_width', 'speed',
                                            'is_CAR', 'is_CYCLIST', 'is_PEDESTRIAN']
 
-    agents_feat_vecs = filter_and_preprocess_agent_feat(scene_data['agents_feat'],
-                                                                  num_agents, agent_feat_vec_coord_labels, device)
+    agents_feat_vecs = filter_and_preprocess_agent_feat(
+        scene_data['agents_feat'],
+        num_agents, agent_feat_vec_coord_labels,
+        device)
+
     # Map features - Move to device
     map_feat = dict()
     for poly_type in polygon_name_order:

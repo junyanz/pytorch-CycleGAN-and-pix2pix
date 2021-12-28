@@ -59,25 +59,22 @@ if __name__ == '__main__':
         iter_data_time = time.time()    # timer for data loading per iteration
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
-        data_buffer = []
+        # data_buffer = []
         for i, scene_data in enumerate(dataset):  # inner loop within one epoch
 
             if not model.is_sample_valid(scene_data):
                 # if the data sample is not valid to use - skip it
                 continue
-            else:
-                data_buffer.append(scene_data)  # accumulate  m samples to classify with D (as in PacGAN)
-                if len(data_buffer) < opt.num_samples_pack:
-                    continue
-
-            total_iters += 1
-            epoch_iter += 1
+            # else:
+            #     data_buffer.append(scene_data)  # accumulate  m samples to classify with D (as in PacGAN)
+            #     if len(data_buffer) < opt.num_samples_pack:
+            #         continue
 
             # unpack data from dataset and apply preprocessing:
-            model.set_input(data_buffer)
+            model.set_input(scene_data)
 
             # display images on visdom and save images to an HTML file:
-            if total_iters == 1 or total_iters % opt.display_freq == 0:
+            if total_iters % opt.display_freq == 0:
                 save_result = total_iters % opt.update_html_freq == 0
                 visuals_dict, wandb_logs = model.get_visual_samples(dataset, opt, epoch, epoch_iter, run_start_time)
                 visualizer.display_current_results(visuals_dict, epoch, epoch_iter, save_result,
@@ -101,6 +98,9 @@ if __name__ == '__main__':
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
                 save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
                 model.save_networks(save_suffix)
+
+            total_iters += 1
+            epoch_iter += 1
 
         # cache our model every <save_epoch_freq> epochs:
         if epoch % opt.save_epoch_freq == 0:

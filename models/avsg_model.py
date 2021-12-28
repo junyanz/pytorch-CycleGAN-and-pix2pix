@@ -81,8 +81,8 @@ class AvsgModel(BaseModel):
                                 netG='SceneGenerator')
             parser.add_argument('--agents_decoder_model', type=str,
                                 default='MLP')  # | 'MLP' | 'LSTM'
-            parser.add_argument('--num_samples_pack', type=int,
-                                default=1)  # accumulate  m samples to classify with D (as in PacGAN)
+            # parser.add_argument('--num_samples_pack', type=int,
+            #                     default=1)  # accumulate  m samples to classify with D (as in PacGAN)
 
 
         if is_train:
@@ -204,17 +204,20 @@ class AvsgModel(BaseModel):
         return len(agents_feat) <= self.num_agents
 
     #########################################################################################
-    def set_input(self, data_buffer):
+    def set_input(self, scene_data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        self.conditioning = []
-        self.real_agents = []
-        for i, scene_data in enumerate(data_buffer):
-            real_agents, map_feat, conditioning = pre_process_scene_data(scene_data, self.opt)
-            self.real_agents.append(real_agents)
-            self.conditioning.append(conditioning)
+        self.real_agents, map_feat, self.conditioning = pre_process_scene_data(scene_data, self.opt)
+        #########################################################################################
+        
+        # self.conditioning = []
+        # self.real_agents = []
+        # # for i, scene_data in enumerate(data_buffer):
+        #     real_agents, map_feat, conditioning = pre_process_scene_data(scene_data, self.opt)
+        #     self.real_agents.append(real_agents)
+        #     self.conditioning.append(conditioning)
 
     #########################################################################################
 
