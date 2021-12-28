@@ -103,6 +103,7 @@ class AgentsDecoderMLP(nn.Module):
     def forward(self, map_latent, latent_noise, n_agents):
         latent_noise_f = torch.flatten(latent_noise)
         in_vec = torch.cat([map_latent, latent_noise_f])
+        assert in_vec.shape[0] == self.d_in
         out_vec = self.decoder(in_vec)
 
         agents_feat_vec_list = []
