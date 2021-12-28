@@ -196,11 +196,11 @@ class AvsgModel(BaseModel):
             # print(calc_agents_feats_stats(dataset, opt.agent_feat_vec_coord_labels, opt.device, opt.num_agents))
             ##
     #########################################################################################
-    def is_sample_valid(self, scene_data):
-        assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
-        agents_feat = scene_data['agents_feat']
-        # if there are too few agents in the scene - skip it
-        return len(agents_feat) <= self.num_agents
+    # def is_sample_valid(self, scene_data):
+    #     assert isinstance(scene_data, dict)  # assume batch_size == 1, where the sample is a dict of one scene
+    #     agents_feat = scene_data['agents_feat']
+    #     # if there are too few agents in the scene - skip it
+    #     return len(agents_feat) <= self.num_agents
 
     #########################################################################################
     def set_input(self, scene_data):
@@ -318,9 +318,9 @@ class AvsgModel(BaseModel):
 
         for scene_data in dataset:
             log_label = f"Epoch {epoch}, iteration {epoch_iter}, Map #{map_id}"
-            if not self.is_sample_valid(scene_data):
-                # if the data sample is not valid to use - skip it
-                continue
+            # if not self.is_sample_valid(scene_data):
+            #     # if the data sample is not valid to use - skip it
+            #     continue
             real_agents, real_map, conditioning = pre_process_scene_data(scene_data, self.opt)
             real_agents_feat_dicts = agents_feat_vecs_to_dicts(real_agents)
             img = visualize_scene_feat(real_agents_feat_dicts, real_map)

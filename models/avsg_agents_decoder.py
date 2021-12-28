@@ -84,13 +84,13 @@ class AgentsDecoderMLP(nn.Module):
         super(AgentsDecoderMLP, self).__init__()
         self.device = device
         self.agents_dec_dim_hid = opt.agents_dec_dim_hid
-
+        self.max_num_agents = opt.max_num_agents
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
         self.dim_latent_map = opt.dim_latent_map
         self.dim_agent_noise = opt.dim_agent_noise
         self.d_in = self.dim_agent_noise * self.max_num_agents + opt.dim_latent_map
-        self.d_out = self.dim_agent_feat_vec * self.num_agents
+        self.d_out = self.dim_agent_feat_vec * self.max_num_agents
 
 
         self.decoder = MLP(d_in=self.d_in,
