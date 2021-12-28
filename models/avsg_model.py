@@ -16,20 +16,15 @@ You need to implement the following functions:
     <optimize_parameters>: Update network weights; it will be called in every training iteration.
 """
 import time
-import pickle
 import datetime
 from util.util import strfdelta
-import os
 import torch
 import wandb
-
 from .base_model import BaseModel
 from . import networks
 from avsg_visualization_utils import visualize_scene_feat
 from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions
 from models.networks import cal_gradient_penalty
-
-
 #########################################################################################
 
 
@@ -45,7 +40,6 @@ class AvsgModel(BaseModel):
         Returns:
             the modified parser.
         """
-
         # ~~~~  Map features
         parser.add_argument('--polygon_name_order', type=list,
                             default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
@@ -135,6 +129,8 @@ class AvsgModel(BaseModel):
                 display_id=0)
             parser.add_argument('--vis_n_maps', type=int, default=2, help='')
             parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
+            parser.add_argument('--stats_n_maps', type=int, default=4, help='')
+            parser.add_argument('--stats_n_generator_runs', type=int, default=5, help='')
 
         return parser
 
@@ -251,7 +247,6 @@ class AvsgModel(BaseModel):
 
         # combine loss and calculate gradients
         self.loss_D = 0.5 * (self.loss_D_fake + self.loss_D_real) + self.loss_D_grad_penalty
-
         self.loss_D.backward()
 
     #########################################################################################
@@ -290,16 +285,26 @@ class AvsgModel(BaseModel):
 
     #########################################################################################
 
-    def get_visual_samples(self, dataset, opt, epoch, epoch_iter, run_start_time):
+    def get_visual_samples(self, dataset, opt, i_epoch, epoch_iter, run_start_time):
 
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
+
+        self.eval()
+
         visuals_dict = {}
         use_wandb = opt.use_wandb
 
-        n_maps = opt.vis_n_maps
-        n_generator_runs = opt.vis_n_generator_runs
+        stats_n_maps = opt.stats_n_maps
+        vis_n_maps = opt.vis_n_maps
+        stats_n_generator_runs = opt.stats_n_generator_runs
+        vis_n_generator_runs = opt.vis_n_generator_runs
+        vis_n_maps_cnt = 0
 
-        show_loss = epoch > 1 or epoch_iter > 1
+        show_loss = i_epoch > 0 or epoch_iter > 0
+
+        # TODO: calc statitics over this and add to wandb log
+        D_fakes_err = 1 - (pred_fake > 0).cpu().numpy().mean()  # metric for evaluation only
+        D_reals_err = pred_fake.mean().item()  # metric for evaluation only
 
         map_id = 1
         wandb_logs = dict()
@@ -312,12 +317,11 @@ class AvsgModel(BaseModel):
             table_columns = ['Runtime'] + list(info_dict.keys())
             table_data_row = [run_time_str] + list(info_dict.values())
             table_data_rows = [table_data_row]
-            wandb_logs[f"Epoch {epoch}, iteration {epoch_iter}"] = \
+            wandb_logs[f"Epoch {i_epoch}, iteration {epoch_iter}"] = \
                 wandb.Table(columns=table_columns, data=table_data_rows)
 
-
         for scene_data in dataset:
-            log_label = f"Epoch {epoch}, iteration {epoch_iter}, Map #{map_id}"
+            log_label = f"Epoch {i_epoch}, iteration {epoch_iter}, Map #{map_id}"
             # if not self.is_sample_valid(scene_data):
             #     # if the data sample is not valid to use - skip it
             #     continue
@@ -331,20 +335,26 @@ class AvsgModel(BaseModel):
                 caption += '\n'.join(get_agents_descriptions(real_agents_feat_dicts))
                 wandb_logs[log_label] = [wandb.Image(img, caption=caption)]
 
-            for i_generator_run in range(n_generator_runs):
+            vis_n_generator_runs_cnt = 0
+            for i_generator_run in range(stats_n_generator_runs):
                 fake_agents_feat_vecs = self.netG(conditioning)
                 fake_agents_feat_dicts = agents_feat_vecs_to_dicts(fake_agents_feat_vecs)
-                img = visualize_scene_feat(fake_agents_feat_dicts, real_map)
-                pred_fake = torch.sigmoid(self.netD(conditioning, fake_agents_feat_vecs)).item()
-                visuals_dict[f'map_{map_id}_gen_{i_generator_run + 1}_D_fake={pred_fake:.2}'] = img
-                if use_wandb:
-                    caption = f'gen_agents_#{i_generator_run + 1}\nD_fake={pred_fake:.2}\n'
-                    caption += '\n'.join(get_agents_descriptions(fake_agents_feat_dicts))
-                    wandb_logs[log_label].append(
-                        wandb.Image(img, caption=caption))
-            map_id += 1
-            if map_id > n_maps:
-                break
 
+                if vis_n_maps_cnt < vis_n_maps and vis_n_generator_runs_cnt < vis_n_generator_runs:
+                    img = visualize_scene_feat(fake_agents_feat_dicts, real_map)
+                    pred_fake = torch.sigmoid(self.netD(conditioning, fake_agents_feat_vecs)).item()
+                    visuals_dict[f'map_{map_id}_gen_{i_generator_run + 1}_D_fake={pred_fake:.2}'] = img
+                    if use_wandb:
+                        caption = f'gen_agents_#{i_generator_run + 1}\nD_fake={pred_fake:.2}\n'
+                        caption += '\n'.join(get_agents_descriptions(fake_agents_feat_dicts))
+                        wandb_logs[log_label].append(
+                            wandb.Image(img, caption=caption))
+                    vis_n_maps_cnt += 1
+                    vis_n_generator_runs_cnt += 1
+            map_id += 1
+            if map_id > stats_n_maps:
+                break
+        if opt.isTrain:
+            self.train()
         return visuals_dict, wandb_logs
     #########################################################################################

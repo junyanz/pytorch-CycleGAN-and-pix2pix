@@ -70,9 +70,7 @@ if __name__ == '__main__':
             #     if len(data_buffer) < opt.num_samples_pack:
             #         continue
 
-            # unpack data from dataset and apply preprocessing:
-            model.set_input(scene_data)
-
+            # run the model in eval mode for several runs to get statistics and
             # display images on visdom and save images to an HTML file:
             if total_iters % opt.display_freq == 0:
                 save_result = total_iters % opt.update_html_freq == 0
@@ -80,6 +78,12 @@ if __name__ == '__main__':
                 visualizer.display_current_results(visuals_dict, i_epoch, epoch_iter, save_result,
                                                    file_type='jpg', wandb_logs=wandb_logs)
                 print(f'Figure saved. epoch #{i_epoch}, epoch_iter #{epoch_iter}, total_iter #{total_iters}')
+
+
+            model.train()
+
+            # unpack data from dataset and apply preprocessing:
+            model.set_input(scene_data)
 
             # calculate loss functions, get gradients, update network weights:
             model.optimize_parameters()
