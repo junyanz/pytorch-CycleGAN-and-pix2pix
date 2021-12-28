@@ -100,13 +100,13 @@ class AgentsDecoderMLP(nn.Module):
                            opt=opt,
                            bias=opt.agents_dec_use_bias)
 
-    def forward(self, map_latent, latent_noise):
+    def forward(self, map_latent, latent_noise, n_agents):
         latent_noise_f = torch.flatten(latent_noise)
         in_vec = torch.cat([map_latent, latent_noise_f])
         out_vec = self.decoder(in_vec)
 
         agents_feat_vec_list = []
-        for i_agent in range(self.num_agents):
+        for i_agent in range(n_agents):
             output_feat = out_vec[i_agent * self.dim_agent_feat_vec:(i_agent + 1) * self.dim_agent_feat_vec]
             # Project the generator output to the feature vectors domain:
             agent_feat = project_to_agent_feat(output_feat)
