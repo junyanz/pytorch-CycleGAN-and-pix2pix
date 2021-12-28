@@ -87,10 +87,9 @@ class AgentsDecoderMLP(nn.Module):
 
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(opt.agent_feat_vec_coord_labels)
-        self.num_agents = opt.num_agents
         self.dim_latent_map = opt.dim_latent_map
         self.dim_agent_noise = opt.dim_agent_noise
-        self.d_in = self.dim_agent_noise * self.num_agents + opt.dim_latent_map
+        self.d_in = self.dim_agent_noise * self.max_num_agents + opt.dim_latent_map
         self.d_out = self.dim_agent_feat_vec * self.num_agents
 
 

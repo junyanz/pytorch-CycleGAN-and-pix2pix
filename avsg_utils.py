@@ -55,7 +55,12 @@ def agents_feat_dicts_to_vecs(agent_feat_vec_coord_labels, agents_feat_dicts, de
 
 
 def pre_process_scene_data(scene_data, opt):
-    num_agents = opt.num_agents
+
+
+    n_agents  = len(scene_data['agents_feat'])
+
+    n_agents = min(n_agents, opt.max_num_agents) # we will take only up to max_num_agents agents from the scene
+
     agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
     polygon_name_order = opt.polygon_name_order
     device = opt.device
@@ -67,7 +72,7 @@ def pre_process_scene_data(scene_data, opt):
 
     agents_feat_vecs = filter_and_preprocess_agent_feat(
         scene_data['agents_feat'],
-        num_agents, agent_feat_vec_coord_labels,
+        n_agents, agent_feat_vec_coord_labels,
         device)
 
     # Map features - Move to device
@@ -125,7 +130,7 @@ def pre_process_scene_data(scene_data, opt):
     else:
         raise NotImplementedError(f'Unrecognized opt.augmentation_type  {opt.augmentation_type}')
     real_agents = agents_feat_vecs
-    conditioning = {'map_feat': map_feat, 'n_agents': opt.num_agents}
+    conditioning = {'map_feat': map_feat, 'n_agents': n_agents}
     return real_agents, map_feat, conditioning
 #########################################################################################
 
@@ -133,7 +138,7 @@ def pre_process_scene_data(scene_data, opt):
 #########################################################################################
 
 
-def filter_and_preprocess_agent_feat(agent_feat, num_agents, agent_feat_vec_coord_labels, device):
+def filter_and_preprocess_agent_feat(agent_feat, n_agents, agent_feat_vec_coord_labels, device):
     # We assume this order of coordinates:
     assert agent_feat_vec_coord_labels == ['centroid_x', 'centroid_y',
                                            'yaw_cos', 'yaw_sin',
@@ -153,7 +158,7 @@ def filter_and_preprocess_agent_feat(agent_feat, num_agents, agent_feat_vec_coor
                                                  device)
     agents_dists_order = np.argsort(agent_dists_to_ego)
 
-    agents_inds = agents_dists_order[:num_agents]  # take the closest agent to the ego
+    agents_inds = agents_dists_order[:n_agents]  # take the closest agent to the ego
     np.random.shuffle(agents_inds)  # shuffle so that the ego won't always be first
     agents_feat_vecs = agents_feat_vecs[agents_inds]
 

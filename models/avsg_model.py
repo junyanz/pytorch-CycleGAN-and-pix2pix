@@ -67,7 +67,7 @@ class AvsgModel(BaseModel):
                                      'is_PEDESTRIAN',  # [9]  0 or 1
                                      ],
                             type=list)
-        parser.add_argument('--num_agents', type=int, default=4, help=' number of agents in a scene')
+        parser.add_argument('--max_num_agents', type=int, default=4, help=' number of agents in a scene')
 
         # ~~~~  Data processing
         parser.add_argument('--augmentation_type', type=str, default='rotate_and_translate',
@@ -156,7 +156,6 @@ class AvsgModel(BaseModel):
         self.polygon_name_order = opt.polygon_name_order
         self.agent_feat_vec_coord_labels = opt.agent_feat_vec_coord_labels
         self.dim_agent_feat_vec = len(self.agent_feat_vec_coord_labels)
-        self.num_agents = opt.num_agents
         self.opt = opt
         # specify the training losses you want to print out.
         # The program will call base_model.get_current_losses to plot the losses to the console and save them to the disk.
@@ -211,7 +210,7 @@ class AvsgModel(BaseModel):
         """
         self.real_agents, map_feat, self.conditioning = pre_process_scene_data(scene_data, self.opt)
         #########################################################################################
-        
+
         # self.conditioning = []
         # self.real_agents = []
         # # for i, scene_data in enumerate(data_buffer):
