@@ -250,7 +250,7 @@ class Visualizer():
         if t_comp and t_data:
             message = '(epoch: %d, iters: %d, time: %.3f, data: %.3f) ' % (epoch, iters, t_comp, t_data)
         else:
-            message = '(epoch: %d, iters: %d) ' % (epoch, iters)
+            message = '(epoch: %d, iters: %d) Current losses: ' % (epoch, iters)
         for k, v in losses.items():
             message += '%s: %.3f ' % (k, v)
 

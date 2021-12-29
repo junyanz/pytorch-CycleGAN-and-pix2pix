@@ -39,7 +39,7 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
-import torch
+from avsg_visualization_utils import get_metrics_stats_and_images
 
 if __name__ == '__main__':
     run_start_time = time.time()
@@ -74,11 +74,10 @@ if __name__ == '__main__':
             # display images on visdom and save images to an HTML file:
             if total_iters % opt.display_freq == 0:
                 save_result = total_iters % opt.update_html_freq == 0
-                visuals_dict, wandb_logs = model.get_visual_samples(dataset, opt, i_epoch, epoch_iter, run_start_time)
+                visuals_dict, wandb_logs = get_metrics_stats_and_images(model, dataset, opt, i_epoch, epoch_iter)
                 visualizer.display_current_results(visuals_dict, i_epoch, epoch_iter, save_result,
                                                    file_type='jpg', wandb_logs=wandb_logs)
                 print(f'Figure saved. epoch #{i_epoch}, epoch_iter #{epoch_iter}, total_iter #{total_iters}')
-
 
             model.train()
 

@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from matplotlib.patches import Rectangle
+import wandb
+from avsg_utils import agents_feat_vecs_to_dicts, pre_process_scene_data, get_agents_descriptions
+from models.networks import cal_gradient_penalty
 
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
@@ -108,3 +111,111 @@ def visualize_scene_feat(agents_feat, map_feat):
     plt.close(fig)
     return image
 ##############################################################################################
+
+
+def get_metrics_stats_and_images(model, dataset, opt, i_epoch, epoch_iter):
+
+    """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
+
+    wandb_logs = {}
+    visuals_dict = {}
+    model.eval()
+    stats_n_maps = opt.stats_n_maps   # how many maps to average over the metrics
+    vis_n_maps = opt.vis_n_maps  # how many maps to visualize
+    vis_n_generator_runs = opt.vis_n_generator_runs    # how many sampled fake agents per map to visualize
+    metrics = dict()
+    metrics_names = ['D_err_on_fakes', 'D_err_on_reals', 'loss_G', 'loss_D', 'loss_G_GAN',
+                     'loss_G_reconstruct', 'loss_D_real', 'loss_D_fake',  'loss_D_grad_penalty']
+    for metric_name in metrics_names:
+        metrics[metric_name] = np.zeros(stats_n_maps)
+
+    assert vis_n_generator_runs >= 1
+    map_id = 0
+    log_label = 'null'
+    for scene_data in dataset:
+        if map_id >= stats_n_maps:
+            break
+        real_agents_vecs, _, conditioning = pre_process_scene_data(scene_data, opt)
+
+
+        if map_id < vis_n_maps:
+            # Add an image of the map & real agents to wandb logs
+            log_label = f"Epoch#{1 + i_epoch} iter#{1 + epoch_iter} Map#{1 + map_id}"
+            img, wandb_img = get_wandb_image(model, conditioning, real_agents_vecs, label='real_agents')
+            visuals_dict[f'map_{map_id}_real_agents'] = img
+            if opt.use_wandb:
+                wandb_logs[log_label] = [wandb_img]
+
+        for i_generator_run in range(vis_n_generator_runs):
+            fake_agents_vecs = model.netG(conditioning)
+
+            # calculate the metrics for only for the first generated agents set per map:
+            if i_generator_run == 0:
+                # Feed real agents set to discriminator
+                pred_is_real_for_real = model.netD(conditioning, real_agents_vecs)
+                pred_is_real_for_fake = model.netD(conditioning, fake_agents_vecs)
+                loss_D_fake = model.criterionGAN(prediction=pred_is_real_for_fake, target_is_real=False) # D wants to correctly classsify
+                loss_D_real = model.criterionGAN(prediction=pred_is_real_for_real, target_is_real=True) # D wants to correctly classsify
+                loss_G_GAN = model.criterionGAN(prediction=pred_is_real_for_fake, target_is_real=True)  # G tries to make D wrongly classify the fake sample (make D output "True"
+                loss_G_reconstruct = model.criterion_reconstruct(fake_agents_vecs, real_agents_vecs)
+                if model.gan_mode == 'wgangp':
+                    loss_D_grad_penalty = cal_gradient_penalty(model.netD, conditioning,
+                                                                    real_agents_vecs, fake_agents_vecs,
+                                                                    model.device, type='mixed',
+                                                                    constant=1.0)
+                else:
+                    loss_D_grad_penalty = 0
+                metrics['loss_G_GAN'][map_id] = loss_G_GAN
+                metrics['loss_D_real'][map_id] = loss_D_real
+                metrics['loss_D_fake'][map_id] = loss_D_fake
+                metrics['loss_G_reconstruct'][map_id] = loss_G_reconstruct
+                metrics['loss_G'][map_id] = loss_G_GAN + loss_G_reconstruct * opt.lambda_reconstruct
+                metrics['loss_D_grad_penalty'][map_id] = loss_D_grad_penalty
+                metrics['loss_D'][map_id] = loss_D_fake + loss_D_real + model.lambda_gp * loss_D_grad_penalty
+                metrics['D_err_on_fakes'][map_id] = pred_is_real_for_fake
+                metrics['D_err_on_reals'][map_id] = 1 - pred_is_real_for_real
+
+            # Add an image of the map & fake agents to wandb logs
+            if map_id < vis_n_maps and i_generator_run < vis_n_generator_runs:
+                img, wandb_img = get_wandb_image(model, conditioning, fake_agents_vecs, label='real_agents')
+                visuals_dict[f'map_#{map_id+1}_fake_#{i_generator_run+1}'] = img
+                if opt.use_wandb:
+                    wandb_logs[log_label].append(wandb_img)
+        map_id += 1
+
+    # Average over the maps:
+    for key, val in metrics.items():
+        metrics[key] = val.mean()
+    if opt.use_wandb:
+        wandb.log(metrics)
+
+    print('Eval metrics: ' + ', '.join([f'{key}: {val:.2f}' for key, val in metrics.items()]))
+
+    # wandb.log(info_dict)
+    # # Show also in table of current vales:
+    # run_time_str = strfdelta(datetime.timedelta(seconds=time.time() - run_start_time), '%H:%M:%S')
+    # table_columns = ['Runtime'] + list(info_dict.keys())
+    # table_data_row = [run_time_str] + list(info_dict.values())
+    # table_data_rows = [table_data_row]
+    # wandb_logs[f"Epoch #{1+i_epoch} iter #{1+epoch_iter}"] = \
+    #     wandb.Table(columns=table_columns, data=table_data_rows)
+
+    if opt.isTrain:
+        model.train()
+    return visuals_dict, wandb_logs
+#########################################################################################
+
+def get_wandb_image(model, conditioning, agents_vecs, label='real_agents'):
+    agents_feat_dicts = agents_feat_vecs_to_dicts(agents_vecs)
+    real_map = conditioning['map_feat']
+    img = visualize_scene_feat(agents_feat_dicts, real_map)
+    pred_is_real = torch.sigmoid(model.netD(conditioning, agents_vecs)).item()
+    caption = f'{label}\npred_is_real={pred_is_real:.2}\n'
+    caption += '\n'.join(get_agents_descriptions(agents_feat_dicts))
+    wandb_img = wandb.Image(img, caption=caption)
+    return img, wandb_img
+
+
+#########################################################################################
+
+
