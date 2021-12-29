@@ -39,7 +39,7 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
-from avsg_visualization_utils import get_metrics_stats_and_images
+from util.avsg_visualization_utils import get_metrics_stats_and_images
 
 if __name__ == '__main__':
     run_start_time = time.time()
