@@ -289,10 +289,11 @@ class AvsgModel(BaseModel):
 
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
 
+        if not opt.use_wandb:
+            return
+
         self.eval()
 
-        visuals_dict = {}
-        use_wandb = opt.use_wandb
 
         stats_n_maps = opt.stats_n_maps
         vis_n_maps = opt.vis_n_maps
@@ -300,40 +301,35 @@ class AvsgModel(BaseModel):
         vis_n_generator_runs = opt.vis_n_generator_runs
         vis_n_maps_cnt = 0
 
-        show_loss = i_epoch > 0 or epoch_iter > 0
-
         # TODO: calc statitics over this and add to wandb log
         D_fakes_err = 1 - (pred_fake > 0).cpu().numpy().mean()  # metric for evaluation only
         D_reals_err = pred_fake.mean().item()  # metric for evaluation only
 
         map_id = 1
-        wandb_logs = dict()
-        if use_wandb and show_loss:
-            # Log all losses in charts:
-            info_dict = self.get_current_losses()
-            wandb.log(info_dict)
-            # Show also in table of current vales:
-            run_time_str = strfdelta(datetime.timedelta(seconds=time.time() - run_start_time), '%H:%M:%S')
-            table_columns = ['Runtime'] + list(info_dict.keys())
-            table_data_row = [run_time_str] + list(info_dict.values())
-            table_data_rows = [table_data_row]
-            wandb_logs[f"Epoch {i_epoch}, iteration {epoch_iter}"] = \
-                wandb.Table(columns=table_columns, data=table_data_rows)
+        wandb_logs = {}
+        visuals_dict = {}
+
 
         for scene_data in dataset:
             log_label = f"Epoch {i_epoch}, iteration {epoch_iter}, Map #{map_id}"
-            # if not self.is_sample_valid(scene_data):
-            #     # if the data sample is not valid to use - skip it
-            #     continue
+
+            #
+            # # Log all losses in charts:
+            # info_dict = self.get_current_losses()
+
+
             real_agents, real_map, conditioning = pre_process_scene_data(scene_data, self.opt)
             real_agents_feat_dicts = agents_feat_vecs_to_dicts(real_agents)
+
             img = visualize_scene_feat(real_agents_feat_dicts, real_map)
+
             pred_fake = torch.sigmoid(self.netD(conditioning, real_agents)).item()
+
             visuals_dict[f'map_{map_id}_real_fake_{int(100 * pred_fake)}'] = img
-            if use_wandb:
-                caption = f'real_agents\nD_fake={pred_fake:.2}\n'
-                caption += '\n'.join(get_agents_descriptions(real_agents_feat_dicts))
-                wandb_logs[log_label] = [wandb.Image(img, caption=caption)]
+
+            caption = f'real_agents\nD_fake={pred_fake:.2}\n'
+            caption += '\n'.join(get_agents_descriptions(real_agents_feat_dicts))
+            wandb_logs[log_label] = [wandb.Image(img, caption=caption)]
 
             vis_n_generator_runs_cnt = 0
             for i_generator_run in range(stats_n_generator_runs):
@@ -354,6 +350,17 @@ class AvsgModel(BaseModel):
             map_id += 1
             if map_id > stats_n_maps:
                 break
+
+        wandb.log(info_dict)
+        # Show also in table of current vales:
+        run_time_str = strfdelta(datetime.timedelta(seconds=time.time() - run_start_time), '%H:%M:%S')
+        table_columns = ['Runtime'] + list(info_dict.keys())
+        table_data_row = [run_time_str] + list(info_dict.values())
+        table_data_rows = [table_data_row]
+        wandb_logs[f"Epoch {i_epoch}, iteration {epoch_iter}"] = \
+            wandb.Table(columns=table_columns, data=table_data_rows)
+
+
         if opt.isTrain:
             self.train()
         return visuals_dict, wandb_logs
