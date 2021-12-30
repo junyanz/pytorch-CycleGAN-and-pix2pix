@@ -182,7 +182,7 @@ class GANLoss(nn.Module):
         return loss
 
 
-def cal_gradient_penalty(netD, conditioning, real_samp, fake_samp, device, type='mixed', constant=1.0):
+def cal_gradient_penalty(netD, conditioning, real_samp, fake_samp, model, type='mixed', constant=1.0):
     """Calculate the gradient penalty loss, used in WGAN-GP paper https://arxiv.org/abs/1704.00028
 
     Arguments:
@@ -196,6 +196,9 @@ def cal_gradient_penalty(netD, conditioning, real_samp, fake_samp, device, type=
 
     Returns the gradient penalty loss
     """
+    device = model.device
+    if model.gan_mode != 'wgangp':
+        return 0
     if type == 'real':   # either use real images, fake images, or a linear interpolation of two.
         interpolatesv = real_samp
     elif type == 'fake':
@@ -212,6 +215,6 @@ def cal_gradient_penalty(netD, conditioning, real_samp, fake_samp, device, type=
                                     grad_outputs=torch.ones(disc_interpolates.size()).to(device),
                                     create_graph=True, retain_graph=True, only_inputs=True)
     gradients = gradients[0].view(real_samp.size(0), -1)  # flat the data
-    gradient_penalty = (((gradients + 1e-16).norm(2, dim=1) - constant) ** 2).mean() * lambda_gp        # added eps
+    gradient_penalty = (((gradients + 1e-16).norm(2, dim=1) - constant) ** 2).mean()        # added eps
     return gradient_penalty
 

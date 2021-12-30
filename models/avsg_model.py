@@ -36,6 +36,15 @@ class AvsgModel(BaseModel):
         Returns:
             the modified parser.
         """
+
+
+        # ~~~~  Data
+        parser.add_argument('--data_eval', type=str, default='', help='Path for evaluation dataset file')
+
+        parser.add_argument('--augmentation_type', type=str, default='rotate_and_translate',
+                            help=" 'none' | 'rotate_and_translate' | 'Gaussian_data' ")
+
+
         # ~~~~  Map features
         parser.add_argument('--polygon_name_order', type=list,
                             default=['lanes_mid', 'lanes_left', 'lanes_right', 'crosswalks'], help='')
@@ -59,13 +68,9 @@ class AvsgModel(BaseModel):
                             type=list)
         parser.add_argument('--max_num_agents', type=int, default=4, help=' number of agents in a scene')
 
-        # ~~~~  Data processing
-        parser.add_argument('--augmentation_type', type=str, default='rotate_and_translate',
-                            help=" 'none' | 'rotate_and_translate' | 'Gaussian_data' ")
-
         # ~~~~  General model settings
         if is_train:
-            parser.set_defaults(gan_mode='vanilla',  # 'the type of GAN objective. [vanilla| lsgan | wgangp].
+            parser.set_defaults(gan_mode='wgangp',  # 'the type of GAN objective. [vanilla| lsgan | wgangp].
                                 # vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
                                 netD='SceneDiscriminator',
                                 netG='SceneGenerator')
@@ -85,7 +90,7 @@ class AvsgModel(BaseModel):
                 lr_decay_factor=0.9,  # if lr_policy==step'
                 num_threads=0,  # threads for loading data, can increase to 4 for faster run if no mem issues
             )
-            parser.add_argument('--lambda_reconstruct', type=float, default=100., help='weight for reconstruct_loss ')
+            parser.add_argument('--lambda_reconstruct', type=float, default=1., help='weight for reconstruct_loss ')
             parser.add_argument('--lambda_gp', type=float, default=100., help='weight for gradient penalty in WGANGP')
             parser.add_argument('--reconstruct_loss_type', type=str, default='MSE', help=" 'L1' | 'MSE' ")
 
@@ -124,7 +129,7 @@ class AvsgModel(BaseModel):
                 update_html_freq=200,
                 display_id=0)
             parser.add_argument('--vis_n_maps', type=int, default=2, help='')
-            parser.add_argument('--vis_n_generator_runs', type=int, default=4, help='')
+            parser.add_argument('--vis_n_generator_runs', type=int, default=3, help='')
             parser.add_argument('--stats_n_maps', type=int, default=10, help='')
 
         return parser
@@ -226,10 +231,10 @@ class AvsgModel(BaseModel):
 
         # Feed fake agents to discriminator and calculate its prediction loss
         fake_agents_detached = self.fake_agents.detach()  # stop backprop to the generator by detaching
-        pred_is_real_for_fake = self.netD(self.conditioning, fake_agents_detached)
+        d_out_for_fake = self.netD(self.conditioning, fake_agents_detached)
 
         # the loss is 0 if D correctly classify as fake
-        self.loss_D_fake = self.criterionGAN(prediction=pred_is_real_for_fake, target_is_real=False)
+        self.loss_D_fake = self.criterionGAN(prediction=d_out_for_fake, target_is_real=False)
 
         # Feed real (loaded from data) agents to discriminator and calculate its prediction loss
         pred_is_real_for_real = self.netD(self.conditioning, self.real_agents)
@@ -237,13 +242,9 @@ class AvsgModel(BaseModel):
         # the loss is 0 if D correctly classify as not fake
         self.loss_D_real = self.criterionGAN(prediction=pred_is_real_for_real, target_is_real=True)
 
-        if self.gan_mode == 'wgangp':
-            self.loss_D_grad_penalty = cal_gradient_penalty(self.netD, self.conditioning,
-                                                            self.real_agents, fake_agents_detached,
-                                                            self.device, type='mixed',
-                                                            constant=1.0)
-        else:
-            self.loss_D_grad_penalty = 0
+
+        self.loss_D_grad_penalty = cal_gradient_penalty(self.netD, self.conditioning, self.real_agents,
+                                                        fake_agents_detached, self)
 
         # combine loss and calculate gradients
         self.loss_D = self.loss_D_fake + self.loss_D_real + self.lambda_gp * self.loss_D_grad_penalty
@@ -254,9 +255,9 @@ class AvsgModel(BaseModel):
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
         #  the generator should fool the discriminator
-        pred_is_real_for_fake = self.netD(self.conditioning, self.fake_agents)
+        d_out_for_fake = self.netD(self.conditioning, self.fake_agents)
         # G wants to make D wrongly classify the fake sample (make D output "True")
-        self.loss_G_GAN = self.criterionGAN(prediction=pred_is_real_for_fake, target_is_real=True)
+        self.loss_G_GAN = self.criterionGAN(prediction=d_out_for_fake, target_is_real=True)
 
         # Second, we want G(map) = map, since the generator acts also as an encoder-decoder for the map
         self.loss_G_reconstruct = self.criterion_reconstruct(self.fake_agents, self.real_agents)

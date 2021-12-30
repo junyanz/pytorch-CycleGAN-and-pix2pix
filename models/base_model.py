@@ -39,6 +39,7 @@ class BaseModel(ABC):
         self.model_names = []
         self.visual_names = []
         self.optimizers = []
+        self.lr = opt.lr
         self.metric = 0  # used for learning rate policy 'plateau'
         if is_image_data:
             if opt.preprocess != 'scale_width':  # with [scale_width], input images might have different sizes, which hurts the performance of cudnn.benchmark.
@@ -135,6 +136,7 @@ class BaseModel(ABC):
         lr = self.optimizers[0].param_groups[0]['lr']
         if lr != old_lr:
             print(f'learning rate {old_lr:.4e} -> {lr:.4e}')
+        self.lr = lr
 
     def get_current_visuals(self):
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""

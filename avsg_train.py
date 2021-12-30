@@ -44,9 +44,13 @@ from util.avsg_visualization_utils import get_metrics_stats_and_images
 if __name__ == '__main__':
     run_start_time = time.time()
     opt = TrainOptions(is_image_data=False).parse()   # get training options
-    dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
-    dataset_size = len(dataset)    # get the number of images in the dataset.
+    train_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+    dataset_size = len(train_dataset)  # get the number of images in the dataset.
     print('The number of training samples = %d' % dataset_size)
+    opt.dataroot = opt.data_eval
+    eval_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+    eval_dataset_size = len(eval_dataset)  # get the number of images in the dataset.
+    print('The number of test samples = %d' % eval_dataset_size)
 
     model = create_model(opt)      # create a model given opt.model and other options
     opt.device = model.device
@@ -60,7 +64,7 @@ if __name__ == '__main__':
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
         # data_buffer = []
-        for i_batch, scene_data in enumerate(dataset):  # inner loop within one epoch
+        for i_batch, scene_data in enumerate(train_dataset):  # inner loop within one epoch
 
             # if not model.is_sample_valid(scene_data):
             #     # if the data sample is not valid to use - skip it
@@ -74,7 +78,9 @@ if __name__ == '__main__':
             # display images on visdom and save images to an HTML file:
             if total_iters % opt.display_freq == 0:
                 save_result = total_iters % opt.update_html_freq == 0
-                visuals_dict, wandb_logs = get_metrics_stats_and_images(model, dataset, opt, i_epoch, epoch_iter)
+                visuals_dict, wandb_logs = get_metrics_stats_and_images(model, train_dataset, eval_dataset,
+                                                                        opt, i_epoch, epoch_iter,
+                                                                        total_iters)
                 visualizer.display_current_results(visuals_dict, i_epoch, epoch_iter, save_result,
                                                    file_type='jpg', wandb_logs=wandb_logs)
                 print(f'Figure saved. epoch #{i_epoch}, epoch_iter #{epoch_iter}, total_iter #{total_iters}')
