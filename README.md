@@ -1,9 +1,20 @@
 
-<img src='imgs/horse2zebra.gif' align="right" width=384>
+<img src='imgs/sketch2fashion.png' align="center" width=600>
 
 <br><br><br>
 
-# CycleGAN and pix2pix in PyTorch
+# Sketch2Fashion with CycleGAN and pix2pix in PyTorch
+
+
+**Information**:  This is the implementation for Sketch2Fashion project which aims to generate realistic pieces of clothing given the sketches. The project uses Pix2Pix and CycleGAN models to achieve the goal. More information about the project can be found at: 
+
+**IMPOARTANT**: The project Pix2Pix and CycleGAN implementations are heavily borrowed from original CGAN and CycleGAN's papers Github repo. We would like to thank you the authors for sharing the amazing models. However, in our project repo, we have a few changes as following:
+
+- We added a new folder **Tools** for our input pipeline implementation such as resize, edge generating, splitting dataset, etc. This folder is borrowed heavily from Tensorflow's implementation of Pix2Pix (many thanks to Christopher Hesse:[link](https://github.com/affinelayer/CGAN-tensorflow)). In this folder, we wrote a few functions to adapt to our specific tasks and dataset. More information in the folder/files.
+- We also added the dataset folder which contains all of our processed dataset, ready for training and testing.
+
+**Contact** If you have any questions or concerns, please leave us a message!
+
 
 **New**:  Please check out [contrastive-unpaired-translation](https://github.com/taesungp/contrastive-unpaired-translation) (CUT), our new unpaired image-to-image translation model that enables fast and memory-efficient training.
 
