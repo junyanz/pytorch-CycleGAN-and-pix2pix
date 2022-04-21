@@ -19,7 +19,7 @@ See our template model class 'template_model.py' for more details.
 """
 
 import importlib
-from models.base_model import BaseModel
+from submodules.cyclegan.models.base_model import BaseModel
 
 
 def find_model_using_name(model_name):
@@ -29,7 +29,7 @@ def find_model_using_name(model_name):
     be instantiated. It has to be a subclass of BaseModel,
     and it is case-insensitive.
     """
-    model_filename = "models." + model_name + "_model"
+    model_filename = "submodules.cyclegan.models." + model_name + "_model"
     modellib = importlib.import_module(model_filename)
     model = None
     target_model_name = model_name.replace('_', '') + 'model'
@@ -47,6 +47,7 @@ def find_model_using_name(model_name):
 
 def get_option_setter(model_name):
     """Return the static method <modify_commandline_options> of the model class."""
+    print(model_name)
     model_class = find_model_using_name(model_name)
     return model_class.modify_commandline_options
 

@@ -1,9 +1,9 @@
 import argparse
 import os
-from util import util
+from submodules.cyclegan.util import util
 import torch
-import models
-import data
+import submodules.cyclegan.models as models
+import submodules.cyclegan.data as data
 
 
 class BaseOptions():
