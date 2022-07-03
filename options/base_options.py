@@ -23,7 +23,9 @@ class BaseOptions():
         parser.add_argument('--dataroot', required=True, help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
         parser.add_argument('--name', type=str, default='experiment_name', help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--use_wandb', action='store_true', help='use wandb')
-        parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
+        parser.add_argument('--gpu_ids', type=str, default='-1', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU', dest='gpu_ids_str')
+        parser.add_argument('--device_ids', type=str, default='0', help='identifiers ("ordinals") of torch devices (i.e. GPUs, CPUs) to use, e.g. 0 or 0,2. ', dest='device_ids_str')
+        parser.add_argument('--device_type', type=str, default='cuda', help='torch device to use [cpu | cuda | mps]')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
         # model parameters
         parser.add_argument('--model', type=str, default='cycle_gan', help='chooses which model to use. [cycle_gan | pix2pix | test | colorization]')
@@ -123,15 +125,26 @@ class BaseOptions():
 
         self.print_options(opt)
 
-        # set gpu ids
-        str_ids = opt.gpu_ids.split(',')
-        opt.gpu_ids = []
-        for str_id in str_ids:
-            id = int(str_id)
-            if id >= 0:
-                opt.gpu_ids.append(id)
-        if len(opt.gpu_ids) > 0:
-            torch.cuda.set_device(opt.gpu_ids[0])
+        device_ids = [int(i) for i in opt.device_ids_str.split(',') if int(i) >= 0]
+        gpu_ids = [int(i) for i in opt.gpu_ids_str.split(',') if int(i) >= 0]
+
+        # convert old-style `gpu_ids` arg into new-style `torch_devices`
+        # while catching invalid combinations of `gpu_ids` and device_type
+        if len(gpu_ids) > 0:
+            if opt.device_type !='cuda':
+                #  This is the canonical way to raise an error from a parser
+                self.parser.error('If --gpu_ids is specified, --device_type must be "cuda". To specify non-cuda device ids, use --device_ids')
+            device_ids = gpu_ids
+
+        # This doesn't currently allow specifying devices with a mix of different types
+        opt.torch_devices = [torch.device(f'{opt.device_type}:{i}') for i in device_ids]
+                    
+        if opt.device_type == 'cuda':
+            torch.cuda.device(device_ids[0])
+        elif opt.device_type == 'mps':
+            if device_ids != [0]:
+                #  This is the canonical way to raise an error from a parser
+                self.parser.error('Devices other than "0" are not currently supported with MPS backend.')
 
         self.opt = opt
         return self.opt
