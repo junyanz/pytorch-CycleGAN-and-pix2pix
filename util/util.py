@@ -101,3 +101,12 @@ def mkdir(path):
     """
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def backend_available(type_):
+    if type_ == 'cpu':
+        return True
+    elif type_ == 'cuda':
+        return torch.cuda.is_available()
+    else:
+        return getattr(torch.backends,type_).is_available()
