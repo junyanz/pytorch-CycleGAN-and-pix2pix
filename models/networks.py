@@ -613,3 +613,26 @@ class PixelDiscriminator(nn.Module):
     def forward(self, input):
         """Standard forward."""
         return self.net(input)
+
+
+class NeuralNetworkClassifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+        # Inputs to hidden layer linear transformation
+        self.hidden = nn.Linear(196608, 256)
+        # Output layer, 10 units - one for each digit
+        self.output = nn.Linear(256, 10)
+        
+        # Define sigmoid activation and softmax output 
+        self.sigmoid = nn.Sigmoid()
+        self.softmax = nn.Softmax(dim=1)
+        
+    def forward(self, x):
+        # Pass the input tensor through each of our operations
+        x = self.hidden(x)
+        x = self.sigmoid(x)
+        x = self.output(x)
+        x = self.softmax(x)
+        
+        return x

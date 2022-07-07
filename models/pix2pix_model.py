@@ -1,7 +1,8 @@
 import torch
 from .base_model import BaseModel
 from . import networks
-
+import numpy as np
+from deepface import DeepFace
 
 class Pix2PixModel(BaseModel):
     """ This class implements the pix2pix model, for learning a mapping from input images to output images given paired data.
@@ -55,10 +56,14 @@ class Pix2PixModel(BaseModel):
         # define networks (both generator and discriminator)
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
+        
+        net = self.netG.module.model.model[1].model[3].model[3].model[3].model[3].model[3].model[3].model[2]#getattr(model, 'net' + layer1)
+        self.layer1 = net
 
         if self.isTrain:  # define a discriminator; conditional GANs need to take both input and output images; Therefore, #channels for D is input_nc + output_nc
             self.netD = networks.define_D(opt.input_nc + opt.output_nc, opt.ndf, opt.netD,
                                           opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
+            #self.shallowNetwork = networks.NeuralNetworkClassifier()
 
         if self.isTrain:
             # define loss functions
@@ -82,6 +87,8 @@ class Pix2PixModel(BaseModel):
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
+        self.isMorph = input['A_paths'][0].split('/')[-1].split('_')[0] == 'morph'
+
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
@@ -111,7 +118,29 @@ class Pix2PixModel(BaseModel):
         self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
         # combine loss and calculate gradients
         self.loss_G = self.loss_G_GAN + self.loss_G_L1
+
+        #biometric loss
+        '''
+        fake = self.fake_B
+        fake = np.array(fake.cpu().detach())
+        #fake = fake[0, :].transpose([1, 2, 0])
+        fake = np.squeeze(fake)
+        fake = np.transpose(fake)
+
+        real_b = self.real_B
+        real_b = np.array(real_b.cpu().detach())
+        real_b = real_b[0, :].transpose([1, 2, 0])
+        '''
+
+        #loss_11 = DeepFace.verify(img1_path = fake, img2_path = real_b ,model_name = "ArcFace",enforce_detection=False) 
+        #biometric_loss = torch.tensor(int(self.opt.lamba_biometric_loss)*(loss_11['distance']), requires_grad=True)
+        #self.loss_G = self.loss_G_GAN + self.loss_G_L1 + biometric_loss
         self.loss_G.backward()
+
+    def backward_shallowNetwork(self):
+        images = self.fake_B.view(self.fake_B.shape[0], -1)
+        
+
 
     def optimize_parameters(self):
         self.forward()                   # compute fake images: G(A)
@@ -125,3 +154,4 @@ class Pix2PixModel(BaseModel):
         self.optimizer_G.zero_grad()        # set G's gradients to zero
         self.backward_G()                   # calculate graidents for G
         self.optimizer_G.step()             # udpate G's weights
+        self.backward_shallowNetwork()
