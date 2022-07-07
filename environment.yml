@@ -13,3 +13,5 @@ dependencies:
   - Pillow==6.1.0
   - numpy==1.16.4
   - visdom==0.1.8
+  - wandb==0.12.18
+
