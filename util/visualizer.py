@@ -76,9 +76,10 @@ class Visualizer():
         self.port = opt.display_port
         self.saved = False
         self.use_wandb = opt.use_wandb
+        self.wandb_project_name = opt.wandb_project_name
         self.current_epoch = 0
         self.ncols = opt.display_ncols
-        
+
         if self.display_id > 0:  # connect to a visdom server given <display_port> and <display_server>
             import visdom
             self.vis = visdom.Visdom(server=opt.display_server, port=opt.display_port, env=opt.display_env)
@@ -86,7 +87,7 @@ class Visualizer():
                 self.create_visdom_connections()
 
         if self.use_wandb:
-            self.wandb_run = wandb.init(project='CycleGAN-and-pix2pix', name=opt.name, config=opt) if not wandb.run else wandb.run
+            self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
             self.wandb_run._label(repo='CycleGAN-and-pix2pix')
 
         if self.use_html:  # create an HTML object at <checkpoints_dir>/web/; images will be saved under <checkpoints_dir>/web/images/
@@ -171,7 +172,7 @@ class Visualizer():
 
         if self.use_wandb:
             columns = [key for key, _ in visuals.items()]
-            columns.insert(0,'epoch')
+            columns.insert(0, 'epoch')
             result_table = wandb.Table(columns=columns)
             table_row = [epoch]
             ims_dict = {}
@@ -185,7 +186,6 @@ class Visualizer():
                 self.current_epoch = epoch
                 result_table.add_data(*table_row)
                 self.wandb_run.log({"Result": result_table})
-
 
         if self.use_html and (save_result or not self.saved):  # save images to an HTML file if they haven't been saved.
             self.saved = True

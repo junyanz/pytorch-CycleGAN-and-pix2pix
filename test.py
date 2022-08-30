@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     # initialize logger
     if opt.use_wandb:
-        wandb_run = wandb.init(project='CycleGAN-and-pix2pix', name=opt.name, config=opt) if not wandb.run else wandb.run
+        wandb_run = wandb.init(project=opt.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
         wandb_run._label(repo='CycleGAN-and-pix2pix')
 
     # create a website
