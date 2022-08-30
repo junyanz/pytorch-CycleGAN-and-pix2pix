@@ -3,15 +3,15 @@ channels:
 - pytorch
 - defaults
 dependencies:
-- python=3.6
-- pytorch=1.4.0
+- python=3.8
+- pytorch=1.8.1
 - scipy
 - pip
 - pip:
-  - dominate==2.4.0
-  - torchvision==0.5.0
-  - Pillow==6.1.0
-  - numpy==1.16.4
+  - dominate==2.6.0
+  - torchvision==0.9.1
+  - Pillow==8.0.1
+  - numpy==1.19.2
   - visdom==0.1.8
   - wandb==0.12.18
 
