@@ -125,3 +125,24 @@ You can find more training details and hyperparameter settings in the appendix o
 
 #### Results with [Cycada](https://arxiv.org/pdf/1711.03213.pdf)
 We generated the [result of translating GTA images to Cityscapes-style images](https://junyanz.github.io/CycleGAN/) using our Torch repo. Our PyTorch and Torch implementation seemed to produce a little bit different results, although we have not measured the FCN score using the PyTorch-trained model. To reproduce the result of Cycada, please use the Torch repo for now.
+
+#### Loading and using the saved model in your code
+You can easily consume the model in your code using the below code snippet:
+
+```python
+import torch
+from models.networks import define_G
+from collections import OrderedDict
+
+model_dict = torch.load("checkpoints/stars_pix2pix/latest_net_G.pth")
+new_dict = OrderedDict()
+for k, v in model_dict.items():
+    # load_state_dict expects keys with prefix 'module.'
+    new_dict["module." + k] = v
+
+# make sure you pass the correct parameters to the define_G method
+generator_model = define_G(input_nc=1,output_nc=1,ngf=64,netG="resnet_9blocks",
+                            norm="batch",use_dropout=True,init_gain=0.02,gpu_ids=[0])
+generator_model.load_state_dict(new_dict)
+```
+If everything goes well you should see a '\<All keys matched successfully\>' message.
