@@ -112,7 +112,16 @@ def get_transform(opt, params=None, grayscale=False, method=transforms.Interpola
     return transforms.Compose(transform_list)
 
 
+def __transforms2pil_resize(method):
+    mapper = {transforms.InterpolationMode.BILINEAR: Image.BILINEAR,
+              transforms.InterpolationMode.BICUBIC: Image.BICUBIC,
+              transforms.InterpolationMode.NEAREST: Image.NEAREST,
+              transforms.InterpolationMode.LANCZOS: Image.LANCZOS,}
+    return mapper[method]
+
+
 def __make_power_2(img, base, method=transforms.InterpolationMode.BICUBIC):
+    method = __transforms2pil_resize(method)
     ow, oh = img.size
     h = int(round(oh / base) * base)
     w = int(round(ow / base) * base)
@@ -124,6 +133,7 @@ def __make_power_2(img, base, method=transforms.InterpolationMode.BICUBIC):
 
 
 def __scale_width(img, target_size, crop_size, method=transforms.InterpolationMode.BICUBIC):
+    method = __transforms2pil_resize(method)
     ow, oh = img.size
     if ow == target_size and oh >= crop_size:
         return img
