@@ -1,3 +1,11 @@
+beautifulsoup4==4.11.1
+dominate==2.6.0
+numpy==1.19.2
+Pillow==9.2.0
+requests==2.28.1
+scikit_image==0.19.3
+scipy==1.9.1
+skimage==0.0
 torch>=1.4.0
 torchvision>=0.5.0
 dominate>=2.4.0
