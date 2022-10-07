@@ -337,11 +337,17 @@ class ResnetGenerator(nn.Module):
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
-
-        model = [nn.ReflectionPad2d(3),
-                 nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0, bias=use_bias),
-                 norm_layer(ngf),
-                 nn.ReLU(True)]
+        print("entering resblock")
+        if input_nc==3:
+            model = [nn.ReflectionPad2d(3),
+                     nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0, bias=use_bias),
+                     norm_layer(ngf),
+                     nn.ReLU(True)]
+        else:
+            model = [nn.ReflectionPad2d(3),
+            nn.Conv2d(input_nc*7+1, ngf, kernel_size=7, padding=0, bias=use_bias),
+            norm_layer(ngf),
+            nn.ReLU(True)]
 
         n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers

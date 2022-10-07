@@ -33,6 +33,50 @@ class vcgDataset(BaseDataset):
         self.targets = list(sorted([logo_name for i, logo_name in enumerate(os.listdir(os.path.join(opt.dataroot, "img_if"))) if ".tif" in logo_name]  
 ))# IF  
     def __getitem__(self, index):
+        img_path = os.path.join(self.root, "img_he", self.imgs[index])        
+        targets_path = os.path.join(self.root, "img_if", self.targets[index])
+        mask_path = os.path.join(self.root, "mask", self.targets[index])
+        img = io.imread(img_path)
+        img = (np.array(img)/255).astype("float32")
+        img = torch.as_tensor(img)
+        img = img.permute((2,0,1))
+        target = io.imread(targets_path)
+        target = (target/(256.*256.-1.))
+        target = torch.as_tensor(target.astype("float32"))
+        mask = io.imread(mask_path)
+        mask = torch.as_tensor(mask.astype("float32"))
+        img, target = self.transforms_he(img), self.transforms_if(target)
+        #return {'A': img, 'B': target, 'A_paths': img_path, 'B_paths': targets_path}
+        return {'A': target, 'B': img, 'A_paths': targets_path, 'B_paths': img_path}
+    def __len__(self):
+        return len(self.imgs)
+    
+class adapter_Dataset(BaseDataset):
+    """A dataset class for paired image dataset.
+
+    It assumes that the directory '/path/to/data/train' contains image pairs in the form of {A,B}.
+    During test time, you need to prepare a directory '/path/to/data/test'.
+    """
+    def __init__(self, opt):
+        """Initialize this dataset class.
+
+        Parameters:
+            opt (Option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions
+        """
+        BaseDataset.__init__(self, opt)
+        #self.dir_AB = os.path.join(opt.dataroot, opt.phase)  # get the image directory
+        #self.AB_paths = sorted(make_dataset(self.dir_AB, opt.max_dataset_size))  # get image paths
+        #assert(self.opt.load_size >= self.opt.crop_size)   # crop_size should be smaller than the size of loaded image
+        #self.input_nc = self.opt.output_nc if self.opt.direction == 'BtoA' else self.opt.input_nc
+        #self.output_nc = self.opt.input_nc if self.opt.direction == 'BtoA' else self.opt.output_nc
+
+        self.transforms_he =  get_transform(train= True, size=256, HE_IF = "he")
+        self.transforms_if = get_transform(train=True, size=256 , HE_IF = "if")
+        self.imgs = list(sorted([logo_name for i, logo_name in enumerate(os.listdir(os.path.join(opt.dataroot, "img_he"))) if ".tif" in logo_name]  
+))# HE
+        self.targets = list(sorted([logo_name for i, logo_name in enumerate(os.listdir(os.path.join(opt.dataroot, "img_if"))) if ".tif" in logo_name]  
+))# IF  
+    def __getitem__(self, index):
 
                 
         ## Data paths 
