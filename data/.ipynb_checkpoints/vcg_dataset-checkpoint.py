@@ -46,13 +46,11 @@ class vcgDataset(BaseDataset):
         mask = io.imread(mask_path)
         mask = torch.as_tensor(mask.astype("float32"))
         img, target = self.transforms_he(img), self.transforms_if(target)
-        #return img, target
-        #return {'A': img, 'B': target[:3,:,:], 'A_paths': img_path, 'B_paths': targets_path}
-        return {'A': img, 'B': target, 'A_paths': img_path, 'B_paths': targets_path}
-        #return {'A': target, 'B': img, 'A_paths': targets_path, 'B_paths': img_path}
+        #return {'A': img, 'B': target, 'A_paths': img_path, 'B_paths': targets_path}
+        return {'A': target, 'B': img, 'A_paths': targets_path, 'B_paths': img_path}
+    
     def __len__(self):
         return len(self.imgs)
-    
 class adapter_Dataset(BaseDataset):
     """A dataset class for paired image dataset.
 
@@ -101,11 +99,12 @@ class adapter_Dataset(BaseDataset):
         mask = torch.as_tensor(mask.astype("float32"))
         img, target = self.transforms_he(img), self.transforms_if(target)
         #return img, target
-        #return {'A': img, 'B': target[:3,:,:], 'A_paths': img_path, 'B_paths': targets_path}
         return {'A': img, 'B': target, 'A_paths': img_path, 'B_paths': targets_path}
+        #return {'A': img, 'B': target, 'A_paths': img_path, 'B_paths': targets_path}
         
     def __len__(self):
         return len(self.imgs)
+    
 def get_transform(train, size=256, HE_IF = "he"):
     transforms = []
     
@@ -113,7 +112,7 @@ def get_transform(train, size=256, HE_IF = "he"):
         if HE_IF=="he":
             #transforms.append(T.Normalize(mean=[0.0663, 0.0628, 0.0703], std=[3.6709, 3.4846, 3.8646])),
             transforms.append(T.Resize((size,size)))
-            #transforms.append(T.ColorJitter(brightness=.5, hue=.3))
+            #transforms.append(T.ColorJitter(brightness=.2, hue=.1))
         elif HE_IF=="if":
             """
             transforms.append(T.Normalize(
@@ -130,7 +129,7 @@ def get_transform(train, size=256, HE_IF = "he"):
             
         ## TODO: add here other augmentations
         #transforms.append(T.GaussianBlur(kernel_size=(5, 9), sigma=(0.1, 5)))
-        #transforms.append(T.RandomHorizontalFlip(0.5))
+        transforms.append(T.RandomHorizontalFlip(0.5))
         #transforms.append(T.Lambda(lambda x: x[None])),
         #transforms.append(T.ToTensor())
     return T.Compose(transforms)
