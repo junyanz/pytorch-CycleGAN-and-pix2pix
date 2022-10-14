@@ -80,6 +80,8 @@ def get_params(opt, size):
 
 def get_transform(opt, params=None, grayscale=False, method=transforms.InterpolationMode.BICUBIC, convert=True):
     transform_list = []
+    if opt.color_jitter:
+        transform_list.append(transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1))
     if grayscale:
         transform_list.append(transforms.Grayscale(1))
     if 'resize' in opt.preprocess:
