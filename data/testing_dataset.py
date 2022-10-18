@@ -43,15 +43,15 @@ class testingDataset(BaseDataset):
         img = img.permute((2,0,1))
         target = io.imread(targets_path)
         
-        channels = [0,3,17] # visual markers
-        target = np.array([target[ch,:,:] for ch in channels]).astype("float32")
+        #channels = [0,3,17] # visual markers
+        #target = np.array([target[ch,:,:] for ch in channels]).astype("float32")
         target = (target/(256.*256.-1.))
         target = torch.as_tensor(target.astype("float32"))
         mask = io.imread(mask_path)
         mask = torch.as_tensor(mask.astype("float32"))
         img, target = self.transforms_he(img), self.transforms_if(target)
-        return {'A': img, 'B': target, 'A_paths': img_path, 'B_paths': targets_path}
-        #return {'A': target, 'B': img, 'A_paths': targets_path, 'B_paths': img_path}
+        #return {'A': img, 'B': target, 'A_paths': img_path, 'B_paths': targets_path}
+        return {'A': target, 'B': img, 'A_paths': targets_path, 'B_paths': img_path}
     
     def __len__(self):
         return len(self.imgs)

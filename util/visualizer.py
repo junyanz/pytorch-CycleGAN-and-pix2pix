@@ -177,6 +177,7 @@ class Visualizer():
                     #import pdb
                     #pdb.set_trace()
                     if image.shape[1]!=3:#**ADDING**
+                        print(image.shape)
                         image = image[:,:3,:,:]#**ADDING**
                         print("[178]storing 19 channel img: ", label)
                     image_numpy = util.tensor2im(image)
@@ -194,11 +195,14 @@ class Visualizer():
                 if label_html_row != '':
                     label_html += '<tr>%s</tr>' % label_html_row
                 try:
+                    pass
+                    """
                     self.vis.images(images, nrow=ncols, win=self.display_id + 1,
                                     padding=2, opts=dict(title=title + ' images'))
                     label_html = '<table>%s</table>' % label_html
                     self.vis.text(table_css + label_html, win=self.display_id + 2,
                                   opts=dict(title=title + ' labels'))
+                    """
                 except VisdomExceptionBase:
                     self.create_visdom_connections()
 
@@ -245,7 +249,7 @@ class Visualizer():
                     print("[242]storing 19 channel img: ", label)
                 image_numpy = util.tensor2im(image)
                 img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))
-                util.save_image(image_numpy, img_path)
+                #util.save_image(image_numpy, img_path)
 
             # update website
             webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, refresh=1)

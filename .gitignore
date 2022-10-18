@@ -1,4 +1,5 @@
 
+*.html
 *.json
 .DS_Store
 debug*

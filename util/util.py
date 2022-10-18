@@ -4,11 +4,11 @@ import torch
 import numpy as np
 from PIL import Image
 import os
+import skimage
 
 
 def tensor2im(input_image, imtype=np.uint8):
     """"Converts a Tensor array into a numpy image array.
-
     Parameters:
         input_image (tensor) --  the input image tensor array
         imtype (type)        --  the desired type of the converted numpy array
@@ -16,16 +16,38 @@ def tensor2im(input_image, imtype=np.uint8):
     if not isinstance(input_image, np.ndarray):
         if isinstance(input_image, torch.Tensor):  # get the data from a variable
             image_tensor = input_image.data
+            """
+            if  input_image.min()>0:
+                image_tensor = input_image.data
+            else:
+                import torch.nn as nn
+                # https://pytorch.org/docs/stable/generated/torch.nn.Softmax.html
+                m = nn.Softmax(dim=1)
+                image_tensor = input_image.data
+                image_tensor = m(input_image)
+            """
         else:
             return input_image
-        image_numpy = image_tensor[0].cpu().float().numpy()  # convert it into a numpy array
+        image_numpy = image_tensor[0].cpu().float().numpy()  # convert it into a numpy arra
+        #print(f"[before]Range for Generated result]-> [{image_numpy.min(), image_numpy.max()}] and shape: [{image_numpy.shape}]")
+    
         if image_numpy.shape[0] == 1:  # grayscale to RGB
-            image_numpy = np.tile(image_numpy, (3, 1, 1))
-        image_numpy = (np.transpose(image_numpy, (1, 2, 0)) + 1) / 2.0 * 255.0  # post-processing: tranpose and scaling
+            image_numpy = np.tile(image_numpy, (3, 1, 1))# repeat channel 1, 3 times to ressemble RGB
+        
+        if np.absolute(image_numpy.max())>=1.0 or np.absolute(image_numpy.min())>=1.0:
+            #print("re-normalizing")
+            image_numpy = (image_numpy-image_numpy.min())/(image_numpy.max()-image_numpy.min())
+            #image_numpy = (np.transpose(skimage.util.img_as_ubyte(image_numpy), (1,2,0)))
+            image_numpy = skimage.util.img_as_ubyte(image_numpy)
+        else:
+            image_numpy = skimage.util.img_as_ubyte(image_numpy)
+        
+        #image_numpy = (np.transpose(skimage.util.img_as_ubyte(image_numpy), (1,2,0)))
     else:  # if it is a numpy array, do nothing
         image_numpy = input_image
-    return image_numpy.astype(imtype)
-
+    image_numpy = image_numpy.astype(imtype)
+    #print(f"[after]Range for Generated result]-> [{image_numpy.min(), image_numpy.max()}] and shape: [{image_numpy.shape}]")
+    return image_numpy
 
 def diagnose_network(net, name='network'):
     """Calculate and print the mean of average absolute(gradients)
