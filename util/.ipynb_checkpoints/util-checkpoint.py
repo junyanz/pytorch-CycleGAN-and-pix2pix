@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 import os
 import skimage
-
+from skimage import io
 
 def tensor2im(input_image, imtype=np.uint8):
     """"Converts a Tensor array into a numpy image array.
@@ -34,14 +34,16 @@ def tensor2im(input_image, imtype=np.uint8):
         if image_numpy.shape[0] == 1:  # grayscale to RGB
             image_numpy = np.tile(image_numpy, (3, 1, 1))# repeat channel 1, 3 times to ressemble RGB
         
+        image_numpy = skimage.exposure.rescale_intensity(image_numpy, out_range=np.uint8)
+        """
         if np.absolute(image_numpy.max())>=1.0 or np.absolute(image_numpy.min())>=1.0:
-            #print("re-normalizing")
+            
             image_numpy = (image_numpy-image_numpy.min())/(image_numpy.max()-image_numpy.min())
-            #image_numpy = (np.transpose(skimage.util.img_as_ubyte(image_numpy), (1,2,0)))
+            
             image_numpy = skimage.util.img_as_ubyte(image_numpy)
         else:
             image_numpy = skimage.util.img_as_ubyte(image_numpy)
-        
+        """
         #image_numpy = (np.transpose(skimage.util.img_as_ubyte(image_numpy), (1,2,0)))
     else:  # if it is a numpy array, do nothing
         image_numpy = input_image
@@ -75,15 +77,7 @@ def save_image(image_numpy, image_path, aspect_ratio=1.0):
         image_numpy (numpy array) -- input numpy array
         image_path (str)          -- the path of the image
     """
-
-    image_pil = Image.fromarray(image_numpy)
-    h, w, _ = image_numpy.shape
-
-    if aspect_ratio > 1.0:
-        image_pil = image_pil.resize((h, int(w * aspect_ratio)), Image.BICUBIC)
-    if aspect_ratio < 1.0:
-        image_pil = image_pil.resize((int(h / aspect_ratio), w), Image.BICUBIC)
-    image_pil.save(image_path)
+    io.imsave(image_path, image_numpy)
 
 
 def print_numpy(x, val=True, shp=False):

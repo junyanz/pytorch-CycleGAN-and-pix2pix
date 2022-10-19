@@ -1,3 +1,7 @@
+"""
+When detecting object with >3 channels, arrray/object tensor is created to avoid storing format
+"""
+
 import numpy as np
 import os
 import sys
@@ -5,7 +9,7 @@ import ntpath
 import time
 from . import util, html
 from subprocess import Popen, PIPE
-
+import pdb
 
 try:
     import wandb
@@ -18,41 +22,6 @@ else:
     VisdomExceptionBase = ConnectionError
 
 
-def save_images2(webpage, visuals, image_path, aspect_ratio=1.0, width=256, use_wandb=False):
-    """Save images to the disk.
-    Parameters:
-        webpage (the HTML class) -- the HTML webpage class that stores these imaegs (see html.py for more details)
-        visuals (OrderedDict)    -- an ordered dictionary that stores (name, images (either tensor or numpy) ) pairs
-        image_path (str)         -- the string is used to create image paths
-        aspect_ratio (float)     -- the aspect ratio of saved images
-        width (int)              -- the images will be resized to width x width
-    This function will save images stored in 'visuals' to the HTML file specified by 'webpage'.
-    """
-    image_dir = webpage.get_image_dir()
-    short_path = ntpath.basename(image_path[0])
-    name = os.path.splitext(short_path)[0]
-
-    webpage.add_header(name)
-    ims, txts, links = [], [], []
-    ims_dict = {}
-    for label, im_data in visuals.items():
-        if im_data.shape[1]!=3:#**ADDING**
-            #im_data = im_data[:,:3,:,:]#**ADDING**
-            print("storing 19 channel img: ", label)
-        im = util.tensor2im(im_data)
-        image_name = '%s_%s.png' % (name, label)
-        save_path = os.path.join(image_dir, image_name)
-        util.save_image(im, save_path, aspect_ratio=aspect_ratio)
-        ims.append(image_name)
-        txts.append(label)
-        links.append(image_name)
-        
-        if use_wandb:
-            ims_dict[label] = wandb.Image(im)
-    webpage.add_images(ims, txts, links, width=width)
-    if use_wandb:
-        wandb.log(ims_dict)
-from skimage import io
 def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256, use_wandb=False):
     """Save images to the disk.
     Parameters:
@@ -71,26 +40,22 @@ def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256, use_w
     ims, txts, links = [], [], []
     ims_dict = {}
     for label, im_data in visuals.items():
-        if im_data.shape[1]!=3:#**ADDING**
-            #im_data = im_data[:,:3,:,:]#**ADDING**
-            print("[76]storing 19 channel img: ", label)
-        else:
-            
-            print("[79]storing 3 channel img: ", label)
-            im = util.tensor2im(im_data)
-            image_name = '%s_%s.tiff' % (name, label)
-            save_path = os.path.join(image_dir, image_name)
-            io.imsave(save_path,im)
-            #util.save_image(im, save_path, aspect_ratio=aspect_ratio)
-            ims.append(image_name)
-            txts.append(label)
-            links.append(image_name)
-            use_wandb = False
-            if use_wandb:
-                ims_dict[label] = wandb.Image(im)
-        webpage.add_images(ims, txts, links, width=width)
+        #import pdb
+        #pdb.set_trace()
+        im = util.tensor2im(im_data)
+        image_name = '%s_%s.tiff' % (name, label)
+        save_path = os.path.join(image_dir, image_name)
+        #util.save_image(im, save_path, aspect_ratio=aspect_ratio)
+        util.save_image(np.transpose(im, (1,2,0)), save_path, aspect_ratio=aspect_ratio)
+        #io.imsave(save_path, im)
+        ims.append(image_name)
+        txts.append(label)
+        links.append(image_name)
         if use_wandb:
-            wandb.log(ims_dict)
+            ims_dict[label] = wandb.Image(im)
+    webpage.add_images(ims, txts, links, width=width)
+    if use_wandb:
+        wandb.log(ims_dict)
 
 
 class Visualizer():
@@ -158,68 +123,6 @@ class Visualizer():
             epoch (int) - - the current epoch
             save_result (bool) - - if save the current results to an HTML file
         """
-        if self.display_id > 0:  # show images in the browser using visdom
-            ncols = self.ncols
-            if ncols > 0:        # show all the images in one visdom panel
-                ncols = min(ncols, len(visuals))
-                h, w = next(iter(visuals.values())).shape[:2]
-                table_css = """<style>
-                        table {border-collapse: separate; border-spacing: 4px; white-space: nowrap; text-align: center}
-                        table td {width: % dpx; height: % dpx; padding: 4px; outline: 4px solid black}
-                        </style>""" % (w, h)  # create a table css
-                # create a table of images.
-                title = self.name
-                label_html = ''
-                label_html_row = ''
-                images = []
-                idx = 0
-                for label, image in visuals.items():
-                    #import pdb
-                    #pdb.set_trace()
-                    if image.shape[1]!=3:#**ADDING**
-                        print(image.shape)
-                        image = image[:,:3,:,:]#**ADDING**
-                        print("[178]storing 19 channel img: ", label)
-                    image_numpy = util.tensor2im(image)
-                    label_html_row += '<td>%s</td>' % label
-                    images.append(image_numpy.transpose([2, 0, 1]))
-                    idx += 1
-                    if idx % ncols == 0:
-                        label_html += '<tr>%s</tr>' % label_html_row
-                        label_html_row = ''
-                white_image = np.ones_like(image_numpy.transpose([2, 0, 1])) * 255
-                while idx % ncols != 0:
-                    images.append(white_image)
-                    label_html_row += '<td></td>'
-                    idx += 1
-                if label_html_row != '':
-                    label_html += '<tr>%s</tr>' % label_html_row
-                try:
-                    pass
-                    """
-                    self.vis.images(images, nrow=ncols, win=self.display_id + 1,
-                                    padding=2, opts=dict(title=title + ' images'))
-                    label_html = '<table>%s</table>' % label_html
-                    self.vis.text(table_css + label_html, win=self.display_id + 2,
-                                  opts=dict(title=title + ' labels'))
-                    """
-                except VisdomExceptionBase:
-                    self.create_visdom_connections()
-
-            else:     # show each image in a separate visdom panel;
-                idx = 1
-                try:
-                    for label, image in visuals.items():
-                        if image.shape[1]!=3:#**ADDING**
-                            image = image[:,:3,:,:]#**ADDING**
-                            print("[208]storing 19 channel img: ", label)
-                        image_numpy = util.tensor2im(image)
-                        self.vis.image(image_numpy.transpose([2, 0, 1]), opts=dict(title=label),
-                                       win=self.display_id + idx)
-                        idx += 1
-                except VisdomExceptionBase:
-                    self.create_visdom_connections()
-
         if self.use_wandb:
             columns = [key for key, _ in visuals.items()]
             columns.insert(0, 'epoch')
@@ -227,11 +130,13 @@ class Visualizer():
             table_row = [epoch]
             ims_dict = {}
             for label, image in visuals.items():
-                if image.shape[1]!=3:#**ADDING**
-                    image = image[:,:3,:,:]#**ADDING**
-                    print("[225]storing 19 channel img: ", label)
                 image_numpy = util.tensor2im(image)
-                wandb_image = wandb.Image(image_numpy)
+                # import pdb
+                #pdb.set_trace()
+                if image_numpy.shape[0]==3:
+                    wandb_image = wandb.Image(np.transpose(image_numpy,(1,2,0)))
+                else: 
+                    wandb_image = wandb.Image(np.transpose(image_numpy[:3,:,:],(1,2,0)))
                 table_row.append(wandb_image)
                 ims_dict[label] = wandb_image
             self.wandb_run.log(ims_dict)
@@ -244,12 +149,11 @@ class Visualizer():
             self.saved = True
             # save images to the disk
             for label, image in visuals.items():
-                if image.shape[1]!=3:#**ADDING**
-                    image = image[:,:3,:,:]#**ADDING**
-                    print("[242]storing 19 channel img: ", label)
                 image_numpy = util.tensor2im(image)
-                img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))
-                #util.save_image(image_numpy, img_path)
+                img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.tiff' % (epoch, label))
+                #import pdb
+                #pdb.set_trace()
+                util.save_image(np.transpose(image_numpy, (1,2,0)), img_path)
 
             # update website
             webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, refresh=1)
@@ -258,11 +162,8 @@ class Visualizer():
                 ims, txts, links = [], [], []#**ADDING**
 
                 for label, image_numpy in visuals.items(): 
-                    if image.shape[1]!=3:#**ADDING**
-                        image = image[:,:3,:,:]
-                        print("[256]storing 19 channel img: ", label)
                     image_numpy = util.tensor2im(image)
-                    img_path = 'epoch%.3d_%s.png' % (n, label)
+                    img_path = 'epoch%.3d_%s.tiff' % (n, label)
                     ims.append(img_path)
                     txts.append(label)
                     links.append(img_path)

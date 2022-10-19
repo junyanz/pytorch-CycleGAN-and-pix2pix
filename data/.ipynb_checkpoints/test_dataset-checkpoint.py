@@ -42,7 +42,7 @@ class testDataset(BaseDataset):
         target = np.dstack([
             skimage.exposure.rescale_intensity(
                 target[c],
-                in_range=(np.percentile(target[c], 5), np.percentile(target[c], 99.9)),
+                in_range=(np.percentile(target[c], 1), np.percentile(target[c], 99.9)),
                 out_range=(0, 1)
             ) 
             for c in CHANNELS
