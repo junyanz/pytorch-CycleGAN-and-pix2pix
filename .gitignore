@@ -1,4 +1,5 @@
 
+*.tiff
 *.ipynb_checkpoints
 *.html
 *.json
