@@ -1,4 +1,5 @@
-
+*.yaml
+*.log
 *.tiff
 *.ipynb_checkpoints
 *.html
