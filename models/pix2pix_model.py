@@ -1,6 +1,7 @@
 import torch
 from .base_model import BaseModel
 from . import networks
+import pickle
 
 
 class Pix2PixModel(BaseModel):
@@ -57,6 +58,7 @@ class Pix2PixModel(BaseModel):
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
         print("iniciando netD")
+        self.splitLoss = {"Channel":[], "loss":[]}
         if self.isTrain:  # define a discriminator; conditional GANs need to take both input and output images; Therefore, #channels for D is input_nc + output_nc
             self.netD = networks.define_D(opt.input_nc + opt.output_nc, opt.ndf, opt.netD,
                                           opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
@@ -103,6 +105,7 @@ class Pix2PixModel(BaseModel):
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
         self.loss_D.backward()
 
+
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
         # First, G(A) should fake the discriminator
@@ -114,7 +117,16 @@ class Pix2PixModel(BaseModel):
         # combine loss and calculate gradients
         self.loss_G = self.loss_G_GAN + self.loss_G_L1
         self.loss_G.backward()
-
+        # Getting individual L1 losses
+        #import pdb
+        #pdb.set_trace()
+        for ch in range(self.fake_B.shape[1]):#BATCH-CHW x4
+            self.splitLoss["Channel"].append(ch)
+            self.splitLoss["loss"].append((self.criterionL1(self.fake_B[:,ch,:,:], self.real_B[:,ch,:,:]) * self.opt.lambda_L1).detach().cpu().numpy())
+        # need to store each line on real time without closing the file.
+        #import pdb
+        #pdb.set_trace()
+        
     def optimize_parameters(self):
         self.forward()                   # compute fake images: G(A)
         # update D

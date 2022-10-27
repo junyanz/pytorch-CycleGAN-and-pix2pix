@@ -74,9 +74,9 @@ class adapterfullDataset(BaseDataset):
         target = tifffile.imread(targets_path)
         target = skimage.util.img_as_float32(target)#**ADDED**
         # Normalize images
-        CHANNELS = (0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18)
+        #CHANNELS = (0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18)
         img = np.moveaxis(img, 0, 2)
-        #CHANNELS = range(19)
+        CHANNELS = range(19)
         target = np.dstack([
             skimage.exposure.rescale_intensity(
                 target[c],
