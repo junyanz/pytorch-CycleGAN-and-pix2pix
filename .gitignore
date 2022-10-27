@@ -1,3 +1,4 @@
+*.pkl
 *.yaml
 *.log
 *.tiff
