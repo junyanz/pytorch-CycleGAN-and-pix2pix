@@ -34,16 +34,16 @@ def tensor2im(input_image, imtype=np.uint8):
         if image_numpy.shape[0] == 1:  # grayscale to RGB
             image_numpy = np.tile(image_numpy, (3, 1, 1))# repeat channel 1, 3 times to ressemble RGB
         
-        image_numpy = skimage.exposure.rescale_intensity(image_numpy, out_range=np.uint8)
-        """
-        if np.absolute(image_numpy.max())>=1.0 or np.absolute(image_numpy.min())>=1.0:
+        #image_numpy = skimage.exposure.rescale_intensity(image_numpy, out_range=np.uint8)
+        # """
+        if np.absolute(image_numpy.max())>1.0 or np.absolute(image_numpy.min())>1.0:
             
             image_numpy = (image_numpy-image_numpy.min())/(image_numpy.max()-image_numpy.min())
             
             image_numpy = skimage.util.img_as_ubyte(image_numpy)
         else:
             image_numpy = skimage.util.img_as_ubyte(image_numpy)
-        """
+        #  """
         #image_numpy = (np.transpose(skimage.util.img_as_ubyte(image_numpy), (1,2,0)))
     else:  # if it is a numpy array, do nothing
         image_numpy = input_image

@@ -1,0 +1,3 @@
+python test.py --dataroot /n/pfister_lab2/Lab/scajas/DATASETS/DATASET_pix2pix/test --model pix2pix --name exp4_case2_testing  --results_dir exp4_case2_testing --dataset_mode adapterfull1 --direction BtoA #--input_nc 3  # # --netG resnet_9blocks #
+
+#python test.py --dataroot /n/pfister_lab2/Lab/scajas/DATASETS/DATASET_pix2pix/ --direction BtoA --model pix2pix --name vcg_changing_deconv_by_upsam --use_wandb --results_dir borrar1
