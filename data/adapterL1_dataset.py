@@ -56,8 +56,6 @@ class adapterDataset(BaseDataset):
     
     def __len__(self):
         return len(self.imgs)
-    def __len__(self):
-        return len(self.imgs)
     
 def get_transform(train, size=256, HE_IF = "he"):
     transforms = []
@@ -69,7 +67,7 @@ def get_transform(train, size=256, HE_IF = "he"):
             transforms.append(T.Resize((size,size)))
         else:
             transforms.append(T.Resize((size,size)))
-    # Adding transformation to both inputs
-    transforms.append(T.RandomHorizontalFlip(0.5))
-        
+        # Adding transformation to both inputs
+        transforms.append(T.RandomHorizontalFlip(0.5))
+
     return T.Compose(transforms)

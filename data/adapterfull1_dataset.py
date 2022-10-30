@@ -108,9 +108,5 @@ def get_transform(train, size=256, HE_IF = "he"):
             transforms.append(T.Resize((size,size)))
         else:
             transforms.append(T.Resize((size,size)))
-    # Adding transformation to both inputs
-    
-    transforms.append(T.RandomHorizontalFlip(0.5))
-    #
-        
+        transforms.append(T.RandomHorizontalFlip(0.5))        
     return T.Compose(transforms)

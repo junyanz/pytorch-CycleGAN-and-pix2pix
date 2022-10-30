@@ -40,13 +40,15 @@ def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256, use_w
     ims, txts, links = [], [], []
     ims_dict = {}
     for label, im_data in visuals.items():
-        #import pdb
-        #pdb.set_trace()
         im = util.tensor2im(im_data)
         image_name = '%s_%s.tiff' % (name, label)
         save_path = os.path.join(image_dir, image_name)
         #util.save_image(im, save_path, aspect_ratio=aspect_ratio)
-        util.save_image(np.transpose(im, (1,2,0)), save_path, aspect_ratio=aspect_ratio)
+        im = np.transpose(im, (1,2,0))
+        print("FUNCTION save_images: ", im.shape)
+        import pdb
+        pdb.set_trace()
+        util.save_image(im, save_path, aspect_ratio=aspect_ratio)
         #io.imsave(save_path, im)
         ims.append(image_name)
         txts.append(label)

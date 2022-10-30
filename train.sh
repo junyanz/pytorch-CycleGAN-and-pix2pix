@@ -1,5 +1,10 @@
+python train.py --dataroot /n/pfister_lab2/Lab/scajas/DATASETS/DATASET_pix2pix/train/ --name exp4_channels --dataset_mode adapter --model pix2pix --direction BtoA  --use_wandb --n_epochs 80 --n_epochs_decay 5 --output_nc 4 #--continue_train 
+ 
+# CRC01 norm
+#python train.py --dataroot /n/pfister_lab2/Lab/scajas/DATASETS/DATASET_pix2pix/train/ --name norm1 --dataset_mode norm1 --model pix2pix --direction BtoA  --use_wandb --n_epochs 70 --n_epochs_decay 15 --output_nc 19
+
 #losses branch to test loss plots
-python train.py --dataroot /n/pfister_lab2/Lab/scajas/DATASETS/DATASET_pix2pix_CRC04/train/ --name losses_1 --dataset_mode adapterfull --model pix2pix --direction BtoA  --use_wandb --n_epochs 300 --n_epochs_decay 1 --output_nc 19
+#python train.py --dataroot /n/pfister_lab2/Lab/scajas/DATASETS/DATASET_pix2pix/train/ --name losses_CRC01 --dataset_mode adapterfull --model pix2pix --direction BtoA  --use_wandb --n_epochs 70 --n_epochs_decay 1 --output_nc 16
 
 #python train.py --dataroot /n/pfister_lab2/Lab/scajas/DATASETS/DATASET_pix2pix/train/ --name losses_1 --dataset_mode adapterfull1 --model pix2pix --direction BtoA  --use_wandb --n_epochs 5
 
