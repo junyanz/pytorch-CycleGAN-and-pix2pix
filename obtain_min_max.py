@@ -2,7 +2,9 @@ store_path = "data"
 SAVER = True #False
 import os
 #root = "/home/sebasmos/Desktop/DATASETS/pix2pix/val"
-root = "/n/pfister_lab2/Lab/vcg_biology/ORION/ORION-PATCH/C1-C40-patches/CRC06"
+#root = "/n/pfister_lab2/Lab/vcg_biology/ORION/ORION-PATCH/C1-C40-patches/CRC06"
+root = "/net/coxfs01/srv/export/coxfs01/pfister_lab2/share_root/Lab/scajas/DATASETS/DATASET_pix2pix_merged/DATAFULL/train"
+
 os.listdir(root)
 
 import copy

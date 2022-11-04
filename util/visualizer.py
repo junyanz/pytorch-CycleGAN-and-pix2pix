@@ -46,15 +46,15 @@ def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256, use_w
         #util.save_image(im, save_path, aspect_ratio=aspect_ratio)
         im = np.transpose(im, (1,2,0))
         print("FUNCTION save_images: ", im.shape)
-        import pdb
-        pdb.set_trace()
+        #import pdb
+        #pdb.set_trace()
         util.save_image(im, save_path, aspect_ratio=aspect_ratio)
         #io.imsave(save_path, im)
         ims.append(image_name)
         txts.append(label)
         links.append(image_name)
         if use_wandb:
-            ims_dict[label] = wandb.Image(im)
+            ims_dict[label] = wandb.Image(im[:,:,:3])# **ADDED**: for several channels on wandb
     webpage.add_images(ims, txts, links, width=width)
     if use_wandb:
         wandb.log(ims_dict)
