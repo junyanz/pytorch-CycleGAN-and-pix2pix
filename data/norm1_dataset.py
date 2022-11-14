@@ -44,7 +44,7 @@ class norm1Dataset(BaseDataset):
         # Normalize images
 
         CHANNELS = range(19)
-        """
+        #"""
         # CRC01 
         maxi = [0.2724814,  0.0690039, 0.016164,   0.05094079, 0.03598041, 0.00516317,
                  0.01510232, 0.01042182, 0.0339626,  0.01665093, 0.00781439, 0.01586902,
@@ -67,7 +67,8 @@ class norm1Dataset(BaseDataset):
              0.00079815, 0.00056579, 0.00152106, 0.00243781, 0.00275859, 0.00233357,
              0.00118882
                 ]
-        #print(target.shape)
+        """
+	#print(target.shape)
         target = np.dstack([
             skimage.exposure.rescale_intensity(
                 target[c],
@@ -92,6 +93,6 @@ def get_transform(train, size=256, HE_IF = "he"):
         elif HE_IF=="if":
             transforms.append(T.Resize((size,size)))
         else:
-            transforms.append(T.Resize((size,size)))
-        
+            transforms.append(T.Resize((size,size)))    
+    transforms.append(T.RandomHorizontalFlip(0.5))
     return T.Compose(transforms)
