@@ -1,6 +1,13 @@
 import torch
+from torch.utils.checkpoint import checkpoint
+
 from .base_model import BaseModel
 from . import networks
+
+try:
+    from apex import amp
+except ImportError:
+    print("Please install NVIDIA Apex for safe mixed precision if you want to use non default --opt_level")
 
 
 class Pix2PixModel(BaseModel):
@@ -70,6 +77,12 @@ class Pix2PixModel(BaseModel):
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
 
+            if opt.apex:
+                [self.netG, self.netD], [self.optimizer_G, self.optimizer_D] = amp.initialize(
+                    [self.netG, self.netD], [self.optimizer_G, self.optimizer_D], opt_level=opt.opt_level, num_losses=2)
+
+        self.make_data_parallel()
+
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
@@ -99,7 +112,12 @@ class Pix2PixModel(BaseModel):
         self.loss_D_real = self.criterionGAN(pred_real, True)
         # combine loss and calculate gradients
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
-        self.loss_D.backward()
+
+        if self.opt.apex:
+            with amp.scale_loss(self.loss_D, self.optimizer_D, loss_id=0) as loss_D_scaled:
+                loss_D_scaled.backward()
+        else:
+            self.loss_D.backward()
 
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
@@ -111,7 +129,12 @@ class Pix2PixModel(BaseModel):
         self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
         # combine loss and calculate gradients
         self.loss_G = self.loss_G_GAN + self.loss_G_L1
-        self.loss_G.backward()
+
+        if self.opt.apex:
+            with amp.scale_loss(self.loss_G, self.optimizer_G, loss_id=1) as loss_G_scaled:
+                loss_G_scaled.backward()
+        else:
+            self.loss_G.backward()
 
     def optimize_parameters(self):
         self.forward()                   # compute fake images: G(A)

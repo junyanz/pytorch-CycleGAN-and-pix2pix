@@ -3,7 +3,12 @@ import itertools
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
+from torch.utils.checkpoint import checkpoint
 
+try:
+    from apex import amp
+except ImportError:
+    print("Please install NVIDIA Apex for safe mixed precision if you want to use non default --opt_level")
 
 class CycleGANModel(BaseModel):
     """
@@ -96,6 +101,13 @@ class CycleGANModel(BaseModel):
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
 
+            if opt.apex:
+                [self.netG_A, self.netG_B, self.netD_A, self.netD_B], [self.optimizer_G, self.optimizer_D] = amp.initialize(
+                    [self.netG_A, self.netG_B, self.netD_A, self.netD_B], [self.optimizer_G, self.optimizer_D], opt_level=opt.opt_level, num_losses=3)
+
+        # need to be wrapped after amp.initialize
+        self.make_data_parallel()
+
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
@@ -112,11 +124,17 @@ class CycleGANModel(BaseModel):
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B = self.netG_A(self.real_A)  # G_A(A)
-        self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
+        if not self.isTrain or not self.opt.checkpointing:
+            self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
+        else:
+            self.rec_A = checkpoint(self.netG_B, self.fake_B)
         self.fake_A = self.netG_B(self.real_B)  # G_B(B)
-        self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
+        if not self.isTrain or not self.opt.checkpointing:
+            self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
+        else:
+            self.rec_B = checkpoint(self.netG_A, self.fake_A)
 
-    def backward_D_basic(self, netD, real, fake):
+    def backward_D_basic(self, netD, real, fake, loss_id):
         """Calculate GAN loss for the discriminator
 
         Parameters:
@@ -135,18 +153,23 @@ class CycleGANModel(BaseModel):
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake) * 0.5
-        loss_D.backward()
+        if self.opt.apex:
+            with amp.scale_loss(loss_D, self.optimizer_D, loss_id=loss_id) as loss_D_scaled:
+                loss_D_scaled.backward()
+        else:
+            loss_D.backward()
+
         return loss_D
 
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B)
+        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B, loss_id=0)
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A)
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A, loss_id=1)
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -175,7 +198,13 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
-        self.loss_G.backward()
+
+        if self.opt.apex:
+            with amp.scale_loss(self.loss_G, self.optimizer_G, loss_id=2) as loss_G_scaled:
+                loss_G_scaled.backward()
+        else:
+            self.loss_G.backward()
+
 
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""

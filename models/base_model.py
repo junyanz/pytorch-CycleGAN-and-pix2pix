@@ -228,3 +228,13 @@ class BaseModel(ABC):
             if net is not None:
                 for param in net.parameters():
                     param.requires_grad = requires_grad
+
+    def make_data_parallel(self):
+        """Make models data parallel"""
+        if len(self.gpu_ids) == 0:
+            return
+        for name in self.model_names:
+            if isinstance(name, str):
+                net = getattr(self, 'net' + name)
+                net = torch.nn.DataParallel(net, self.gpu_ids)  # multi-GPUs
+                setattr(self, 'net' + name, net)
