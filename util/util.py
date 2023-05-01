@@ -37,7 +37,7 @@ def tensor2im(input_image, imtype=np.uint8):
         #image_numpy = skimage.exposure.rescale_intensity(image_numpy, out_range=np.uint8)
         # """
         if np.absolute(image_numpy.max())>1.0 or np.absolute(image_numpy.min())>1.0:
-            
+            print("normalizing image")
             image_numpy = (image_numpy-image_numpy.min())/(image_numpy.max()-image_numpy.min())
             
             image_numpy = skimage.util.img_as_ubyte(image_numpy)
@@ -48,7 +48,7 @@ def tensor2im(input_image, imtype=np.uint8):
     else:  # if it is a numpy array, do nothing
         image_numpy = input_image
     image_numpy = image_numpy.astype(imtype)
-    #print(f"[after]Range for Generated result]-> [{image_numpy.min(), image_numpy.max()}] and shape: [{image_numpy.shape}]")
+    print(f"Range for Generated result]-> [{image_numpy.min(), image_numpy.max()}] and shape: [{image_numpy.shape}]")
     return image_numpy# +1)/2#similar scaling as provided in the paper
 def tensor2im_all(input_image, imtype=np.uint8):
     """"Converts a Tensor array into a numpy image array.
