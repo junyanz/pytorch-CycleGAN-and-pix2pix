@@ -4,8 +4,8 @@
 .DS_Store
 debug*
 datasets/
-**/*.checkpoints
-*.checkpoints
+**/*.ipynb_checkpoints
+*.ipynb_checkpoints
 checkpoints/
 results/
 build/

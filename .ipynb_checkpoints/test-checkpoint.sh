@@ -1,4 +1,0 @@
-echo "python test.py --dataroot /n/pfister_lab2/Lab/scajas/DATASETS/DATASET_pix2pix/test --model pix2pix --name vcg_changing_deconv_by_upsam --use_wandb --results_dir tiff_v2 --dataset_mode testing "
-python test.py --dataroot /n/pfister_lab2/Lab/scajas/DATASETS/DATASET_pix2pix/test --model pix2pix --name vcg_augmented_horiz_v2_500_epochs  --results_dir tiff --dataset_mode testing  --direction BtoA  # --output_nc 19 #--input_nc 3  #--direction BtoA # --netG resnet_9blocks #
-
-#python test.py --dataroot /n/pfister_lab2/Lab/scajas/DATASETS/DATASET_pix2pix/ --direction BtoA --model pix2pix --name vcg_changing_deconv_by_upsam --use_wandb --results_dir borrar1
