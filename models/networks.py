@@ -365,13 +365,28 @@ class ResnetGenerator(nn.Module):
                       nn.ReLU(True)]
         model += [nn.ReflectionPad2d(3)]
         model += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
-        model += [nn.Tanh()]
+        # model += [nn.Tanh()]
+        model += [AddOneELU()]
+
+        # act = lambda x : 1 + torch.nn.functional.elu(x)
+        # relu
+        # no activation
+        # normalize input to match generator, undo normalization later
 
         self.model = nn.Sequential(*model)
 
     def forward(self, input):
         """Standard forward"""
         return self.model(input)
+
+    # ROHIN ADDITION
+    class AddOneELU(nn.Module):
+        def __init__(self):
+            super(AddOneELU, self).__init__()
+            self.elu = nn.ELU()
+
+        def forward(self, x):
+            return self.elu(x) + 1
 
 
 class ResnetBlock(nn.Module):
