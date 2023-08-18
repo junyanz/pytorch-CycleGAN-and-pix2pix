@@ -4,7 +4,7 @@ from util import util
 import torch
 import models
 import data
-
+import matplotlib
 
 class BaseOptions():
     """This class defines options used during both training and test time.

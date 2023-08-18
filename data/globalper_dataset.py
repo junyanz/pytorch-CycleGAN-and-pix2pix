@@ -13,7 +13,7 @@ import torchvision.transforms as T
 from skimage import io
 import tifffile
 
-class unalignedadapterDataset(BaseDataset):
+class globalperDataset(BaseDataset):
     """A dataset class for paired image dataset.
     It assumes that the directory '/path/to/data/train' contains image pairs in the form of {A,B}.
     During test time, you need to prepare a directory '/path/to/data/test'.
@@ -26,7 +26,7 @@ class unalignedadapterDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         self.transforms_he =  get_transform(train= opt.train, size=256, HE_IF = "he")
         self.transforms_if = get_transform(train=opt.train, size=256 , HE_IF = "if")
-        print(f"training? {opt.train}")
+        print(f"Training? {opt.train}")
         self.imgs = list(sorted([logo_name for i, logo_name in enumerate(os.listdir(os.path.join(opt.dataroot, "img_he"))) if ".tif" in logo_name]  
 ))# HE
         self.targets = list(sorted([logo_name for i, logo_name in enumerate(os.listdir(os.path.join(opt.dataroot, "img_if"))) if ".tif" in logo_name]  
@@ -35,23 +35,40 @@ class unalignedadapterDataset(BaseDataset):
         img_path = os.path.join(self.root, "img_he", self.imgs[index])        
         targets_path = os.path.join(self.root, "img_if", self.targets[index])
         img = tifffile.imread(img_path)
-        target = tifffile.imread(targets_path)
-        target = skimage.util.img_as_float32(target)#**ADDED**
-        # Normalize images
-        CHANNELS = range(19)#(0, 3,1,17,2,4)# 6 channels
-        #CHANNELS = (0, 3,1,17,2) # 5 channels
-        #CHANNELS = (0,3,1,4,2,9,8,6,10,11,15)
+        target = tifffile.imread(targets_path)# 0 22850
         img = np.moveaxis(img, 0, 2)
+        CHANNELS = range(19)
+
+        target = skimage.util.img_as_float32(target)#**ADDED**
+        CHANNELS   = range(len(target))
+        marker = ['Hoechst','AF1','CD31','CD45','CD68','Blank','CD4',
+                  'FOXP3','CD8a','CD45RO','CD20','PD-L1','CD3e','CD163',
+                  'E-Cadherin','PD-1','Ki-67','Pan-CK','SMA'
+                 ]
+        BLANCK_CH = 1
+        CD_20 = 1
+        FOXP3 = 0.004
+        PD_L1 = 0.004
+        E_CADHERIN=0.004
+        PAN_CK = 0.005
+        
+        threshold = [0, 0 , 0 , 0 , 0 , BLANCK_CH, 0.004, FOXP3,  0 , 0  , CD_20  ,  PD_L1  ,  0 ,  0,  E_CADHERIN ,  0,0,PAN_CK,0]
+            
+        val_lower = [0.0075446152706507945, 0.003629292572446398, 0.0029421623111127336, 0.0032673615865327333, 0.003105331579194418, 0.0027199335477773624, 0.0030575714542808705, 0.0026497724921902875, 0.0028753122741884984, 0.0036289414492961377, 0.0028419083532367933, 0.00345574265440891, 0.0025111015143016785, 0.0021671432928285664, 0.0025467569248282585, 0.0030193113044666765, 0.0030956476865261046, 0.0030234318537183413, 0.00217884851425964]
+        val_upper = [0.2265105275027782, 0.014934057374848634, 0.01727550464754221, 0.049639684407353196, 0.031028947067013278, 0.008827899013046793, 0.01819653593757534, 0.009791264213451343, 0.019860039003553712, 0.020504618506112984, 0.013477529866159403, 0.014383675656430854, 0.022218277600566532, 0.03350917936382925, 0.022567319253225353, 0.008643826065390162, 0.01750753829050882, 0.03975980690939506, 0.01822751117716048]
+
         target = np.dstack([
-        skimage.exposure.rescale_intensity(target[c], out_range=(0, 1)) 
-        for c in CHANNELS
-        ])
+            skimage.exposure.rescale_intensity(
+                target[c],
+                in_range=(val_lower[c], val_upper[c]),
+                out_range=(0, 1)
+            ) * (target[c] > threshold[c])  
+            for c in CHANNELS
+        ]).astype(np.float32)
+        
         img, target = self.transforms_he(img), self.transforms_if(target)
-        # 4-7 for IF, STD, mu calculated in the log-im, check with all on 0.5
-        # denormalize the log-img: 16 bit 
-        # final range --> convert to 8 bit or 0-1
         return {'A': target, 'B': img, 'A_paths': targets_path, 'B_paths': img_path}
-    
+        
     def __len__(self):
         return len(self.imgs)
     
@@ -62,7 +79,6 @@ def get_transform(train, size=256, HE_IF = "he"):
     if train==1:
         print("training data!!")
         transforms.append(T.Resize((size,size)))
-        # Adding transformation to both inputs
         transforms.append(T.RandomHorizontalFlip(0.5))
     else:
         print("testing data!!")
