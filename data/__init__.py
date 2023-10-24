@@ -12,6 +12,8 @@ See our template dataset class 'template_dataset.py' for more details.
 """
 import importlib
 import torch.utils.data
+import syft as sy
+
 from data.base_dataset import BaseDataset
 
 
@@ -55,7 +57,7 @@ def create_dataset(opt):
         >>> dataset = create_dataset(opt)
     """
     data_loader = CustomDatasetDataLoader(opt)
-    dataset = data_loader.load_data()
+    dataset = data_loader.load_data())#maybe change this
     return dataset
 
 
@@ -72,6 +74,17 @@ class CustomDatasetDataLoader():
         dataset_class = find_dataset_using_name(opt.dataset_mode)
         self.dataset = dataset_class(opt)
         print("dataset [%s] was created" % type(self.dataset).__name__)
+        
+        
+        # #load as a federated set(can add sets later on)
+        # federated_dataset = sy.FederatedDataset(data=(self.dataset,))
+        
+        # self.dataloader = sy.FederatedDataLoader(
+        #     federated_dataset,
+        #     batch_size = opt.batch_size,
+        #     shuffle = not opt.serial_batches,
+        #     num_workers= 1
+        # )
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,
             batch_size=opt.batch_size,

@@ -23,18 +23,34 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
+import syft as sy
 
 if __name__ == '__main__':
+    
+    #added this to create a vurtual worker
+    #end
+    
     opt = TrainOptions().parse()   # get training options
+    
+    #in real model would have to have this as another system(however no need for the moment)
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+    
+    #create function to divide dataset into validation and training for k-fold where k is the number of folds
+    
     dataset_size = len(dataset)    # get the number of images in the dataset.
     print('The number of training images = %d' % dataset_size)
 
+
+    #send this to virtual location as well
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
+    
+    
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations
 
+    
+    #add and outer loop for the k-folds
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()    # timer for data loading per iteration
@@ -49,8 +65,10 @@ if __name__ == '__main__':
             total_iters += opt.batch_size
             epoch_iter += opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
-            model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
+            model.optimize_parameters()   # calculate loss functions, get gradients, update network weights !!also updates!!
 
+            #plan add logic to stop if validation set starts to increase in loss meaning overfitting has occured
+            
             if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
                 save_result = total_iters % opt.update_html_freq == 0
                 model.compute_visuals()
