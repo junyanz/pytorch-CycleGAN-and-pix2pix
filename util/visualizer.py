@@ -97,9 +97,14 @@ class Visualizer():
             util.mkdirs([self.web_dir, self.img_dir])
         # create a logging file to store training losses
         self.log_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')
+        self.fid_log_name = os.path.join(opt.checkpoints_dir, opt.name, 'fid_log.txt')
+
         with open(self.log_name, "a") as log_file:
             now = time.strftime("%c")
             log_file.write('================ Training Loss (%s) ================\n' % now)
+        with open(self.fid_log_name, "a") as log_file:
+            now = time.strftime("%c")
+            log_file.write('================ Validation FID (%s) ================\n' % now)
 
     def reset(self):
         """Reset the self.saved status"""
@@ -210,6 +215,29 @@ class Visualizer():
                 webpage.add_images(ims, txts, links, width=self.win_size)
             webpage.save()
 
+    def plot_current_fid(self, epoch, fid):
+        """display the current fid on visdom display
+
+        Parameters:
+            epoch (int)  -- current epoch
+            fid (float)  -- validation fid
+        """
+        if not hasattr(self, 'fid_plot_data'):
+            self.fid_plot_data = {'X': [], 'Y': []}
+        self.fid_plot_data['X'].append(epoch)
+        self.fid_plot_data['Y'].append(fid)
+        try:
+            self.vis.line(
+                X=np.array(self.fid_plot_data['X']),
+                Y=np.array(self.fid_plot_data['Y']),
+                opts={
+                    'title': self.name + ' fid over time',
+                    'xlabel': 'epoch',
+                    'ylabel': 'fid'},
+                win=self.display_id + 4)
+        except VisdomExceptionBase:
+            self.create_visdom_connections()
+
     def plot_current_losses(self, epoch, counter_ratio, losses):
         """display the current losses on visdom display: dictionary of error labels and values
 
@@ -254,4 +282,17 @@ class Visualizer():
 
         print(message)  # print the message
         with open(self.log_name, "a") as log_file:
+            log_file.write('%s\n' % message)  # save the message
+
+    def print_current_fid(self, epoch, fid):
+        """print current fid on console; also save the fid to the disk
+
+        Parameters:
+            epoch (int) -- current epoch
+            fid (float) - fid metric
+        """
+        message = '(epoch: %d, fid: %.3f) ' % (epoch, fid)
+
+        print(message)  # print the message
+        with open(self.fid_log_name, "a") as log_file:
             log_file.write('%s\n' % message)  # save the message
