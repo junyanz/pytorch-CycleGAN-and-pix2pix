@@ -2,8 +2,10 @@ import torch
 import torch.nn as nn
 from torch.nn import init
 import functools
-from torch.optim import lr_scheduler
 
+from torch.nn.functional import interpolate
+from torch.optim import lr_scheduler
+import numpy as np
 
 ###############################################################################
 # Helper Functions
@@ -99,7 +101,7 @@ def init_weights(net, init_type='normal', init_gain=0.02):
     net.apply(init_func)  # apply the initialization function <init_func>
 
 
-def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[], init_weights_=True):
     """Initialize a network: 1. register CPU/GPU device (with multi-GPU support); 2. initialize the network weights
     Parameters:
         net (network)      -- the network to be initialized
@@ -112,12 +114,13 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
         net.to(gpu_ids[0])
-        net = torch.nn.DataParallel(net, gpu_ids)  # multi-GPUs
-    init_weights(net, init_type, init_gain=init_gain)
+    if init_weights_:
+        init_weights(net, init_type, init_gain=init_gain)
     return net
 
 
-def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[],
+             init_weights=True, **kwargs):
     """Create a generator
 
     Parameters:
@@ -155,12 +158,16 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
         net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+    elif netG == 'progan':
+        net = GeneratorProGanV2(input_code_dim=input_nc, in_channel=ngf, max_steps=kwargs['max_steps']+1, out_channels=output_nc)
+        # net = GeneratorProGan(input_code_dim=input_nc, in_channel=ngf, max_steps=kwargs['max_steps'], out_channels=output_nc)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
-    return init_net(net, init_type, init_gain, gpu_ids)
+    return init_net(net, init_type, init_gain, gpu_ids, init_weights_=init_weights)
 
 
-def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[],
+             init_weights=True, **kwargs):
     """Create a discriminator
 
     Parameters:
@@ -199,9 +206,12 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
         net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
     elif netD == 'pixel':     # classify if each pixel is real or fake
         net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
+    elif netD == 'progan':
+        net = DiscriminatorProGanV2(feat_dim=ndf, in_dim=input_nc, max_steps=kwargs['max_steps']+1)
+        # net = DiscriminatorProGan(feat_dim=ndf, in_dim=input_nc, max_steps=kwargs['max_steps'])
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
-    return init_net(net, init_type, init_gain, gpu_ids)
+    return init_net(net, init_type, init_gain, gpu_ids, init_weights_=init_weights)
 
 
 ##############################################################################
@@ -614,3 +624,195 @@ class PixelDiscriminator(nn.Module):
     def forward(self, input):
         """Standard forward."""
         return self.net(input)
+
+
+# ========================================================================================
+# Generator Module of ProGAN
+# can be used with ProGAN or standalone (for inference)
+# Thanks to https://raw.githubusercontent.com/akanimax/pro_gan_pytorch/
+# ========================================================================================
+
+
+class GeneratorProGanV2(nn.Module):
+    """ Generator of the GAN network """
+
+    def __init__(self, max_steps=7, input_code_dim=512, in_channel=512, out_channels=3, use_eql=True):
+        """
+        constructor for the Generator class
+        :param max_steps: required depth of the Network
+        :param input_code_dim: size of the latent manifold
+        :param use_eql: whether to use equalized learning rate
+        """
+        from .progan_layers import GenGeneralConvBlock, GenInitialBlock, _equalized_conv2d
+
+        super(GeneratorProGanV2, self).__init__()
+
+        assert input_code_dim != 0 and ((input_code_dim & (input_code_dim - 1)) == 0), \
+            "latent size not a power of 2"
+        if max_steps >= 4:
+            assert in_channel >= np.power(2, max_steps - 4), "in_channel size will diminish to zero"
+
+        # state of the generator:
+        self.use_eql = use_eql
+        self.depth = max_steps
+        self.latent_size = input_code_dim
+        self.channels_conv = in_channel
+
+        # register the modules required for the GAN
+        self.initial_block = GenInitialBlock(in_channels=self.latent_size, out_channels=in_channel, use_eql=self.use_eql)
+
+        # create a module list of the other required general convolution blocks
+        self.layers = nn.ModuleList([])  # initialize to empty list
+
+        # create the ToRGB layers for various outputs:
+        if self.use_eql:
+            self.toRGB = lambda in_channels: \
+                _equalized_conv2d(in_channels, out_channels, (1, 1), bias=True)
+        else:
+            from torch.nn import Conv2d
+            self.toRGB = lambda in_channels: Conv2d(in_channels, out_channels, (1, 1), bias=True)
+
+        self.rgb_converters = nn.ModuleList([self.toRGB(self.channels_conv)])
+
+        # create the remaining layers
+        for i in range(self.depth - 1):
+            if i <= 2:
+                layer = GenGeneralConvBlock(self.channels_conv,
+                                            self.channels_conv, use_eql=self.use_eql)
+                rgb = self.toRGB(self.channels_conv)
+            else:
+                layer = GenGeneralConvBlock(
+                    int(self.channels_conv // np.power(2, i - 3)),
+                    int(self.channels_conv // np.power(2, i - 2)),
+                    use_eql=self.use_eql
+                )
+                rgb = self.toRGB(int(self.channels_conv // np.power(2, i - 2)))
+            self.layers.append(layer)
+            self.rgb_converters.append(rgb)
+
+        # register the temporary upsampler
+        self.temporaryUpsampler = lambda x: interpolate(x, scale_factor=2)
+
+    def forward(self, x, step, alpha):
+        """
+        forward pass of the Generator
+        :param x: input noise
+        :param step: current depth from where output is required
+        :param alpha: value of alpha for fade-in effect
+        :return: y => output
+        """
+        # step = step - 1
+        assert step < self.depth, "Requested output depth cannot be produced"
+
+        y = self.initial_block(x)
+
+        if step > 0:
+            for block in self.layers[:step - 1]:
+                y = block(y)
+
+            residual = self.rgb_converters[step - 1](self.temporaryUpsampler(y))
+            straight = self.rgb_converters[step](self.layers[step - 1](y))
+
+            out = (alpha * straight) + ((1 - alpha) * residual)
+
+        else:
+            out = self.rgb_converters[0](y)
+
+        return out
+
+# ========================================================================================
+# Discriminator Module of ProGAN
+# can be used with ProGAN or standalone (for inference).
+# Thanks to https://raw.githubusercontent.com/akanimax/pro_gan_pytorch/
+# ========================================================================================
+
+
+class DiscriminatorProGanV2(nn.Module):
+    """ Discriminator of the GAN """
+
+    def __init__(self, max_steps=7, feat_dim=512, in_dim=3, use_eql=True):
+        """
+        constructor for the class
+        :param max_steps: total height of the discriminator (Must be equal to the Generator depth)
+        :param feat_dim: size of the deepest features extracted
+                             (Must be equal to Generator latent_size)
+        :param use_eql: whether to use equalized learning rate
+        """
+        from torch.nn import ModuleList, AvgPool2d
+        from .progan_layers import DisGeneralConvBlock, DisFinalBlock, _equalized_conv2d
+
+        super(DiscriminatorProGanV2, self).__init__()
+
+        assert feat_dim != 0 and ((feat_dim & (feat_dim - 1)) == 0), \
+            "latent size not a power of 2"
+        if max_steps >= 4:
+            assert feat_dim >= np.power(2, max_steps - 4), "feature size cannot be produced"
+
+        # create state of the object
+        self.use_eql = use_eql
+        self.height = max_steps
+        self.feature_size = feat_dim
+
+        self.final_block = DisFinalBlock(self.feature_size, use_eql=self.use_eql)
+
+        # create a module list of the other required general convolution blocks
+        self.layers = ModuleList([])  # initialize to empty list
+
+        # create the fromRGB layers for various inputs:
+        if self.use_eql:
+            self.fromRGB = lambda out_channels: \
+                _equalized_conv2d(3, out_channels, (1, 1), bias=True)
+        else:
+            from torch.nn import Conv2d
+            self.fromRGB = lambda out_channels: Conv2d(in_dim, out_channels, (1, 1), bias=True)
+
+        self.rgb_to_features = ModuleList([self.fromRGB(self.feature_size)])
+
+        # create the remaining layers
+        for i in range(self.height - 1):
+            if i > 2:
+                layer = DisGeneralConvBlock(
+                    int(self.feature_size // np.power(2, i - 2)),
+                    int(self.feature_size // np.power(2, i - 3)),
+                    use_eql=self.use_eql
+                )
+                rgb = self.fromRGB(int(self.feature_size // np.power(2, i - 2)))
+            else:
+                layer = DisGeneralConvBlock(self.feature_size,
+                                            self.feature_size, use_eql=self.use_eql)
+                rgb = self.fromRGB(self.feature_size)
+
+            self.layers.append(layer)
+            self.rgb_to_features.append(rgb)
+
+        # register the temporary downSampler
+        self.temporaryDownsampler = AvgPool2d(2)
+
+    def forward(self, x, step, alpha):
+        """
+        forward pass of the discriminator
+        :param x: input to the network
+        :param step: current height of operation (Progressive GAN)
+        :param alpha: current value of alpha for fade-in
+        :return: out => raw prediction values (WGAN-GP)
+        """
+        # step = step - 1
+        assert step < self.height, "Requested output depth cannot be produced"
+
+        if step > 0:
+            residual = self.rgb_to_features[step - 1](self.temporaryDownsampler(x))
+
+            straight = self.layers[step - 1](
+                self.rgb_to_features[step](x)
+            )
+
+            y = (alpha * straight) + ((1 - alpha) * residual)
+
+            for block in reversed(self.layers[:step - 1]):
+                y = block(y)
+        else:
+            y = self.rgb_to_features[0](x)
+
+        out = self.final_block(y)
+
+        return out
