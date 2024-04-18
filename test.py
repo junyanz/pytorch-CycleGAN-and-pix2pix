@@ -84,7 +84,7 @@ if __name__ == '__main__':
             save_path = os.path.join(web_dir, f'{image_name}_{label}.tiff')
             image_numpy = image_numpy.cpu().numpy()
             # Salva l'immagine come tiff utilizzando tifffile
-            tifffile.imwrite(save_path, image_numpy)         
+            tifffile.imwrite(save_path, image_numpy(np.uint16))         
             if opt.use_wandb:
                 wandb.save(save_path)    
             
