@@ -26,7 +26,7 @@ See options/base_options.py and options/test_options.py for more test options.
 See training and test tips at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md
 See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md
 """
-import imageio
+import tifffile
 import os
 from options.test_options import TestOptions
 from data import create_dataset
@@ -83,8 +83,9 @@ if __name__ == '__main__':
             image_name, ext = os.path.splitext(os.path.basename(image_path))
             save_path = os.path.join(web_dir, f'{image_name}_{label}.tiff')
             # Sposta il tensore sulla CPU e quindi convertilo in un array NumPy
-            image_numpy = image_numpy.cpu().numpy()         
-            imageio.imwrite(save_path, image_numpy)
+            image_numpy = image_numpy.cpu().numpy()
+            # Salva l'immagine come tiff utilizzando tifffile
+            tifffile.imwrite(save_path, image_numpy)         
             if opt.use_wandb:
                 wandb.save(save_path)    
             # Stampare l'estensione di ogni immagine
