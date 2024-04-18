@@ -82,10 +82,13 @@ if __name__ == '__main__':
             image_path = img_path[0] if len(img_path) == 1 else img_path[i]
             image_name, ext = os.path.splitext(os.path.basename(image_path))
             save_path = os.path.join(web_dir, f'{image_name}_{label}.tiff')
+            # Sposta il tensore sulla CPU e quindi convertilo in un array NumPy
+            image_numpy = image_numpy.cpu().numpy()         
             imageio.imwrite(save_path, image_numpy)
             if opt.use_wandb:
                 wandb.save(save_path)    
             # Stampare l'estensione di ogni immagine
             print(f"L'estensione dell'immagine {image_name}_{label} è: {ext}")    
+            
         #save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     webpage.save()  # save the HTML
