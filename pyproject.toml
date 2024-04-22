@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "pytorch-cyclegan-and-pix2pix"
+version = "0.1.0"
+description = ""
+authors = ["joshuachadney <joshua.chadney@satellitevu.com>"]
+readme = "README.md"
+packages = [{include = "pytorch_cyclegan_and_pix2pix"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+torch = ">=1.4.0"
+torchvision = ">=0.5.0"
+dominate = ">=2.4.0"
+visdom = ">=0.1.8.8"
+wandb = "^0.16.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
