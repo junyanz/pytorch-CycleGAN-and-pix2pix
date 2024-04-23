@@ -32,7 +32,7 @@ bootstrap: ## Bootstrap local repository checkout
 ifeq (, $(shell which poetry))
 	@echo "No \`poetry\` in \$$PATH, please install poetry https://python-poetry.org"
 else
-	poetry install --with dev
+	. ./ca_token.sh && poetry install --no-root
 endif
 
 	poetry run pre-commit install
@@ -40,7 +40,7 @@ endif
 
 .PHONY: docker-build
 docker-build: ## Build docker image for local development (alias: build)
-	${DC} build
+	. ./ca_token.sh && ${DC} build
 
 
 .PHONY: build
