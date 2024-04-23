@@ -42,6 +42,8 @@ test/data/legacy_serialized.pt
 *~
 .idea
 res.png
+*hotsat1/*
+*sentinel2/*
 
 #Ignore Wandb
 wandb/
