@@ -1,0 +1,25 @@
+version: '3'
+services:
+  pix2pix:
+    build:
+      target: development
+      context: .
+      secrets:
+        - poetry_username
+        - poetry_password
+    environment:
+      - ENVIRONMENT=development
+      - HTTP_SERVER_URL=http-server
+      - HTTP_SERVER_PORT=80
+    volumes:
+      - .:/srv
+
+networks:
+  default:
+    name: pix2pix
+
+secrets:
+  poetry_username:
+    environment: POETRY_HTTP_BASIC_ARTIFACT_USERNAME
+  poetry_password:
+    environment: POETRY_HTTP_BASIC_ARTIFACT_PASSWORD
