@@ -40,13 +40,16 @@ class MyAlignedDataset(BaseDataset):
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
         
-        # Print information about the images
-        print("Image A:")
+        # Convert tensor to numpy array and print all values
+        A_array = A.numpy()
+        print("All values of image A:", A_array)
         print("Shape:", A.size)
         print("Type:", A.mode)
         print("Min value:", np.min(A))
         print("Max value:", np.max(A))
-        print("\nImage B:")
+        # Convert tensor to numpy array and print all values
+        B_array = B.numpy()
+        print("\nAll values of image B:", B_array)
         print("Shape:", B.size)
         print("Type:", B.mode)
         print("Min value:", np.min(B))
