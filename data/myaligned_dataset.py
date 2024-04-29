@@ -2,6 +2,7 @@ from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
 import tifffile as tiff
 import numpy as np
+import torch
 from PIL import Image
 
 
