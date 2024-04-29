@@ -42,7 +42,7 @@ class MyAlignedDataset(BaseDataset):
         # Print information about the images
         print("Image A:")
         print("Shape:", A.size)
-        print("Type:", A,mode)
+        print("Type:", A.mode)
         #print("Min value:", np.min(AB))
         #print("Max value:", np.max(AB))
         print("\nImage B:")
