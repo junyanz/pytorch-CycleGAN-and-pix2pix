@@ -44,7 +44,7 @@ class MyAlignedDataset(BaseDataset):
         '''
         # Convert tensor to numpy array and print all values
         A_array = A.numpy()
-        print("All values of image A:", A_array)
+        print("\nAll values of image A:\n", A_array)
         print("Shape:", A.size)
         print("Type:", A.mode)
         print("Min value:", np.min(A))
