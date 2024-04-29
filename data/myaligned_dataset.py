@@ -70,7 +70,7 @@ class MyAlignedDataset(BaseDataset):
         print("Shape:", B_array.shape)
         print("Type:", B_array.dtype)
         print("Min value:", np.min(B_array))
-        print("Max value:", np.max(B_array)"\n")
+        print("Max value:", np.max(B_array),"\n")
         
         # apply the same transform to both A and B
         A = self.transform(A)
