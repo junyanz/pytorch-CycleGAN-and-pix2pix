@@ -59,14 +59,14 @@ class MyAlignedDataset(BaseDataset):
         '''
         # Convert image to NumPy array and print all values
         A_array = np.array(A)
-        print("All values of image A:", A_array)
+        print("\nAll values of image A:\n", A_array)
         print("Shape:", A_array.shape)
         print("Type:", A_array.dtype)
         print("Min value:", np.min(A_array))
         print("Max value:", np.max(A_array))
 
         B_array = np.array(B)
-        print("\nAll values of image B:", B_array)
+        print("\nAll values of image B:\n", B_array)
         print("Shape:", B_array.shape)
         print("Type:", B_array.dtype)
         print("Min value:", np.min(B_array))
