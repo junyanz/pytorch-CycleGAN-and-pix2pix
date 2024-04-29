@@ -1,6 +1,7 @@
 from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
 import tifffile as tiff
+import numpy as np
 from PIL import Image
 
 
