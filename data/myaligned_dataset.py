@@ -35,7 +35,6 @@ class MyAlignedDataset(BaseDataset):
         """
         AB_path = self.AB_paths[index]
         AB = tiff.imread(AB_path)
-        w, h = AB.size
         w, h = AB.shape[-1] // 2, AB.shape[-2] 
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
