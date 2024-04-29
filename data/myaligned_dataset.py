@@ -43,13 +43,13 @@ class MyAlignedDataset(BaseDataset):
         print("Image A:")
         print("Shape:", A.size)
         print("Type:", A.mode)
-        #print("Min value:", np.min(AB))
-        #print("Max value:", np.max(AB))
+        print("Min value:", np.min(A))
+        print("Max value:", np.max(A))
         print("\nImage B:")
         print("Shape:", B.size)
         print("Type:", B.mode)
-        #print("Min value:", np.min(B))
-        #print("Max value:", np.max(B))
+        print("Min value:", np.min(B))
+        print("Max value:", np.max(B))
         
         # apply the same transform to both A and B
         A = self.transform(A)
