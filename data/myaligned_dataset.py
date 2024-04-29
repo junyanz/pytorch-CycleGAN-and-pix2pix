@@ -40,7 +40,8 @@ class MyAlignedDataset(BaseDataset):
         w, h = AB.shape[-1] // 2, AB.shape[-2] 
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
-        
+
+        '''
         # Convert tensor to numpy array and print all values
         A_array = A.numpy()
         print("All values of image A:", A_array)
@@ -55,6 +56,21 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", B.mode)
         print("Min value:", np.min(B))
         print("Max value:", np.max(B))
+        '''
+        # Convert image to NumPy array and print all values
+        A_array = np.array(A)
+        print("All values of image A:", A_array)
+        print("Shape:", A_array.shape)
+        print("Type:", A_array.dtype)
+        print("Min value:", np.min(A_array))
+        print("Max value:", np.max(A_array))
+
+        B_array = np.array(B)
+        print("\nAll values of image B:", B_array)
+        print("Shape:", B_array.shape)
+        print("Type:", B_array.dtype)
+        print("Min value:", np.min(B_array))
+        print("Max value:", np.max(B_array))
         
         # apply the same transform to both A and B
         A = self.transform(A)
