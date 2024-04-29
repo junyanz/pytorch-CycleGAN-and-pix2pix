@@ -16,7 +16,9 @@ class MyAlignedDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         self.dir_AB = opt.dataroot  # Assuming data is organized in pairs in the same directory
         self.AB_paths = sorted(make_dataset(self.dir_AB, opt.max_dataset_size))
-        self.transform = get_transform(opt)
+        self.input_nc = self.opt.output_nc if self.opt.direction == 'BtoA' else self.opt.input_nc
+        self.output_nc = self.opt.input_nc if self.opt.direction == 'BtoA' else self.opt.output_nc
+        self.transform = get_transform(opt, grayscale=(input_nc == 1))
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.
@@ -33,11 +35,15 @@ class MyAlignedDataset(BaseDataset):
         """
         AB_path = self.AB_paths[index]
         AB = tiff.imread(AB_path)
-        w, h = AB.shape[-1] // 2, AB.shape[-2]
+        w, h = AB.size
+        w, h = AB.shape[-1] // 2, AB.shape[-2] 
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
+
+        # apply the same transform to both A and B
         A = self.transform(A)
         B = self.transform(B)
+        
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
     def __len__(self):
