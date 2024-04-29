@@ -29,8 +29,14 @@ class MyDataset(BaseDataset):
         """
         A_path = self.A_paths[index]
         A_img = tiff.imread(A_path)  # Load the TIFF image
+        print("Valori dell'immagine prima del dataloader:")
+        print(A_img)
         A_img = Image.fromarray(A_img.squeeze(), mode='L')  # Convert the NumPy array to a PIL image
+        print("Valori dell'immagine dopo prime operazioni:")
+        print(A_img)
         A = self.transform(A_img)
+        print("Valori dell'immagine dopo transform:")
+        print(A_img)
         return {'A': A, 'A_paths': A_path}
 
     def __len__(self):
