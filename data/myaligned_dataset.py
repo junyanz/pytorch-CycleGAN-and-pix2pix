@@ -41,9 +41,10 @@ class MyAlignedDataset(BaseDataset):
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
 
+        '''
         if np.array_equal(A, B):
             print("Images A and B are equal.")
-
+        
         # Convert image to NumPy array and print all values
         A_array = np.array(A)
         print("\nAll values of image A:\n", A_array)
@@ -81,7 +82,7 @@ class MyAlignedDataset(BaseDataset):
         print("Min value:", np.min(B_array_after))
         print("Max value:", np.max(B_array_after),"\n")
         
-
+        '''
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
     def __len__(self):
