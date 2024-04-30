@@ -21,10 +21,7 @@ class MyAlignedDataset(BaseDataset):
         self.AB_paths = sorted(make_dataset(self.dir_AB, opt.max_dataset_size))
         input_nc = self.opt.output_nc if self.opt.direction == 'BtoA' else self.opt.input_nc
         output_nc = self.opt.input_nc if self.opt.direction == 'BtoA' else self.opt.output_nc
-        self.transform = transforms.Compose([
-            transforms.ToTensor(),
-        ])
-        #self.transform = get_transform(opt, grayscale=(input_nc == 1))
+        self.transform = get_transform(opt, grayscale=(input_nc == 1))
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.
@@ -44,7 +41,8 @@ class MyAlignedDataset(BaseDataset):
         w, h = AB.shape[-1] // 2, AB.shape[-2] 
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
-
+        A_array = np.array(A)
+        B_array = np.array(B)
         '''
         if np.array_equal(A, B):
             print("Images A and B are equal.")
@@ -63,11 +61,11 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", B_array.dtype)
         print("Min value:", np.min(B_array))
         print("Max value:", np.max(B_array),"\n")
-        '''
+        
         # apply the same transform to both A and B
         A = self.transform(A)
         B = self.transform(B)
-        '''        
+                
         if np.array_equal(A, B):
             print("Images A and B are equal after trasnform.")
 
@@ -86,7 +84,7 @@ class MyAlignedDataset(BaseDataset):
         print("Max value:", np.max(B_array_after),"\n")
         
         '''
-        return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
+        return {'A': A_array, 'B': B_array, 'A_paths': AB_path, 'B_paths': AB_path}
 
     def __len__(self):
         """Return the total number of images in the dataset."""
