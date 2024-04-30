@@ -62,6 +62,10 @@ class MyAlignedDataset(BaseDataset):
         # apply the same transform to both A and B
         A = self.transform(A)
         B = self.transform(B)
+        
+        if np.array_equal(A, B):
+            print("Images A and B are equal after trasnform.")
+
 
         A_array_after = np.array(A)
         print("\nAll values of image A after transform:\n", A_array_after)
