@@ -41,36 +41,20 @@ class MyAlignedDataset(BaseDataset):
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
 
-        '''
-        # Convert tensor to numpy array and print all values
-        A_array = A.numpy()
-        print("\nAll values of image A:\n", A_array)
-        print("Shape:", A.size)
-        print("Type:", A.mode)
-        print("Min value:", np.min(A))
-        print("Max value:", np.max(A))
-        # Convert tensor to numpy array and print all values
-        B_array = B.numpy()
-        print("\nAll values of image B:", B_array)
-        print("Shape:", B.size)
-        print("Type:", B.mode)
-        print("Min value:", np.min(B))
-        print("Max value:", np.max(B))
-        '''
         # Convert image to NumPy array and print all values
-        A_array = np.array(A)
-        print("\nAll values of image A:\n", A_array)
-        print("Shape:", A_array.shape)
-        print("Type:", A_array.dtype)
-        print("Min value:", np.min(A_array))
-        print("Max value:", np.max(A_array))
+        #A_array = np.array(A)
+        #print("\nAll values of image A:\n", A_array)
+        #print("Shape:", A_array.shape)
+        #print("Type:", A_array.dtype)
+        #print("Min value:", np.min(A_array))
+        #print("Max value:", np.max(A_array))
 
-        B_array = np.array(B)
-        print("\nAll values of image B:\n", B_array)
-        print("Shape:", B_array.shape)
-        print("Type:", B_array.dtype)
-        print("Min value:", np.min(B_array))
-        print("Max value:", np.max(B_array),"\n")
+        #B_array = np.array(B)
+        #print("\nAll values of image B:\n", B_array)
+        #print("Shape:", B_array.shape)
+        #print("Type:", B_array.dtype)
+        #print("Min value:", np.min(B_array))
+        #print("Max value:", np.max(B_array),"\n")
         
         # apply the same transform to both A and B
         A = self.transform(A)
