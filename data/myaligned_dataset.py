@@ -3,6 +3,7 @@ from data.image_folder import make_dataset
 import tifffile as tiff
 import numpy as np
 import torch
+from torchvision import transforms
 from PIL import Image
 
 
