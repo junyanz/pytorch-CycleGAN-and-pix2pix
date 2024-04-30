@@ -42,12 +42,12 @@ class MyAlignedDataset(BaseDataset):
         B = Image.fromarray(AB[:, w:])
 
         # Convert image to NumPy array and print all values
-        #A_array = np.array(A)
-        #print("\nAll values of image A:\n", A_array)
-        #print("Shape:", A_array.shape)
-        #print("Type:", A_array.dtype)
-        #print("Min value:", np.min(A_array))
-        #print("Max value:", np.max(A_array))
+        A_array = np.array(A)
+        print("\nAll values of image A:\n", A_array)
+        print("Shape:", A_array.shape)
+        print("Type:", A_array.dtype)
+        print("Min value:", np.min(A_array))
+        print("Max value:", np.max(A_array))
 
         #B_array = np.array(B)
         #print("\nAll values of image B:\n", B_array)
@@ -59,7 +59,14 @@ class MyAlignedDataset(BaseDataset):
         # apply the same transform to both A and B
         A = self.transform(A)
         B = self.transform(B)
-        
+
+        A_array_after = np.array(A)
+        print("\nAll values of image A after transform:\n", A_array_after)
+        print("Shape:", A_array_after.shape)
+        print("Type:", A_array_after.dtype)
+        print("Min value:", np.min(A_array_after))
+        print("Max value:", np.max(A_array_after))
+
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
     def __len__(self):
