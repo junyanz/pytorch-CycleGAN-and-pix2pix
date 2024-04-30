@@ -46,20 +46,6 @@ class AlignedDataset(BaseDataset):
         A = AB.crop((0, 0, w2, h))
         B = AB.crop((w2, 0, w, h))
 
-        #Convert image to NumPy array and print all values
-        A_array = np.array(A)
-        print("\nAll values of image A:\n", A_array)
-        print("Shape:", A_array.shape)
-        print("Type:", A_array.dtype)
-        print("Min value:", np.min(A_array))
-        print("Max value:", np.max(A_array))
-
-        B_array = np.array(B)
-        print("\nAll values of image B:\n", B_array)
-        print("Shape:", B_array.shape)
-        print("Type:", B_array.dtype)
-        print("Min value:", np.min(B_array))
-        print("Max value:", np.max(B_array),"\n")
         # apply the same transform to both A and B
         transform_params = get_params(self.opt, A.size)
         A_transform = get_transform(self.opt, transform_params, grayscale=(self.input_nc == 1))
