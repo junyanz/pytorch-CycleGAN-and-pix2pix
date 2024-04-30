@@ -41,8 +41,8 @@ class MyAlignedDataset(BaseDataset):
         w, h = AB.shape[-1] // 2, AB.shape[-2] 
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
-        A_array = np.array(A)
-        B_array = np.array(B)
+        A_array = np.array(A, dtype=np.int16)
+        B_array = np.array(B, dtype=np.int16)
         '''
         if np.array_equal(A, B):
             print("Images A and B are equal.")
