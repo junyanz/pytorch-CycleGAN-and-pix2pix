@@ -41,6 +41,9 @@ class MyAlignedDataset(BaseDataset):
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
 
+        if np.array_equal(A, B):
+            print("Images A and B are equal.")
+
         # Convert image to NumPy array and print all values
         A_array = np.array(A)
         print("\nAll values of image A:\n", A_array)
