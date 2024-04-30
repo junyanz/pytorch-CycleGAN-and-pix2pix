@@ -68,7 +68,7 @@ class MyAlignedDataset(BaseDataset):
         print("Max value:", np.max(A_array_after))
 
         B_array_after = np.array(B)
-        print("\nAll values of image B:\n", B_array_after)
+        print("\nAll values of image B after transform:\n", B_array_after)
         print("Shape:", B_array_after.shape)
         print("Type:", B_array_after.dtype)
         print("Min value:", np.min(B_array_after))
