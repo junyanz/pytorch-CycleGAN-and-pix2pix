@@ -49,12 +49,12 @@ class MyAlignedDataset(BaseDataset):
         print("Min value:", np.min(A_array))
         print("Max value:", np.max(A_array))
 
-        #B_array = np.array(B)
-        #print("\nAll values of image B:\n", B_array)
-        #print("Shape:", B_array.shape)
-        #print("Type:", B_array.dtype)
-        #print("Min value:", np.min(B_array))
-        #print("Max value:", np.max(B_array),"\n")
+        B_array = np.array(B)
+        print("\nAll values of image B:\n", B_array)
+        print("Shape:", B_array.shape)
+        print("Type:", B_array.dtype)
+        print("Min value:", np.min(B_array))
+        print("Max value:", np.max(B_array),"\n")
         
         # apply the same transform to both A and B
         A = self.transform(A)
@@ -66,6 +66,14 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", A_array_after.dtype)
         print("Min value:", np.min(A_array_after))
         print("Max value:", np.max(A_array_after))
+
+        B_array_after = np.array(B)
+        print("\nAll values of image B:\n", B_array_after)
+        print("Shape:", B_array_after.shape)
+        print("Type:", B_array_after.dtype)
+        print("Min value:", np.min(B_array_after))
+        print("Max value:", np.max(B_array_after),"\n")
+        
 
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
