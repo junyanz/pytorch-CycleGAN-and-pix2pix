@@ -21,10 +21,10 @@ class MyAlignedDataset(BaseDataset):
         self.AB_paths = sorted(make_dataset(self.dir_AB, opt.max_dataset_size))
         input_nc = self.opt.output_nc if self.opt.direction == 'BtoA' else self.opt.input_nc
         output_nc = self.opt.input_nc if self.opt.direction == 'BtoA' else self.opt.output_nc
-        self.transform = transforms.Compose([
-            transforms.ToTensor()
-        ])
-        #self.transform = get_transform(opt, grayscale=(input_nc == 1))
+        #self.transform = transforms.Compose([
+            #transforms.ToTensor()
+        #])
+        self.transform = get_transform(opt, grayscale=(input_nc == 1))
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.
