@@ -22,6 +22,7 @@ class MyAlignedDataset(BaseDataset):
         input_nc = self.opt.output_nc if self.opt.direction == 'BtoA' else self.opt.input_nc
         output_nc = self.opt.input_nc if self.opt.direction == 'BtoA' else self.opt.output_nc
         self.transform = transforms.Compose([
+            transforms.Grayscale(num_output_channels=1),
             transforms.ToTensor()
         ])
         #self.transform = get_transform(opt, grayscale=(input_nc == 1))
