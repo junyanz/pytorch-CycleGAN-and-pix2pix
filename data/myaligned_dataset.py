@@ -45,7 +45,7 @@ class MyAlignedDataset(BaseDataset):
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
 
-        
+        '''
         A_array = np.array(A)
         B_array = np.array(B)
         
@@ -66,11 +66,11 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", B_array.dtype)
         print("Min value:", np.min(B_array))
         print("Max value:", np.max(B_array),"\n")
-        
+        '''
         # apply the same transform to both A and B
         A = self.transform(A)
         B = self.transform(B)
-              
+        '''      
         if np.array_equal(A, B):
             print("Images A and B are equal after trasnform.")
 
@@ -88,7 +88,7 @@ class MyAlignedDataset(BaseDataset):
         print("Min value:", np.min(B_array_after))
         print("Max value:", np.max(B_array_after),"\n")
         
-        
+        '''
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
     def __len__(self):
