@@ -53,16 +53,22 @@ class MyAlignedDataset(BaseDataset):
         if np.array_equal(A, B):
             print("Images A and B are equal.")
         
-        # Convert image to NumPy array and print all values
+        # Convert image to NumPy array and print all values        
+        print("Number of unique values in image A:", num_unique_values_A)
         A_array = np.array(A)
+        unique_values_A = np.unique(A_array)
+        num_unique_values_A = len(unique_values_A)
         print("\nAll values of image A:\n", A_array)
         print("Shape:", A_array.shape)
         print("Type:", A_array.dtype)
         print("Min value:", np.min(A_array))
         print("Max value:", np.max(A_array))
 
-        B_array = np.array(B)
+        B_array = np.array(B)        
         print("\nAll values of image B:\n", B_array)
+        unique_values_B = np.unique(B_array)
+        num_unique_values_B = len(unique_values_B)
+        print("Number of unique values in image B:", num_unique_values_B)
         print("Shape:", B_array.shape)
         print("Type:", B_array.dtype)
         print("Min value:", np.min(B_array))
@@ -76,7 +82,10 @@ class MyAlignedDataset(BaseDataset):
             print("Images A and B are equal after trasnform.")
 
         A_array_after = np.array(A)
-        print("\nAll values of image A after transform:\n", A_array_after)
+        print("\nAll values of image A after transform:\n", A_array_after)  
+        unique_values_A_after = np.unique(A_array_after)
+        num_unique_values_A_after = len(unique_values_A_after)
+        print("Number of unique values in image A after transform:", num_unique_values_A_after)
         print("Shape:", A_array_after.shape)
         print("Type:", A_array_after.dtype)
         print("Min value:", np.min(A_array_after))
@@ -84,6 +93,9 @@ class MyAlignedDataset(BaseDataset):
 
         B_array_after = np.array(B)
         print("\nAll values of image B after transform:\n", B_array_after)
+        unique_values_B_after = np.unique(B_array_after)
+        num_unique_values_B_after = len(unique_values_B_after)
+        print("Number of unique values in image B after trasnform:", num_unique_values_B_after)
         print("Shape:", B_array_after.shape)
         print("Type:", B_array_after.dtype)
         print("Min value:", np.min(B_array_after))
