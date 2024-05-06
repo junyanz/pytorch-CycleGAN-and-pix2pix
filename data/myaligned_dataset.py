@@ -54,11 +54,11 @@ class MyAlignedDataset(BaseDataset):
             print("Images A and B are equal.")
         
         # Convert image to NumPy array and print all values        
-        print("Number of unique values in image A:", num_unique_values_A)
         A_array = np.array(A)
+        print("\nAll values of image A:\n", A_array)
         unique_values_A = np.unique(A_array)
         num_unique_values_A = len(unique_values_A)
-        print("\nAll values of image A:\n", A_array)
+        print("Number of unique values in image A:", num_unique_values_A)
         print("Shape:", A_array.shape)
         print("Type:", A_array.dtype)
         print("Min value:", np.min(A_array))
