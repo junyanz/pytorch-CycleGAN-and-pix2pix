@@ -80,7 +80,7 @@ class MyAlignedDataset(BaseDataset):
         
         if np.array_equal(A, B):
             print("Images A and B are equal after trasnform.")
-        '''
+        
         A_array_after = np.array(A)
         print("\nAll values of image A after transform:\n", A_array_after)  
         unique_values_A_after = np.unique(A_array_after)
@@ -100,7 +100,7 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", B_array_after.dtype)
         print("Min value:", np.min(B_array_after))
         print("Max value:", np.max(B_array_after),"\n")
-        
+        '''
         
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
