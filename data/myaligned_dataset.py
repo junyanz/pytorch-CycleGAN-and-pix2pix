@@ -48,7 +48,7 @@ class MyAlignedDataset(BaseDataset):
         
         A_array = np.array(A)
         B_array = np.array(B)
-        
+        '''
         if np.array_equal(A, B):
             print("Images A and B are equal.")
         
@@ -100,7 +100,7 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", B_array_after.dtype)
         print("Min value:", np.min(B_array_after))
         print("Max value:", np.max(B_array_after),"\n")
-        '''
+        
         
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
