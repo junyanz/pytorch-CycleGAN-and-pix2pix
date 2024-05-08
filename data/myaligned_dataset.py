@@ -48,7 +48,7 @@ class MyAlignedDataset(BaseDataset):
         
         A_array = np.array(A)
         B_array = np.array(B)
-        
+        '''
         if np.array_equal(A, B):
             print("Images A and B are equal.")
         
@@ -72,7 +72,7 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", B_array.dtype)
         print("Min value:", np.min(B_array))
         print("Max value:", np.max(B_array),"\n")
-    
+        '''
         # apply the same transform to both A and B
         A = self.transform(A)
         B = self.transform(B)
