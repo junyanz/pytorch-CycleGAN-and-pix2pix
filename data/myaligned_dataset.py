@@ -45,6 +45,8 @@ class MyAlignedDataset(BaseDataset):
         w, h = AB.shape[-1] // 2, AB.shape[-2] 
         A = Image.fromarray(AB[:, :w])
         B = Image.fromarray(AB[:, w:])
+        A = A.convert('L')
+        B = B.convert('L')
         '''
         A_array = np.array(A)
         B_array = np.array(B)
