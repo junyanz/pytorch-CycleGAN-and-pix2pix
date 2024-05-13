@@ -84,16 +84,16 @@ def get_transform(opt, params=None, grayscale=False, method=transforms.Interpola
         #transform_list += [transforms.ToTensor()]
         #transform_list.append(transforms.Grayscale(1))
     if 'resize' in opt.preprocess:
-        osize = [opt.load_size, opt.load_size]
-        transform_list.append(transforms.Resize(osize, method))
-    #elif 'scale_width' in opt.preprocess:
-        #transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.load_size, opt.crop_size, method)))
+        #osize = [opt.load_size, opt.load_size]
+        #transform_list.append(transforms.Resize(osize, method))
+    elif 'scale_width' in opt.preprocess:
+        transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.load_size, opt.crop_size, method)))
 
-    #if 'crop' in opt.preprocess:
-        #if params is None:
-            #transform_list.append(transforms.RandomCrop(opt.crop_size))
-        #else:
-            #transform_list.append(transforms.Lambda(lambda img: __crop(img, params['crop_pos'], opt.crop_size)))
+    if 'crop' in opt.preprocess:
+        if params is None:
+            transform_list.append(transforms.RandomCrop(opt.crop_size))
+        else:
+            transform_list.append(transforms.Lambda(lambda img: __crop(img, params['crop_pos'], opt.crop_size)))
 
     #if opt.preprocess == 'none':
         #transform_list.append(transforms.Lambda(lambda img: __make_power_2(img, base=4, method=method)))
