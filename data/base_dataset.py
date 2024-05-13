@@ -89,9 +89,9 @@ def get_transform(opt, params=None, grayscale=False, method=transforms.Interpola
     #elif 'scale_width' in opt.preprocess:
         #transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.load_size, opt.crop_size, method)))
 
-    #if 'crop' in opt.preprocess:
-        #if params is None:
-            #transform_list.append(transforms.RandomCrop(opt.crop_size))
+    if 'crop' in opt.preprocess:
+        if params is None:
+            transform_list.append(transforms.CenterCrop(opt.crop_size))
         #else:
             #transform_list.append(transforms.Lambda(lambda img: __crop(img, params['crop_pos'], opt.crop_size)))
 
