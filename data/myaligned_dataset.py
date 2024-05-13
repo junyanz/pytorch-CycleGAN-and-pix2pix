@@ -64,7 +64,7 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", A_array.dtype)
         print("Min value:", np.min(A_array))
         print("Max value:", np.max(A_array))
-        '''
+        
         B_array = np.array(B)        
         print("\nAll values of image B:\n", B_array)
         unique_values_B = np.unique(B_array)
@@ -74,7 +74,7 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", B_array.dtype)
         print("Min value:", np.min(B_array))
         print("Max value:", np.max(B_array),"\n")
-        
+        '''
         # apply the same transform to both A and B
         A = self.transform(A)
         B = self.transform(B)
@@ -92,7 +92,7 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", A_array_after.dtype)
         print("Min value:", np.min(A_array_after))
         print("Max value:", np.max(A_array_after))
-        '''
+        
         B_array_after = np.array(B)
         print("\nAll values of image B after transform:\n", B_array_after)
         unique_values_B_after = np.unique(B_array_after)
@@ -102,7 +102,7 @@ class MyAlignedDataset(BaseDataset):
         print("Type:", B_array_after.dtype)
         print("Min value:", np.min(B_array_after))
         print("Max value:", np.max(B_array_after),"\n")
-        
+        '''
         
         return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
