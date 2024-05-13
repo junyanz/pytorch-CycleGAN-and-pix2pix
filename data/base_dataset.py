@@ -91,9 +91,9 @@ def get_transform(opt, params=None, grayscale=False, method=transforms.Interpola
 
     if 'crop' in opt.preprocess:
         if params is None:
-            transform_list.append(transforms.CenterCrop(opt.crop_size))
-        #else:
-            #transform_list.append(transforms.Lambda(lambda img: __crop(img, params['crop_pos'], opt.crop_size)))
+            transform_list.append(transforms.RandomCrop(opt.crop_size))
+        else:
+            transform_list.append(transforms.Lambda(lambda img: __crop(img, params['crop_pos'], opt.crop_size)))
 
     #if opt.preprocess == 'none':
         #transform_list.append(transforms.Lambda(lambda img: __make_power_2(img, base=4, method=method)))
