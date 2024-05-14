@@ -26,7 +26,9 @@ See options/base_options.py and options/test_options.py for more test options.
 See training and test tips at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md
 See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md
 """
+import tifffile
 import os
+import numpy as np
 from options.test_options import TestOptions
 from data import create_dataset
 from models import create_model
@@ -76,5 +78,17 @@ if __name__ == '__main__':
         img_path = model.get_image_paths()     # get image paths
         if i % 5 == 0:  # save images to an HTML file
             print('processing (%04d)-th image... %s' % (i, img_path))
-        save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
-    webpage.save()  # save the HTML
+        for label, image_numpy in visuals.items():
+            image_path = img_path[0] if len(img_path) == 1 else img_path[i]
+            image_name, ext = os.path.splitext(os.path.basename(image_path))
+            save_path = os.path.join(web_dir, f'{image_name}_{label}.tiff')
+            image_numpy = image_numpy.cpu().numpy()
+            # Salva l'immagine come tiff utilizzando tifffile
+            image_numpy = (image_numpy + 1) / 2
+            tifffile.imwrite(save_path, image_numpy, dtype='float32',)  #.astype(np.uint16))         
+            if opt.use_wandb:
+                wandb.save(save_path)    
+            
+        #save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
+    #webpage.save()  # save the HTML
+     
