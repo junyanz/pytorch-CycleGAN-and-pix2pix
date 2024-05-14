@@ -81,17 +81,17 @@ if __name__ == '__main__':
          # Save images as TIFF
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     webpage.save()  # save the HTML
-        '''
-        for label, image_numpy in visuals.items():
-            image_path = img_path[0] if len(img_path) == 1 else img_path[i]
-            image_name, ext = os.path.splitext(os.path.basename(image_path))
-            save_path = os.path.join(web_dir, f'{image_name}_{label}.tiff')
-            image_numpy = image_numpy.cpu().numpy()
+        
+        #for label, image_numpy in visuals.items():
+            #image_path = img_path[0] if len(img_path) == 1 else img_path[i]
+            #image_name, ext = os.path.splitext(os.path.basename(image_path))
+            #save_path = os.path.join(web_dir, f'{image_name}_{label}.tiff')
+            #image_numpy = image_numpy.cpu().numpy()
             # Salva l'immagine come tiff utilizzando tifffile
-            tifffile.imwrite(save_path, image_numpy, dtype='float32',)  #.astype(np.uint16))         
-            if opt.use_wandb:
-                wandb.save(save_path)    
+            #tifffile.imwrite(save_path, image_numpy, dtype='float32',)  #.astype(np.uint16))         
+            #if opt.use_wandb:
+                #wandb.save(save_path)    
             
         #save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
-    webpage.save()  # save the HTML
-        '''
+    #webpage.save()  # save the HTML
+     
