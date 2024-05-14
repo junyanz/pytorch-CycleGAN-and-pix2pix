@@ -79,6 +79,9 @@ if __name__ == '__main__':
         if i % 5 == 0:  # save images to an HTML file
             print('processing (%04d)-th image... %s' % (i, img_path))
          # Save images as TIFF
+        save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
+    webpage.save()  # save the HTML
+        '''
         for label, image_numpy in visuals.items():
             image_path = img_path[0] if len(img_path) == 1 else img_path[i]
             image_name, ext = os.path.splitext(os.path.basename(image_path))
@@ -91,3 +94,4 @@ if __name__ == '__main__':
             
         #save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     webpage.save()  # save the HTML
+        '''
