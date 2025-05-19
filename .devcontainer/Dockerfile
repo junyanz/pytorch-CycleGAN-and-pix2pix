@@ -11,16 +11,18 @@ ENV PATH=/miniconda/bin:${PATH}
 RUN conda update -y conda
 
 # Clone the project
-WORKDIR /workspace
 RUN git clone https://github.com/migueel-st/pix2pix-pokemon.git
-WORKDIR /workspace/pix2pix-pokemon
+WORKDIR /pix2pix-pokemon
 RUN git checkout chore/setup
 
 # Install dependencies
 RUN conda env create -f environment.yml && conda clean -afy
-ENV PATH=/opt/conda/envs/pytorch-CycleGAN-and-pix2pix/bin:$PATH
-ENV CONDA_DEFAULT_ENV=pytorch-CycleGAN-and-pix2pix
+ENV PATH=/opt/conda/envs/p2p/bin:$PATH
+ENV CONDA_DEFAULT_ENV=p2p
 
 # Setup nano for inline git commits
-RUN apt-get update && sudo apt-get install -y nano
+RUN apt-get update && apt-get install -y nano
 RUN git config --global core.editor "nano"
+
+# To show currently active git branch in terminal
+RUN chmod +x /workspaces/scripts/update-bashrc.sh

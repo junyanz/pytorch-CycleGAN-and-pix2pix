@@ -17,7 +17,7 @@
 	},
 	"runArgs": ["--gpus", "all"],
 	"postCreateCommand": "echo '✅ Devcontainer ready!'",
-	"postStartCommand": "cp /workspaces/your-repo/.devcontainer/bashrc.sh ~/.bashrc && conda init bash"
+	"postStartCommand": "bash /workspaces/pix2pix-pokemon/.devcontainer/update-bashrc.sh && conda init bash"
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
