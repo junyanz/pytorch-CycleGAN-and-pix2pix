@@ -25,4 +25,4 @@ RUN apt-get update && apt-get install -y nano
 RUN git config --global core.editor "nano"
 
 # To show currently active git branch in terminal
-RUN chmod +x /workspaces/scripts/update-bashrc.sh
+RUN chmod +x ./.devcontainer/update-bashrc.sh
