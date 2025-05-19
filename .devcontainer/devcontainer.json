@@ -5,7 +5,19 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"build": {
 		"dockerfile": "Dockerfile"
-	}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"ms-toolsai.jupyter",
+				"ms-python.vscode-pylance"
+			]
+		}
+	},
+	"runArgs": ["--gpus", "all"],
+	"postCreateCommand": "echo '✅ Devcontainer ready!'",
+	"postStartCommand": "cp /workspaces/your-repo/.devcontainer/bashrc.sh ~/.bashrc && conda init bash"
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
