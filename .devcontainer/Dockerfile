@@ -20,3 +20,7 @@ RUN git checkout chore/setup
 RUN conda env create -f environment.yml && conda clean -afy
 ENV PATH=/opt/conda/envs/pytorch-CycleGAN-and-pix2pix/bin:$PATH
 ENV CONDA_DEFAULT_ENV=pytorch-CycleGAN-and-pix2pix
+
+# Setup nano for inline git commits
+RUN apt-get update && sudo apt-get install -y nano
+RUN git config --global core.editor "nano"
