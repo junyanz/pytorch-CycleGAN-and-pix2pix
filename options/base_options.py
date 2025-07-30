@@ -1,5 +1,5 @@
 import argparse
-import os
+from pathlib import Path
 from util import util
 import torch
 import models
@@ -106,9 +106,9 @@ class BaseOptions():
         print(message)
 
         # save to the disk
-        expr_dir = os.path.join(opt.checkpoints_dir, opt.name)
+        expr_dir = Path(opt.checkpoints_dir) / opt.name
         util.mkdirs(expr_dir)
-        file_name = os.path.join(expr_dir, '{}_opt.txt'.format(opt.phase))
+        file_name = expr_dir / f'{opt.phase}_opt.txt'
         with open(file_name, 'wt') as opt_file:
             opt_file.write(message)
             opt_file.write('\n')

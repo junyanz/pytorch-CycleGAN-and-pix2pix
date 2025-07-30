@@ -1,13 +1,14 @@
-"""This module contains simple helper functions """
+"""This module contains simple helper functions"""
+
 from __future__ import print_function
 import torch
 import numpy as np
 from PIL import Image
-import os
+from pathlib import Path
 
 
 def tensor2im(input_image, imtype=np.uint8):
-    """"Converts a Tensor array into a numpy image array.
+    """ "Converts a Tensor array into a numpy image array.
 
     Parameters:
         input_image (tensor) --  the input image tensor array
@@ -27,7 +28,7 @@ def tensor2im(input_image, imtype=np.uint8):
     return image_numpy.astype(imtype)
 
 
-def diagnose_network(net, name='network'):
+def diagnose_network(net, name="network"):
     """Calculate and print the mean of average absolute(gradients)
 
     Parameters:
@@ -73,11 +74,10 @@ def print_numpy(x, val=True, shp=False):
     """
     x = x.astype(np.float64)
     if shp:
-        print('shape,', x.shape)
+        print("shape,", x.shape)
     if val:
         x = x.flatten()
-        print('mean = %3.3f, min = %3.3f, max = %3.3f, median = %3.3f, std=%3.3f' % (
-            np.mean(x), np.min(x), np.max(x), np.median(x), np.std(x)))
+        print("mean = %3.3f, min = %3.3f, max = %3.3f, median = %3.3f, std=%3.3f" % (np.mean(x), np.min(x), np.max(x), np.median(x), np.std(x)))
 
 
 def mkdirs(paths):
@@ -99,5 +99,4 @@ def mkdir(path):
     Parameters:
         path (str) -- a single directory path
     """
-    if not os.path.exists(path):
-        os.makedirs(path)
+    Path(path).mkdir(parents=True, exist_ok=True)

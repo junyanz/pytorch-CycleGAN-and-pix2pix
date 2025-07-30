@@ -5,9 +5,8 @@ so that this class can load images from both current directory and its subdirect
 """
 
 import torch.utils.data as data
-
+from pathlib import Path
 from PIL import Image
-import os
 
 IMG_EXTENSIONS = [
     '.jpg', '.JPG', '.jpeg', '.JPEG',
@@ -22,13 +21,12 @@ def is_image_file(filename):
 
 def make_dataset(dir, max_dataset_size=float("inf")):
     images = []
-    assert os.path.isdir(dir), '%s is not a valid directory' % dir
+    dir_path = Path(dir)
+    assert dir_path.is_dir(), f'{dir} is not a valid directory'
 
-    for root, _, fnames in sorted(os.walk(dir)):
-        for fname in fnames:
-            if is_image_file(fname):
-                path = os.path.join(root, fname)
-                images.append(path)
+    for path in sorted(dir_path.rglob('*')):
+        if path.is_file() and is_image_file(path.name):
+            images.append(str(path))
     return images[:min(max_dataset_size, len(images))]
 
 
