@@ -10,7 +10,7 @@ Este codigo fue escrito por [Jun-Yan Zhu](https://github.com/junyanz) y [Taesung
 
 Esta implementacion de PyTorch produce resultados comparables o mejores que nuestros original software de Torch. Si te gustaria producir los mismos resultados que en documento oficial, echa un vistazo al codigo original [CycleGAN Torch](https://github.com/junyanz/CycleGAN) y [pix2pix Torch](https://github.com/phillipi/pix2pix)
 
-**Aviso**: El software actual funciona correctamente en PyTorch 0.41+. Para soporte en PyTorch 0.1-0.3: [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1).
+**Aviso**: El software actual funciona correctamente en PyTorch 2.4+. Para soporte en PyTorch 0.1-0.3: [branch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/pytorch0.3.1).
 
 Puede encontrar información útil en [training/test tips](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md) y [preguntas frecuentes](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md). Para implementar modelos y conjuntos de datos personalizados, consulte nuestro [templates](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/README_es.md#modelo-y-dataset-personalizado). Para ayudar a los usuarios a comprender y adaptar mejor nuestra base de código, proporcionamos un [overview](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/overview.md) de la estructura de código de este repositorio.
 
