@@ -12,6 +12,9 @@ See our template dataset class 'template_dataset.py' for more details.
 """
 import importlib
 import torch.utils.data
+from torch.utils.data.distributed import DistributedSampler
+import torch.distributed as dist
+import os
 from data.base_dataset import BaseDataset
 
 
@@ -72,10 +75,21 @@ class CustomDatasetDataLoader():
         dataset_class = find_dataset_using_name(opt.dataset_mode)
         self.dataset = dataset_class(opt)
         print("dataset [%s] was created" % type(self.dataset).__name__)
+        
+        # Use DistributedSampler for DDP training
+        if "LOCAL_RANK" in os.environ:
+            print(f'create DDP sampler on rank {int(os.environ["LOCAL_RANK"])}')
+            self.sampler = DistributedSampler(self.dataset, shuffle=not opt.serial_batches)
+            shuffle = False  # DistributedSampler handles shuffling
+        else:
+            self.sampler = None
+            shuffle = not opt.serial_batches
+            
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,
             batch_size=opt.batch_size,
-            shuffle=not opt.serial_batches,
+            shuffle=shuffle,
+            sampler=self.sampler,
             num_workers=int(opt.num_threads))
 
     def load_data(self):
@@ -91,3 +105,8 @@ class CustomDatasetDataLoader():
             if i * self.opt.batch_size >= self.opt.max_dataset_size:
                 break
             yield data
+            
+    def set_epoch(self, epoch):
+        """Set epoch for DistributedSampler to ensure proper shuffling"""
+        if self.sampler is not None:
+            self.sampler.set_epoch(epoch)

@@ -1,5 +1,6 @@
 import os
 import torch
+import torch.distributed as dist
 from pathlib import Path
 from collections import OrderedDict
 from abc import ABC, abstractmethod
@@ -31,13 +32,11 @@ class BaseModel(ABC):
             -- self.optimizers (optimizer list):    define and initialize optimizers. You can define one optimizer for each network. If two networks are updated at the same time, you can use itertools.chain to group them. See cycle_gan_model.py for an example.
         """
         self.opt = opt
-        self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
-        self.device = torch.device("cuda:{}".format(self.gpu_ids[0])) if self.gpu_ids else torch.device("cpu")  # get device name: CPU or GPU
         self.save_dir = Path(opt.checkpoints_dir) / opt.name  # save all the checkpoints to save_dir
-        if (
-            opt.preprocess != "scale_width"
-        ):  # with [scale_width], input images might have different sizes, which hurts the performance of cudnn.benchmark.
+        self.device = opt.device
+        # with [scale_width], input images might have different sizes, which hurts the performance of cudnn.benchmark.
+        if opt.preprocess != "scale_width":
             torch.backends.cudnn.benchmark = True
         self.loss_names = []
         self.model_names = []
@@ -89,9 +88,28 @@ class BaseModel(ABC):
         if not self.isTrain or opt.continue_train:
             load_suffix = "iter_%d" % opt.load_iter if opt.load_iter > 0 else opt.epoch
             self.load_networks(load_suffix)
-        self.print_networks(opt.verbose)
+        print(f"start wrap networks with DDP 1")
+        # Wrap networks with DDP after loading
+        if "LOCAL_RANK" in os.environ and dist.is_initialized():
+            # dist.barrier()
+            local_rank = int(os.environ["LOCAL_RANK"])
+            print(f"start wrap networks with DDP 2")
 
-        # Apply torch.compile if available (PyTorch 2.0+)
+            for name in self.model_names:
+                if isinstance(name, str):
+                    print(f"start wrap networks with DDP 3")
+                    net = getattr(self, "net" + name)
+                    print(f"start wrap networks with DDP 4")
+                    ddp_net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[local_rank], find_unused_parameters=True)
+                    print(f"start wrap networks with DDP 5")
+                    setattr(self, "net" + name, ddp_net)
+                    print(f"start wrap networks with DDP 6")
+                    print(f"Wrapped network {name} with DDP on rank {local_rank}")
+
+            # Sync all processes after DDP wrapping
+            # dist.barrier()
+
+        self.print_networks(opt.verbose)  # Apply torch.compile if available (PyTorch 2.0+)
         if hasattr(torch, "compile"):
             self.compile_networks()
 
@@ -149,22 +167,21 @@ class BaseModel(ABC):
         return errors_ret
 
     def save_networks(self, epoch):
-        """Save all the networks to the disk.
+        """Save all the networks to the disk, only on the main process."""
 
-        Parameters:
-            epoch (int) -- current epoch; used in the file name '%s_net_%s.pth' % (epoch, name)
-        """
-        for name in self.model_names:
-            if isinstance(name, str):
-                save_filename = f"{epoch}_net_{name}.pth"
-                save_path = self.save_dir / save_filename
-                net = getattr(self, "net" + name)
+        # 1. Only allow the main process (rank 0) to save the checkpoint
+        if not dist.is_initialized() or dist.get_rank() == 0:
+            for name in self.model_names:
+                if isinstance(name, str):
+                    save_filename = f"{epoch}_net_{name}.pth"
+                    save_path = self.save_dir / save_filename
+                    net = getattr(self, "net" + name)
 
-                if len(self.gpu_ids) > 0 and torch.cuda.is_available():
-                    torch.save(net.module.cpu().state_dict(), save_path)
-                    net.cuda(self.gpu_ids[0])
-                else:
-                    torch.save(net.cpu().state_dict(), save_path)
+                    # 2. Access the underlying model through .module and save its state_dict
+                    if hasattr(net, "module"):
+                        torch.save(net.module.state_dict(), save_path)
+                    else:
+                        torch.save(net.state_dict(), save_path)
 
     def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
         """Fix InstanceNorm checkpoints incompatibility (prior to 0.4)"""
@@ -179,29 +196,37 @@ class BaseModel(ABC):
             self.__patch_instance_norm_state_dict(state_dict, getattr(module, key), keys, i + 1)
 
     def load_networks(self, epoch):
-        """Load all the networks from the disk.
+        """Load all networks from the disk for DDP."""
 
-        Parameters:
-            epoch (int) -- current epoch; used in the file name '%s_net_%s.pth' % (epoch, name)
-        """
         for name in self.model_names:
             if isinstance(name, str):
                 load_filename = f"{epoch}_net_{name}.pth"
                 load_path = self.save_dir / load_filename
                 net = getattr(self, "net" + name)
-                if isinstance(net, torch.nn.DataParallel):
+
+                if isinstance(net, torch.nn.parallel.DistributedDataParallel):
                     net = net.module
+
                 print(f"loading the model from {load_path}")
-                # if you are using PyTorch newer than 0.4 (e.g., built from
-                # GitHub source), you can remove str() on self.device
-                state_dict = torch.load(load_path, map_location=str(self.device), weights_only=True)
+
+                # Map storage to the process's specific GPU
+                if hasattr(self, "local_rank"):
+                    map_location = f"cuda:{self.local_rank}"
+                else:
+                    map_location = str(self.device)
+                state_dict = torch.load(load_path, map_location=map_location, weights_only=True)
+
                 if hasattr(state_dict, "_metadata"):
                     del state_dict._metadata
 
-                # patch InstanceNorm checkpoints prior to 0.4
-                for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
+                # patch InstanceNorm checkpoints
+                for key in list(state_dict.keys()):
                     self.__patch_instance_norm_state_dict(state_dict, net, key.split("."))
                 net.load_state_dict(state_dict)
+
+        # Add a barrier to sync all processes before continuing
+        if hasattr(self, "local_rank") and dist.is_initialized():
+            dist.barrier()
 
     def compile_networks(self, **compile_kwargs):
         """Apply torch.compile to all networks for optimization.
@@ -216,7 +241,6 @@ class BaseModel(ABC):
                 compiled_net = torch.compile(net, **compile_kwargs)
                 setattr(self, "net" + name, compiled_net)
                 print(f"[Network {name}] compiled with torch.compile")
-                setattr(self, "net" + name, compiled_net)
 
     def print_networks(self, verbose):
         """Print the total number of parameters in the network and (if verbose) network architecture

@@ -5,6 +5,8 @@ import time
 from . import util, html
 from pathlib import Path
 import wandb
+import os
+import torch.distributed as dist
 
 
 def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256):
@@ -91,6 +93,10 @@ class Visualizer:
 
     def display_current_results(self, visuals, epoch: int, total_iters: int, save_result=False):
         """Save current results to wandb and HTML file."""
+        # Only display results on main process (rank 0)
+        if "LOCAL_RANK" in os.environ and dist.is_initialized() and dist.get_rank() != 0:
+            return
+
         if self.use_wandb:
             ims_dict = {}
             for label, image in visuals.items():
@@ -128,6 +134,10 @@ class Visualizer:
             total_iters (int)     -- current training iteration during this epoch
             losses (OrderedDict)  -- training losses stored in the format of (name, float) pairs
         """
+        # Only plot losses on main process (rank 0)
+        if "LOCAL_RANK" in os.environ and dist.is_initialized() and dist.get_rank() != 0:
+            return
+
         if self.use_wandb:
             self.wandb_run.log(losses, step=total_iters)
 
@@ -141,10 +151,14 @@ class Visualizer:
             t_comp (float) -- computational time per data point (normalized by batch_size)
             t_data (float) -- data loading time per data point (normalized by batch_size)
         """
-        message = f"(epoch: {epoch}, iters: {iters}, time: {t_comp:.3f}, data: {t_data:.3f}) "
+        local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        message = f"[Rank {local_rank}] (epoch: {epoch}, iters: {iters}, time: {t_comp:.3f}, data: {t_data:.3f}) "
         for k, v in losses.items():
             message += f"{k}: {v:.3f} "
 
-        print(message)  # print the message
-        with open(self.log_name, "a") as log_file:
-            log_file.write(f"{message}\n")  # save the message
+        print(message)  # print the message on ALL ranks with rank info
+
+        # Only save to log file on main process (rank 0)
+        if local_rank == 0:
+            with open(self.log_name, "a") as log_file:
+                log_file.write(f"{message}\n")  # save the message
