@@ -17,7 +17,7 @@ class SingleDataset(BaseDataset):
         """
         BaseDataset.__init__(self, opt)
         self.A_paths = sorted(make_dataset(opt.dataroot, opt.max_dataset_size))
-        input_nc = self.opt.output_nc if self.opt.direction == 'BtoA' else self.opt.input_nc
+        input_nc = self.opt.output_nc if self.opt.direction == "BtoA" else self.opt.input_nc
         self.transform = get_transform(opt, grayscale=(input_nc == 1))
 
     def __getitem__(self, index):
@@ -31,9 +31,9 @@ class SingleDataset(BaseDataset):
             A_paths(str) - - the path of the image
         """
         A_path = self.A_paths[index]
-        A_img = Image.open(A_path).convert('RGB')
+        A_img = Image.open(A_path).convert("RGB")
         A = self.transform(A_img)
-        return {'A': A, 'A_paths': A_path}
+        return {"A": A, "A_paths": A_path}
 
     def __len__(self):
         """Return the total number of images in the dataset."""

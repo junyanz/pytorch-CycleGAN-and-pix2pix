@@ -11,13 +11,16 @@ You need to implement the following functions:
     -- <__getitem__>: Return a data point and its metadata information.
     -- <__len__>: Return the number of images.
 """
+
 from data.base_dataset import BaseDataset, get_transform
+
 # from data.image_folder import make_dataset
 # from PIL import Image
 
 
 class TemplateDataset(BaseDataset):
     """A template dataset class for you to implement custom datasets."""
+
     @staticmethod
     def modify_commandline_options(parser, is_train):
         """Add new dataset-specific options, and rewrite default values for existing options.
@@ -29,7 +32,7 @@ class TemplateDataset(BaseDataset):
         Returns:
             the modified parser.
         """
-        parser.add_argument('--new_dataset_option', type=float, default=1.0, help='new dataset option')
+        parser.add_argument("--new_dataset_option", type=float, default=1.0, help="new dataset option")
         parser.set_defaults(max_dataset_size=10, new_dataset_option=2.0)  # specify dataset-specific default values
         return parser
 
@@ -65,10 +68,10 @@ class TemplateDataset(BaseDataset):
         Step 3: convert your data to a PyTorch tensor. You can use helpder functions such as self.transform. e.g., data = self.transform(image)
         Step 4: return a data point as a dictionary.
         """
-        path = 'temp'    # needs to be a string
-        data_A = None    # needs to be a tensor
-        data_B = None    # needs to be a tensor
-        return {'data_A': data_A, 'data_B': data_B, 'path': path}
+        path = "temp"  # needs to be a string
+        data_A = None  # needs to be a tensor
+        data_B = None  # needs to be a tensor
+        return {"data_A": data_A, "data_B": data_B, "path": path}
 
     def __len__(self):
         """Return the total number of images."""

@@ -12,6 +12,7 @@ class ColorizationDataset(BaseDataset):
 
     This dataset is required by pix2pix-based colorization model ('--model colorization')
     """
+
     @staticmethod
     def modify_commandline_options(parser, is_train):
         """Add new dataset-specific options, and rewrite default values for existing options.
@@ -26,7 +27,7 @@ class ColorizationDataset(BaseDataset):
         By default, the number of channels for input image  is 1 (L) and
         the number of channels for output image is 2 (ab). The direction is from A to B
         """
-        parser.set_defaults(input_nc=1, output_nc=2, direction='AtoB')
+        parser.set_defaults(input_nc=1, output_nc=2, direction="AtoB")
         return parser
 
     def __init__(self, opt):
@@ -38,7 +39,7 @@ class ColorizationDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         self.dir = os.path.join(opt.dataroot, opt.phase)
         self.AB_paths = sorted(make_dataset(self.dir, opt.max_dataset_size))
-        assert(opt.input_nc == 1 and opt.output_nc == 2 and opt.direction == 'AtoB')
+        assert opt.input_nc == 1 and opt.output_nc == 2 and opt.direction == "AtoB"
         self.transform = get_transform(self.opt, convert=False)
 
     def __getitem__(self, index):
@@ -54,14 +55,14 @@ class ColorizationDataset(BaseDataset):
             B_paths (str) - - image paths (same as A_paths)
         """
         path = self.AB_paths[index]
-        im = Image.open(path).convert('RGB')
+        im = Image.open(path).convert("RGB")
         im = self.transform(im)
         im = np.array(im)
         lab = color.rgb2lab(im).astype(np.float32)
         lab_t = transforms.ToTensor()(lab)
         A = lab_t[[0], ...] / 50.0 - 1.0
         B = lab_t[[1, 2], ...] / 110.0
-        return {'A': A, 'B': B, 'A_paths': path, 'B_paths': path}
+        return {"A": A, "B": B, "A_paths": path, "B_paths": path}
 
     def __len__(self):
         """Return the total number of images in the dataset."""

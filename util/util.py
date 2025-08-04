@@ -52,20 +52,20 @@ def diagnose_network(net, name="network"):
 # initialize ddp
 def init_ddp():
     # Initialize DDP if LOCAL_RANK is set
-    if "LOCAL_RANK" in os.environ:
+    is_ddp = "WORLD_SIZE" in os.environ and int(os.environ["WORLD_SIZE"]) > 1
+
+    if is_ddp:
         if not dist.is_initialized():
             dist.init_process_group(backend="nccl")
         local_rank = int(os.environ["LOCAL_RANK"])
         device = torch.device(f"cuda:{local_rank}")
         torch.cuda.set_device(local_rank)
-        print(f"Initialized DDP on rank {local_rank} with device {device}")
     elif torch.cuda.is_available():
         device = torch.device("cuda:0")
         torch.cuda.set_device(0)
-        print(f"Initialized with device {device}")
     else:
         device = torch.device("cpu")
-        print(f"Initialized with device {device}")
+    print(f"Initialized with device {device}")
     return device
 
 

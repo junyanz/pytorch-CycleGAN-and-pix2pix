@@ -63,9 +63,13 @@ class Visualizer:
 
         # Initialize wandb if enabled
         if self.use_wandb:
-            self.wandb_project_name = getattr(opt, "wandb_project_name", "CycleGAN-and-pix2pix")
-            self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
-            self.wandb_run._label(repo="CycleGAN-and-pix2pix")
+            # Only initialize wandb on main process (rank 0)
+            if dist.is_initialized() and dist.get_rank() == 0:
+                self.wandb_project_name = getattr(opt, "wandb_project_name", "CycleGAN-and-pix2pix")
+                self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
+                self.wandb_run._label(repo="CycleGAN-and-pix2pix")
+            else:
+                self.wandb_run = None
 
         if self.use_html:  # create an HTML object at <checkpoints_dir>/web/; images will be saved under <checkpoints_dir>/web/images/
             self.web_dir = Path(opt.checkpoints_dir) / opt.name / "web"
@@ -135,7 +139,7 @@ class Visualizer:
             losses (OrderedDict)  -- training losses stored in the format of (name, float) pairs
         """
         # Only plot losses on main process (rank 0)
-        if "LOCAL_RANK" in os.environ and dist.is_initialized() and dist.get_rank() != 0:
+        if dist.is_initialized() and dist.get_rank() != 0:
             return
 
         if self.use_wandb:
@@ -154,8 +158,8 @@ class Visualizer:
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         message = f"[Rank {local_rank}] (epoch: {epoch}, iters: {iters}, time: {t_comp:.3f}, data: {t_data:.3f}) "
         for k, v in losses.items():
-            message += f"{k}: {v:.3f} "
-
+            message += f", {k}: {v:.3f}"
+        message += "\n"
         print(message)  # print the message on ALL ranks with rank info
 
         # Only save to log file on main process (rank 0)

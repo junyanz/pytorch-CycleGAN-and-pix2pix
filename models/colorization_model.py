@@ -11,6 +11,7 @@ class ColorizationModel(Pix2PixModel):
     It trains a pix2pix model, mapping from L channel to ab channels in Lab color space.
     By default, the colorization dataset will automatically set '--input_nc 1' and '--output_nc 2'.
     """
+
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
         """Add new dataset-specific options, and rewrite default values for existing options.
@@ -26,7 +27,7 @@ class ColorizationModel(Pix2PixModel):
         See the original pix2pix paper (https://arxiv.org/pdf/1611.07004.pdf) and colorization results (Figure 9 in the paper)
         """
         Pix2PixModel.modify_commandline_options(parser, is_train)
-        parser.set_defaults(dataset_mode='colorization')
+        parser.set_defaults(dataset_mode="colorization")
         return parser
 
     def __init__(self, opt):
@@ -43,7 +44,7 @@ class ColorizationModel(Pix2PixModel):
         # reuse the pix2pix model
         Pix2PixModel.__init__(self, opt)
         # specify the images to be visualized.
-        self.visual_names = ['real_A', 'real_B_rgb', 'fake_B_rgb']
+        self.visual_names = ["real_A", "real_B_rgb", "fake_B_rgb"]
 
     def lab2rgb(self, L, AB):
         """Convert an Lab tensor image to a RGB numpy output

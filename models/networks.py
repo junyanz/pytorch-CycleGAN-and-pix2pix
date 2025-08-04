@@ -26,6 +26,8 @@ def get_norm_layer(norm_type="instance"):
     """
     if norm_type == "batch":
         norm_layer = functools.partial(nn.BatchNorm2d, affine=True, track_running_stats=True)
+    elif norm_type == "syncbatch":
+        norm_layer = functools.partial(nn.SyncBatchNorm, affine=True, track_running_stats=True)
     elif norm_type == "instance":
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
     elif norm_type == "none":
@@ -155,7 +157,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm="batch", use_dropout=False, in
         net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     else:
         raise NotImplementedError("Generator model name [%s] is not recognized" % netG)
-    return init_net(net, init_type, init_gain)
+    return net
 
 
 def define_D(input_nc, ndf, netD, n_layers_D=3, norm="batch", init_type="normal", init_gain=0.02):
@@ -198,7 +200,7 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm="batch", init_type="normal"
         net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
     else:
         raise NotImplementedError("Discriminator model name [%s] is not recognized" % netD)
-    return init_net(net, init_type, init_gain)
+    return net
 
 
 ##############################################################################

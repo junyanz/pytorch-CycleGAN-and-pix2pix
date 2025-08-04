@@ -4,7 +4,7 @@
 
 # CycleGAN and pix2pix in PyTorch
 
-**Udpate in 2025**: we recently updated the code to support Python 3.11 and PyTorch 2.4.
+**Udpate in 2025**: we recently updated the code to support Python 3.11 and PyTorch 2.4. It also supports DDP for single-machine multiple-GPU training. (Please use `torchrun --nproc_per_node=4 train.py ...`)
 
 **New**: Please check out [img2img-turbo](https://github.com/GaParmar/img2img-turbo) repo that includes both pix2pix-turbo and CycleGAN-Turbo. Our new one-step image-to-image translation methods can support both paired and unpaired training and produce better results by leveraging the pre-trained StableDiffusion-Turbo model. The inference time for 512x512 image is 0.29 sec on A6000 and 0.11 sec on A100.
 
@@ -231,6 +231,10 @@ python test.py --dataroot ./datasets/facades/ --direction BtoA --model pix2pix -
 - If you would like to apply a pre-trained model to a collection of input images (rather than image pairs), please use `--model test` option. See `./scripts/test_single.sh` for how to apply a model to Facade label maps (stored in the directory `facades/testB`).
 
 - See a list of currently available models at `./scripts/download_pix2pix_model.sh`
+
+### Multi-GPU training
+
+To train a model on multiple GPUs, please use `torchrun --nproc_per_node=4 train.py ...` instead of `python train.py ...`. We also need to use synchronized batchnorm by setting `--norm sync_batch` (or `--norm sync_instance` for instance normgalization). The `--norm batch` is not compatible with DDP.
 
 ## [Docker](docs/docker.md)
 
