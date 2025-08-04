@@ -88,30 +88,21 @@ class BaseModel(ABC):
         if not self.isTrain or opt.continue_train:
             load_suffix = "iter_%d" % opt.load_iter if opt.load_iter > 0 else opt.epoch
             self.load_networks(load_suffix)
-        print(f"start wrap networks with DDP 1")
         # Wrap networks with DDP after loading
         if "LOCAL_RANK" in os.environ and dist.is_initialized():
-            # dist.barrier()
             local_rank = int(os.environ["LOCAL_RANK"])
-            print(f"start wrap networks with DDP 2")
 
             for name in self.model_names:
                 if isinstance(name, str):
-                    print(f"start wrap networks with DDP 3")
                     net = getattr(self, "net" + name)
-                    print(f"start wrap networks with DDP 4")
-                    ddp_net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[local_rank], find_unused_parameters=True)
-                    print(f"start wrap networks with DDP 5")
+                    ddp_net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[local_rank])  
                     setattr(self, "net" + name, ddp_net)
-                    print(f"start wrap networks with DDP 6")
-                    print(f"Wrapped network {name} with DDP on rank {local_rank}")
 
             # Sync all processes after DDP wrapping
-            # dist.barrier()
+            dist.barrier()
 
-        self.print_networks(opt.verbose)  # Apply torch.compile if available (PyTorch 2.0+)
-        if hasattr(torch, "compile"):
-            self.compile_networks()
+        self.print_networks(opt.verbose)
+
 
     def eval(self):
         """Make models eval mode during test time"""
@@ -167,22 +158,29 @@ class BaseModel(ABC):
         return errors_ret
 
     def save_networks(self, epoch):
-        """Save all the networks to the disk, only on the main process."""
-
-        # 1. Only allow the main process (rank 0) to save the checkpoint
+        """Save all the networks to the disk, unwrapping them first."""
+        
+        # Only allow the main process (rank 0) to save the checkpoint
         if not dist.is_initialized() or dist.get_rank() == 0:
             for name in self.model_names:
                 if isinstance(name, str):
                     save_filename = f"{epoch}_net_{name}.pth"
                     save_path = self.save_dir / save_filename
                     net = getattr(self, "net" + name)
-
-                    # 2. Access the underlying model through .module and save its state_dict
+                  
+                    # 1. First, unwrap from DDP if it exists
                     if hasattr(net, "module"):
-                        torch.save(net.module.state_dict(), save_path)
+                        model_to_save = net.module
                     else:
-                        torch.save(net.state_dict(), save_path)
+                        model_to_save = net
 
+                    # 2. Second, unwrap from torch.compile if it exists
+                    if hasattr(model_to_save, "_orig_mod"):
+                        model_to_save = model_to_save._orig_mod
+                    
+                    # 3. Save the final, clean state_dict
+                    torch.save(model_to_save.state_dict(), save_path)
+                    
     def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
         """Fix InstanceNorm checkpoints incompatibility (prior to 0.4)"""
         key = keys[i]
@@ -206,7 +204,7 @@ class BaseModel(ABC):
 
                 if isinstance(net, torch.nn.parallel.DistributedDataParallel):
                     net = net.module
-
+                print(f"net {net}")
                 print(f"loading the model from {load_path}")
 
                 # Map storage to the process's specific GPU
@@ -227,20 +225,6 @@ class BaseModel(ABC):
         # Add a barrier to sync all processes before continuing
         if hasattr(self, "local_rank") and dist.is_initialized():
             dist.barrier()
-
-    def compile_networks(self, **compile_kwargs):
-        """Apply torch.compile to all networks for optimization.
-
-        Parameters:
-            **compile_kwargs -- keyword arguments to pass to torch.compile
-                              (e.g., mode='reduce-overhead', backend='inductor')
-        """
-        for name in self.model_names:
-            if isinstance(name, str):
-                net = getattr(self, "net" + name)
-                compiled_net = torch.compile(net, **compile_kwargs)
-                setattr(self, "net" + name, compiled_net)
-                print(f"[Network {name}] compiled with torch.compile")
 
     def print_networks(self, verbose):
         """Print the total number of parameters in the network and (if verbose) network architecture

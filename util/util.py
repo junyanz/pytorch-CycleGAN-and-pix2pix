@@ -5,6 +5,8 @@ import torch
 import numpy as np
 from PIL import Image
 from pathlib import Path
+import torch.distributed as dist
+import os
 
 
 def tensor2im(input_image, imtype=np.uint8):
@@ -45,6 +47,32 @@ def diagnose_network(net, name="network"):
         mean = mean / count
     print(name)
     print(mean)
+
+
+# initialize ddp
+def init_ddp():
+    # Initialize DDP if LOCAL_RANK is set
+    if "LOCAL_RANK" in os.environ:
+        if not dist.is_initialized():
+            dist.init_process_group(backend="nccl")
+        local_rank = int(os.environ["LOCAL_RANK"])
+        device = torch.device(f"cuda:{local_rank}")
+        torch.cuda.set_device(local_rank)
+        print(f"Initialized DDP on rank {local_rank} with device {device}")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda:0")
+        torch.cuda.set_device(0)
+        print(f"Initialized with device {device}")
+    else:
+        device = torch.device("cpu")
+        print(f"Initialized with device {device}")
+    return device
+
+
+# cleanup ddp
+def cleanup_ddp():
+    if dist.is_initialized():
+        dist.destroy_process_group()
 
 
 def save_image(image_numpy, image_path, aspect_ratio=1.0):

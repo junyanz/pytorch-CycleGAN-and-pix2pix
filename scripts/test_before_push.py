@@ -33,15 +33,11 @@ if __name__ == "__main__":
     run("python test.py --dataroot ./datasets/facades/ --direction BtoA --model pix2pix --name facades_label2photo_pretrained --num_test 1")
 
     # cyclegan train/test
-    run(
-        "python train.py --model cycle_gan --name temp_cyclegan --dataroot ./datasets/mini --n_epochs 1 --n_epochs_decay 0 --save_latest_freq 10 --print_freq 1"
-    )
+    run( "python train.py --model cycle_gan --name temp_cyclegan --dataroot ./datasets/mini --n_epochs 1 --n_epochs_decay 0 --save_latest_freq 10 --print_freq 1")
     run('python test.py --model test --name temp_cyclegan --dataroot ./datasets/mini --num_test 1 --model_suffix "_A" --no_dropout')
 
     # pix2pix train/test
-    run(
-        "python train.py --model pix2pix --name temp_pix2pix --dataroot ./datasets/mini_pix2pix --n_epochs 1 --n_epochs_decay 5 --save_latest_freq 10"
-    )
+    run("python train.py --model pix2pix --name temp_pix2pix --dataroot ./datasets/mini_pix2pix --n_epochs 1 --n_epochs_decay 5 --save_latest_freq 10")
     run("python test.py --model pix2pix --name temp_pix2pix --dataroot ./datasets/mini_pix2pix --num_test 1")
 
     # template train/test
@@ -52,7 +48,5 @@ if __name__ == "__main__":
     if not Path("./datasets/mini_colorization").exists():
         run("bash ./datasets/download_cyclegan_dataset.sh mini_colorization")
 
-    run(
-        "python train.py --model colorization --name temp_color --dataroot ./datasets/mini_colorization --n_epochs 1 --n_epochs_decay 0 --save_latest_freq 5"
-    )
+    run( "python train.py --model colorization --name temp_color --dataroot ./datasets/mini_colorization --n_epochs 1 --n_epochs_decay 0 --save_latest_freq 5")
     run("python test.py --model colorization --name temp_color --dataroot ./datasets/mini_colorization --num_test 1")

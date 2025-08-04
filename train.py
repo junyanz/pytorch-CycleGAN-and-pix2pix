@@ -24,28 +24,7 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
-import torch
-import torch.distributed as dist
-import os
-
-
-def init_ddp():
-    # Initialize DDP if LOCAL_RANK is set
-    if "LOCAL_RANK" in os.environ:
-        if not dist.is_initialized():
-            dist.init_process_group(backend="nccl")
-        local_rank = int(os.environ["LOCAL_RANK"])
-        device = torch.device(f"cuda:{local_rank}")
-        torch.cuda.set_device(local_rank)
-        print(f"Initialized DDP on rank {local_rank} with device {device}")
-    elif torch.cuda.is_available():
-        device = torch.device("cuda:0")
-        torch.cuda.set_device(0)
-        print(f"Initialized with device {device}")
-    else:
-        device = torch.device("cpu")
-        print(f"Initialized with device {device}")
-    return device
+from util.util import init_ddp, cleanup_ddp
 
 
 if __name__ == "__main__":
@@ -59,25 +38,21 @@ if __name__ == "__main__":
     model.setup(opt)  # regular setup: load and print networks; create schedulers
     visualizer = Visualizer(opt)  # create a visualizer that display/save images and plots
     total_iters = 0  # the total number of training iterations
-    print(f"finish setup")
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()
-        print(f"Starting epoch {epoch}")
         # Set epoch for DistributedSampler
         if hasattr(dataset, "set_epoch"):
             dataset.set_epoch(epoch)
 
         for i, data in enumerate(dataset):  # inner loop within one epoch
-            # print(f"processing batch {i}")
             iter_start_time = time.time()  # timer for computation per iteration
             if total_iters % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
 
             total_iters += opt.batch_size
-            print(f"total iters: {total_iters}")
             epoch_iter += opt.batch_size
             model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters()  # calculate loss functions, get gradients, update network weights
@@ -108,3 +83,5 @@ if __name__ == "__main__":
             model.save_networks(epoch)
 
         print(f"End of epoch {epoch} / {opt.n_epochs + opt.n_epochs_decay} \t Time Taken: {time.time() - epoch_start_time:.0f} sec")
+
+    cleanup_ddp

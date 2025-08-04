@@ -89,10 +89,8 @@ class TemplateModel(BaseModel):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        print("enter backward")
         self.loss_G = self.criterionLoss(self.output, self.data_B) * self.opt.lambda_regression
         self.loss_G.backward()  # calculate gradients of network G w.r.t. loss_G
-        print("finish backward")
 
     def optimize_parameters(self):
         """Update network weights; it will be called in every training iteration."""
