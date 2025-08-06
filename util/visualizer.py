@@ -58,13 +58,13 @@ class Visualizer:
         self.win_size = opt.display_winsize
         self.name = opt.name
         self.saved = False
-        self.use_wandb = getattr(opt, "use_wandb", False)
+        self.use_wandb = opt.use_wandb
         self.current_epoch = 0
 
         # Initialize wandb if enabled
         if self.use_wandb:
             # Only initialize wandb on main process (rank 0)
-            if dist.is_initialized() and dist.get_rank() == 0:
+            if not dist.is_initialized() or dist.get_rank() == 0:
                 self.wandb_project_name = getattr(opt, "wandb_project_name", "CycleGAN-and-pix2pix")
                 self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
                 self.wandb_run._label(repo="CycleGAN-and-pix2pix")

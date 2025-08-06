@@ -116,7 +116,7 @@ class BaseModel(ABC):
                 if dist.is_initialized():
                     # Check if using syncbatch normalization for DDP
                     if self.opt.norm == "syncbatch":
-                        raise ValueError(f"For distributed training, opt.norm must be 'syncbatch' of 'inst', but got '{self.opt.norm}'. " "Please set --norm syncbatch for multi-GPU training.")
+                        raise ValueError(f"For distributed training, opt.norm must be 'syncbatch' or 'inst', but got '{self.opt.norm}'. " "Please set --norm syncbatch for multi-GPU training.")
 
                     net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[self.device.index])
                     # Sync all processes after DDP wrapping
@@ -164,7 +164,7 @@ class BaseModel(ABC):
                 scheduler.step()
 
         lr = self.optimizers[0].param_groups[0]["lr"]
-        print("learning rate %.7f -> %.7f" % (old_lr, lr))
+        print(f"learning rate {old_lr:.7f} -> {lr:.7f}")
 
     def get_current_visuals(self):
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
@@ -260,7 +260,7 @@ class BaseModel(ABC):
                     num_params += param.numel()
                 if verbose:
                     print(net)
-                print("[Network %s] Total number of parameters : %.3f M" % (name, num_params / 1e6))
+                print(f"[Network {name}] Total number of parameters : {num_params / 1e6:.3f} M")
         print("-----------------------------------------------")
 
     def set_requires_grad(self, nets, requires_grad=False):
