@@ -48,6 +48,7 @@ if __name__ == '__main__':
     opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
     opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+    print(dataset)
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
 
@@ -65,25 +66,18 @@ if __name__ == '__main__':
     # test with eval mode. This only affects layers like batchnorm and dropout.
     # For [pix2pix]: we use batchnorm and dropout in the original pix2pix. You can experiment it with and without eval() mode.
     # For [CycleGAN]: It should not affect CycleGAN as CycleGAN uses instancenorm without dropout.
-    if opt.eval:
-        model.eval()
-    for i, data in enumerate(dataset):
-        if i >= opt.num_test:  # only apply our model to opt.num_test images.
-            break
-        model.set_input(data)  # unpack data from data loader
-        model.test()           # run inference
-        # print(model.fake.shape)
-        # print(model.real.shape)
-        # Compute L2 Loss, SSIM, PSNR using torcheval metrics
-        
-        # l2_loss = torch.nn.functional.mse_loss(model.fake, model.real)
-        # ssim = torch.nn.functional.ssim(model.fake, model.real)
-        # psnr = torch.nn.functional.psnr(model.fake, model.real)
-        # print(f"L2 Loss: {l2_loss}, SSIM: {ssim}, PSNR: {psnr}")
+    # if opt.eval:
+    #     model.eval()
+    # for i, data in enumerate(dataset):
+    #     if i >= opt.num_test:  # only apply our model to opt.num_test images.
+    #         break
+    #     model.set_input(data)  # unpack data from data loader
+    #     model.test()           # run inference
+    #     visuals = model.get_current_visuals()  # get image results
+    #     img_path = model.get_image_paths()     # get image paths
+    #     if i % 5 == 0:  # save images to an HTML file
+    #         print('processing (%04d)-th image... %s' % (i, img_path))
+    #     save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
+    # webpage.save()  # save the HTML
+    print(opt)
 
-        visuals = model.get_current_visuals()  # get image results
-        img_path = model.get_image_paths()     # get image paths
-        if i % 5 == 0:  # save images to an HTML file
-            print('processing (%04d)-th image... %s' % (i, img_path))
-        save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
-    webpage.save()  # save the HTML

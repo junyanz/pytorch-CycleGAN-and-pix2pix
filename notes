@@ -1,0 +1,8 @@
+I will write my notes here and it will keep the ai chat aligned with whatever the fuck my dumb mind is thinking right now~ 
+So lets get it
+
+Task ID : 98Ops000
+Task Title: Create the Infererence Pipeline for the domain adaptive segmentaion network
+Steps to follow: 1) first load the generator checkpoint 2) load all the praameyeters taht i feel confident enogh for generating the correct image for the testing the busi dataset
+3) then load the pretrianed segmentiaon network 4) couple both models 5) get batchwise inference and then stack each image 7) there will be lots of the stacking and syncing of the batchwise
+8) Cook this damned GPU brrr

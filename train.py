@@ -48,6 +48,8 @@ if __name__ == '__main__':
 
             total_iters += opt.batch_size
             epoch_iter += opt.batch_size
+            # add the line to set the ROI specifics here 
+            # data['roi'] = data['ROI'] # BBOX around the 
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
