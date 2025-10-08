@@ -1,0 +1,6 @@
+torch
+torchvision
+tqdm
+Pillow
+matplotlib
+dominate
