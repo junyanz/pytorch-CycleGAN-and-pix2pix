@@ -1,8 +1,14 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
+
+
+from .attention import AttentionBlock
+from .edge import EdgeBlock
+
 
 
 ###############################################################################
@@ -155,6 +161,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm="batch", use_dropout=False, in
         net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == "unet_256":
         net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+    elif netG == "mri":
+        net = MRIGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     else:
         raise NotImplementedError("Generator model name [%s] is not recognized" % netG)
     return net
@@ -308,6 +316,49 @@ def cal_gradient_penalty(netD, real_data, fake_data, device, type="mixed", const
         return gradient_penalty, gradients
     else:
         return 0.0, None
+
+
+
+
+
+class MRIGenerator(nn.Module):
+    """
+    Generator with Attention and Edge blocks
+    """
+    def __init__(self, input_nc=None, output_nc=None, num_downs=8, ngf=64, norm_layer=None, use_dropout=False):
+        super(MRIGenerator, self).__init__()
+
+        # This needs the attention & edge blocks
+        self.attention_block = AttentionBlock(in_channels=1, features=64)
+        self.edge_block = EdgeBlock(in_channels=1, features=64)
+
+        laplacian_tensor = [
+            [ 0, 1, 0 ],
+            [ 1, -4, 1 ],
+            [ 0, 1, 0 ]
+        ]
+
+        self.laplacian = torch.tensor(laplacian_tensor, dtype=torch.float32).view(1, 1, 3, 3)
+
+    def forward(self, x):
+
+        I_att, I_content = self.attention_block(x)
+
+        laplacian_kernel = self.laplacian.to(x.device)
+
+        I_edge = F.conv2d(I_att, laplacian_kernel, padding=1) # Extract edge map
+
+        I_edge_refined = self.edge_block(I_edge)
+
+        HF_images = I_att + (I_edge_refined - I_edge)
+
+        # Save I_content so generator only returns 1 thing
+        self.latest_I_content = I_content 
+
+        return HF_images
+
+
+
 
 
 class ResnetGenerator(nn.Module):

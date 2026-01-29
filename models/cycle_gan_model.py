@@ -3,6 +3,8 @@ import itertools
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
+from .new_losses.perceptual_loss import PerceptualLoss
+from .new_losses.content_adversarial_loss import content_adversarial_loss
 
 
 class CycleGANModel(BaseModel):
@@ -48,6 +50,14 @@ class CycleGANModel(BaseModel):
                 help="use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1",
             )
 
+            # Add the new loss function lambdas
+            parser.add_argument("--lambda_per_c", type=float, default=0.3, help="weight for perceptual content loss")
+            parser.add_argument("--lambda_per_s", type=float, default=1.0, help="weight for perceptual style loss")
+            
+            # Add Content Adversarial Loss lambdas
+            parser.add_argument("--lambda_content_adversarial", type=float, default=1.0, help="weight for content adversarial loss")
+
+
         return parser
 
     def __init__(self, opt):
@@ -57,8 +67,12 @@ class CycleGANModel(BaseModel):
             opt (Option class)-- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseModel.__init__(self, opt)
+
+        # Instantiate the perceptual loss:
+        self.perceptualLoss = PerceptualLoss(self.device)
+
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
-        self.loss_names = ["D_A", "G_A", "cycle_A", "idt_A", "D_B", "G_B", "cycle_B", "idt_B"]
+        self.loss_names = ["D_A", "G_A", "cycle_A", "idt_A", "D_B", "G_B", "cycle_B", "idt_B", "per_c", "per_s", "content_A", "content_B"]
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         visual_names_A = ["real_A", "fake_B", "rec_A"]
         visual_names_B = ["real_B", "fake_A", "rec_B"]
@@ -114,8 +128,17 @@ class CycleGANModel(BaseModel):
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B = self.netG_A(self.real_A)  # G_A(A)
+        
+        # Assign content_B
+        self.content_B = self.netG_A.latest_I_content
+
         self.rec_A = self.netG_B(self.fake_B)  # G_B(G_A(A))
+
         self.fake_A = self.netG_B(self.real_B)  # G_B(B)
+
+        # Assign content_A
+        self.content_A = self.netG_B.latest_I_content
+
         self.rec_B = self.netG_A(self.fake_A)  # G_A(G_B(B))
 
     def backward_D_basic(self, netD, real, fake):
@@ -155,6 +178,11 @@ class CycleGANModel(BaseModel):
         lambda_idt = self.opt.lambda_identity
         lambda_A = self.opt.lambda_A
         lambda_B = self.opt.lambda_B
+        lambda_per_c = self.opt.lambda_per_c
+        lambda_per_s = self.opt.lambda_per_s
+        lambda_content_adversarial = self.opt.lambda_content_adversarial
+
+
         # Identity loss
         if lambda_idt > 0:
             # G_A should be identity if real_B is fed: ||G_A(B) - B||
@@ -175,8 +203,26 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
         self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
+
+
+        # ============== Add Content Adversarial Loss here ==============
+        self.loss_content_A = self.criterionGAN(self.netD_A(self.content_B), True) * lambda_content_adversarial
+        self.loss_content_B = self.criterionGAN(self.netD_B(self.content_A), True) * lambda_content_adversarial
+
+        # ============== Add Perceptual Loss Here ================
+
+        self.loss_per_c = self.perceptualLoss.loss_per_C(self.fake_B, self.fake_A, self.real_A, self.real_B) * lambda_per_c
+        self.loss_per_s = self.perceptualLoss.loss_per_S(self.fake_B, self.fake_A, self.real_A, self.real_B) * lambda_per_s
+
         # combined loss and calculate gradients
-        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
+        self.loss_G = (
+            self.loss_G_A + self.loss_G_B + 
+            self.loss_cycle_A + self.loss_cycle_B + 
+            self.loss_idt_A + self.loss_idt_B +
+            self.loss_content_A + self.loss_content_B + # Content adversarial loss 
+            self.loss_per_c + self.loss_per_s # Perceptual loss
+        )
+
         self.loss_G.backward()
 
     def optimize_parameters(self):
