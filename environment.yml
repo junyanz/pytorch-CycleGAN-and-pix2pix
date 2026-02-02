@@ -1,4 +1,4 @@
-name: pytorch-img2img
+name: mri
 channels:
   - pytorch
   - conda-forge
@@ -10,8 +10,11 @@ dependencies:
   - pytorch-cuda=12.1
   - numpy=1.24.3
   - scikit-image
+  - h5py
+  - nibabel
+  - pillow
   - pip
   - pip:
       - dominate>=2.8.0
-      - Pillow>=10.0.0
+      # - Pillow>=10.0.0
       - wandb>=0.16.0

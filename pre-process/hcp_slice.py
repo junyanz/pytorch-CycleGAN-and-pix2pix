@@ -20,6 +20,8 @@ import tempfile
 def slice_scan(scan_data):
     slices = []
 
+    # This needs to be adapted to only take 10 slices for each scan, and only take them from a certian range
+
     # Axial
     for i in range(scan_data.shape[2]):
         slices.append((scan_data[:, :, i], 'axial', i))
@@ -50,6 +52,9 @@ def load_scan(path, subject_id):
                 tmp_path = tmp.name
 
     img = nib.load(tmp_path)
+
+    # Re-orient
+    img = nib.as_closest_canonical(img)
 
     return img.get_fdata(), tmp_path
 
