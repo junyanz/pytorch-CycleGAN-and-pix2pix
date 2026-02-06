@@ -114,9 +114,9 @@ class BaseModel(ABC):
 
                 # Wrap networks with DDP after loading
                 if dist.is_initialized():
-                    # Check if using syncbatch normalization for DDP
-                    if self.opt.norm == "syncbatch":
-                        raise ValueError(f"For distributed training, opt.norm must be 'syncbatch' or 'inst', but got '{self.opt.norm}'. " "Please set --norm syncbatch for multi-GPU training.")
+                    # Check if using syncbatch or instance normalization for DDP
+                    if self.opt.norm != "syncbatch" and self.opt.norm != "instance":
+                        raise ValueError(f"For distributed training, opt.norm must be 'syncbatch' or 'instance', but got '{self.opt.norm}'. " "Please set --norm syncbatch for multi-GPU training.")
 
                     net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[self.device.index])
                     # Sync all processes after DDP wrapping
