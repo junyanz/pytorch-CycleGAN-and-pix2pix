@@ -4,9 +4,13 @@ import ntpath
 import time
 from . import util, html
 from pathlib import Path
-import wandb
 import os
 import torch.distributed as dist
+
+try:
+    import wandb
+except ImportError:
+    wandb = None
 
 
 def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256):
@@ -63,6 +67,8 @@ class Visualizer:
 
         # Initialize wandb if enabled
         if self.use_wandb:
+            if wandb is None:
+                raise ImportError('wandb package cannot be found. Install "wandb" or run without --use_wandb.')
             # Only initialize wandb on main process (rank 0)
             if not dist.is_initialized() or dist.get_rank() == 0:
                 self.wandb_project_name = getattr(opt, "wandb_project_name", "CycleGAN-and-pix2pix")
