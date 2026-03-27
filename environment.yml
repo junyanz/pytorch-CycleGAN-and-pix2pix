@@ -1,7 +1,6 @@
 name: pytorch-img2img
 channels:
   - pytorch
-  - conda-forge
   - nvidia
 dependencies:
   - python=3.11
@@ -12,6 +11,7 @@ dependencies:
   - scikit-image
   - pip
   - pip:
+      - tensorboard==2.20.0
       - dominate>=2.8.0
       - Pillow>=10.0.0
       - wandb>=0.16.0

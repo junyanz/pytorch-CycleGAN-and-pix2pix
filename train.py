@@ -23,7 +23,7 @@ import time
 from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
-from util.visualizer import Visualizer
+from util.visualizer import get_visualizer
 from util.util import init_ddp, cleanup_ddp
 
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
-    visualizer = Visualizer(opt)  # create a visualizer that display/save images and plots
+    visualizer = get_visualizer(opt)  # create a visualizer that display/save images and plots
     total_iters = 0  # the total number of training iterations
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):
         epoch_start_time = time.time()  # timer for entire epoch

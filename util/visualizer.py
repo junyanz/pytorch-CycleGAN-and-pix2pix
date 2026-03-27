@@ -7,6 +7,12 @@ from pathlib import Path
 import wandb
 import os
 import torch.distributed as dist
+from torch.utils.tensorboard import SummaryWriter
+import torchvision
+import os
+
+from abc import ABC, abstractmethod
+
 
 
 def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256):
@@ -37,7 +43,88 @@ def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256):
     webpage.add_images(ims, txts, links, width=width)
 
 
-class Visualizer:
+def get_visualizer(opt):
+    """Factory method to select visualizer.
+    """
+    visualizers = {
+        "wandb": WandbVisualizer,
+        "tensorboard": TensorboardVisualizer,
+    }
+
+    return visualizers[opt.logger](opt)
+
+
+
+class AbstractVisualizer(ABC):
+    """This class includes several functions that can display/save images and print/save logging information.
+
+    It uses wandb for logging (optional) and a Python library 'dominate' (wrapped in 'HTML') for creating HTML files with images.
+    """
+
+    def __init__(self, opt):
+        """Initialize the Visualizer class
+
+        Parameters:
+            opt -- stores all the experiment flags; needs to be a subclass of BaseOptions
+        Step 1: Cache the training/test options
+        Step 2: Initialize wandb (if enabled)
+        Step 3: create an HTML object for saving HTML files
+        Step 4: create a logging file to store training losses
+        """
+        pass
+
+    def reset(self):
+        """Reset the self.saved status"""
+        self.saved = False
+
+    def set_dataset_size(self, dataset_size):
+        """Set the dataset size for global step calculation"""
+        self.dataset_size = dataset_size
+
+    def _calculate_global_step(self, epoch, epoch_iter):
+        """Calculate global step from epoch and epoch_iter"""
+        # Assuming epoch starts from 1 and epoch_iter is cumulative within epoch
+        return (epoch - 1) * self.dataset_size + epoch_iter
+
+    @abstractmethod
+    def display_current_results(self, visuals, epoch: int, total_iters: int, save_result=False):
+        """Save current results to wandb and HTML file."""
+        pass
+
+    @abstractmethod
+    def plot_current_losses(self, total_iters, losses):
+        """Log current losses
+
+        Parameters:
+            total_iters (int)     -- current training iteration during this epoch
+            losses (OrderedDict)  -- training losses stored in the format of (name, float) pairs
+        """
+        pass
+
+    def print_current_losses(self, epoch, iters, losses, t_comp, t_data):
+        """print current losses on console; also save the losses to the disk
+
+        Parameters:
+            epoch (int) -- current epoch
+            iters (int) -- current training iteration during this epoch (reset to 0 at the end of every epoch)
+            losses (OrderedDict) -- training losses stored in the format of (name, float) pairs
+            t_comp (float) -- computational time per data point (normalized by batch_size)
+            t_data (float) -- data loading time per data point (normalized by batch_size)
+        """
+        local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        message = f"[Rank {local_rank}] (epoch: {epoch}, iters: {iters}, time: {t_comp:.3f}, data: {t_data:.3f}) "
+        for k, v in losses.items():
+            message += f", {k}: {v:.3f}"
+        message += "\n"
+        print(message)  # print the message on ALL ranks with rank info
+
+        # Only save to log file on main process (rank 0)
+        if local_rank == 0:
+            with open(self.log_name, "a") as log_file:
+                log_file.write(f"{message}\n")  # save the message
+
+
+class WandbVisualizer(AbstractVisualizer):
     """This class includes several functions that can display/save images and print/save logging information.
 
     It uses wandb for logging (optional) and a Python library 'dominate' (wrapped in 'HTML') for creating HTML files with images.
@@ -81,19 +168,6 @@ class Visualizer:
         with open(self.log_name, "a") as log_file:
             now = time.strftime("%c")
             log_file.write(f"================ Training Loss ({now}) ================\n")
-
-    def reset(self):
-        """Reset the self.saved status"""
-        self.saved = False
-
-    def set_dataset_size(self, dataset_size):
-        """Set the dataset size for global step calculation"""
-        self.dataset_size = dataset_size
-
-    def _calculate_global_step(self, epoch, epoch_iter):
-        """Calculate global step from epoch and epoch_iter"""
-        # Assuming epoch starts from 1 and epoch_iter is cumulative within epoch
-        return (epoch - 1) * self.dataset_size + epoch_iter
 
     def display_current_results(self, visuals, epoch: int, total_iters: int, save_result=False):
         """Save current results to wandb and HTML file."""
@@ -145,24 +219,49 @@ class Visualizer:
         if self.use_wandb:
             self.wandb_run.log(losses, step=total_iters)
 
-    def print_current_losses(self, epoch, iters, losses, t_comp, t_data):
-        """print current losses on console; also save the losses to the disk
+
+class TensorboardVisualizer(AbstractVisualizer):
+    """This class includes several functions that can display/save images and print/save logging information using tensorboard.
+    """
+
+    def __init__(self, opt):
+        """Initialize the Visualizer class
 
         Parameters:
-            epoch (int) -- current epoch
-            iters (int) -- current training iteration during this epoch (reset to 0 at the end of every epoch)
-            losses (OrderedDict) -- training losses stored in the format of (name, float) pairs
-            t_comp (float) -- computational time per data point (normalized by batch_size)
-            t_data (float) -- data loading time per data point (normalized by batch_size)
+            opt -- stores all the experiment flags; needs to be a subclass of BaseOptions
+        Step 1: Cache the training/test options
+        Step 2: Initialize tensorboard
+        Step 3: create a logging file to store training losses
         """
-        local_rank = int(os.environ.get("LOCAL_RANK", 0))
-        message = f"[Rank {local_rank}] (epoch: {epoch}, iters: {iters}, time: {t_comp:.3f}, data: {t_data:.3f}) "
-        for k, v in losses.items():
-            message += f", {k}: {v:.3f}"
-        message += "\n"
-        print(message)  # print the message on ALL ranks with rank info
+        self.opt = opt  # cache the option
+        self.name = opt.name
+        self.saved = False
+        self.current_epoch = 0
 
-        # Only save to log file on main process (rank 0)
-        if local_rank == 0:
-            with open(self.log_name, "a") as log_file:
-                log_file.write(f"{message}\n")  # save the message
+        self.writer = SummaryWriter(os.path.join("runs", self.name))
+        # create a logging file to store training losses
+        self.log_name = Path(opt.checkpoints_dir) / opt.name / "loss_log.txt"
+        with open(self.log_name, "a") as log_file:
+            now = time.strftime("%c")
+            log_file.write(f"================ Training Loss ({now}) ================\n")
+
+    def display_current_results(self, visuals, epoch: int, total_iters: int, save_result=False):
+        """Save current results to tensorboard."""
+
+        for label, t_image in visuals.items():
+            grid = torchvision.utils.make_grid(t_image, normalize=True, value_range=(-1, 1))
+            self.writer.add_image(label, grid, total_iters)
+
+    def plot_current_losses(self, total_iters, losses):
+        """Log current losses to wandb
+
+        Parameters:
+            total_iters (int)     -- current training iteration during this epoch
+            losses (OrderedDict)  -- training losses stored in the format of (name, float) pairs
+        """
+        # Only plot losses on main process (rank 0)
+        if dist.is_initialized() and dist.get_rank() != 0:
+            return
+
+        for loss, value in losses.items():
+            self.writer.add_scalar(f"train/{loss}", value, total_iters)
