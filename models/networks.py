@@ -1,6 +1,7 @@
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.nn import init
+import torch.nn.functional as F
 import functools
 from torch.optim import lr_scheduler
 
@@ -229,7 +230,7 @@ class GANLoss(nn.Module):
         self.register_buffer("fake_label", torch.tensor(target_fake_label))
         self.gan_mode = gan_mode
         if gan_mode == "lsgan":
-            self.loss = nn.MSELoss()
+            self.loss = masked_mse
         elif gan_mode == "vanilla":
             self.loss = nn.BCEWithLogitsLoss()
         elif gan_mode in ["wgangp"]:
@@ -254,7 +255,7 @@ class GANLoss(nn.Module):
             target_tensor = self.fake_label
         return target_tensor.expand_as(prediction)
 
-    def __call__(self, prediction, target_is_real):
+    def __call__(self, prediction: torch.Tensor, target_is_real: bool, mask: torch.Tensor):
         """Calculate loss given Discriminator's output and grount truth labels.
 
         Parameters:
@@ -266,7 +267,7 @@ class GANLoss(nn.Module):
         """
         if self.gan_mode in ["lsgan", "vanilla"]:
             target_tensor = self.get_target_tensor(prediction, target_is_real)
-            loss = self.loss(prediction, target_tensor)
+            loss = self.loss(prediction, target_tensor, mask=mask)
         elif self.gan_mode == "wgangp":
             if target_is_real:
                 loss = -prediction.mean()
@@ -274,6 +275,21 @@ class GANLoss(nn.Module):
                 loss = prediction.mean()
         return loss
 
+
+def masked_l1(pred: torch.Tensor, target: torch.Tensor, mask: torch.Tensor):
+    error = (pred - target).abs()  # (B, C, H, W)
+    numerator = (error * mask).sum(dim=(-3, -2, -1))  # (B,)
+    denominator = mask.sum(dim=(-3, -2, -1)).clamp(min=1.0) * pred.shape[1]  # (B,)
+    return (numerator / denominator).mean()
+
+def masked_mse(pred: torch.Tensor, target: torch.Tensor, mask: torch.Tensor):
+    mask = F.adaptive_avg_pool2d(mask.float(), pred.shape[-2:])
+    mask = (mask > 0).to(pred.dtype)
+
+    error = (pred - target) ** 2
+    numerator = (error * mask).sum(dim=(-2, -1))  # (B, 1)
+    denominator = mask.sum(dim=(-2, -1)).clamp(min=1.0)
+    return (numerator / denominator).mean()
 
 def cal_gradient_penalty(netD, real_data, fake_data, device, type="mixed", constant=1.0, lambda_gp=10.0):
     """Calculate the gradient penalty loss, used in WGAN-GP paper https://arxiv.org/abs/1704.00028

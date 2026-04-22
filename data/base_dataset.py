@@ -4,6 +4,9 @@ It also includes common transformation functions (e.g., get_transform, __scale_w
 """
 
 import random
+
+import albumentations
+import cv2
 import numpy as np
 import torch.utils.data as data
 from PIL import Image
@@ -79,38 +82,22 @@ def get_params(opt, size):
     return {"crop_pos": (x, y), "flip": flip}
 
 
-def get_transform(opt, params=None, grayscale=False, method=transforms.InterpolationMode.BICUBIC, convert=True):
+def get_transform(grayscale=False, convert=True):
     transform_list = []
-    if grayscale:
-        transform_list.append(transforms.Grayscale(1))
-    if "resize" in opt.preprocess:
-        osize = [opt.load_size, opt.load_size]
-        transform_list.append(transforms.Resize(osize, method))
-    elif "scale_width" in opt.preprocess:
-        transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.load_size, opt.crop_size, method)))
 
-    if "crop" in opt.preprocess:
-        if params is None:
-            transform_list.append(transforms.RandomCrop(opt.crop_size))
-        else:
-            transform_list.append(transforms.Lambda(lambda img: __crop(img, params["crop_pos"], opt.crop_size)))
-
-    if opt.preprocess == "none":
-        transform_list.append(transforms.Lambda(lambda img: __make_power_2(img, base=4, method=method)))
-
-    if not opt.no_flip:
-        if params is None:
-            transform_list.append(transforms.RandomHorizontalFlip())
-        elif params["flip"]:
-            transform_list.append(transforms.Lambda(lambda img: __flip(img, params["flip"])))
+    transform_list.append(albumentations.SquareSymmetry())
+    transform_list.append(albumentations.Rotate(border_mode=cv2.BORDER_CONSTANT))
+    transform_list.append(albumentations.GaussNoise(std_range=(0.05, 0.12)))
+    transform_list.append(albumentations.RandomBrightnessContrast(brightness_by_max=False, ensure_safe_output=True))
+    transform_list.append(albumentations.GridDistortion(border_mode=cv2.BORDER_CONSTANT))
 
     if convert:
-        transform_list += [transforms.ToTensor()]
         if grayscale:
-            transform_list += [transforms.Normalize((0.5,), (0.5,))]
+            transform_list += [albumentations.Normalize((0.5,), (0.5,))]
         else:
-            transform_list += [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-    return transforms.Compose(transform_list)
+            transform_list += [albumentations.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+        transform_list += [albumentations.ToTensorV2()]
+    return albumentations.Compose(transform_list)
 
 
 def __transforms2pil_resize(method):
@@ -145,15 +132,6 @@ def __scale_width(img, target_size, crop_size, method=transforms.InterpolationMo
     return img.resize((w, h), method)
 
 
-def __crop(img, pos, size):
-    ow, oh = img.size
-    x1, y1 = pos
-    tw = th = size
-    if ow > tw or oh > th:
-        return img.crop((x1, y1, x1 + tw, y1 + th))
-    return img
-
-
 def __flip(img, flip):
     if flip:
         return img.transpose(Image.FLIP_LEFT_RIGHT)
@@ -165,3 +143,49 @@ def __print_size_warning(ow, oh, w, h):
     if not hasattr(__print_size_warning, "has_printed"):
         print("The image size needs to be a multiple of 4. " "The loaded image size was (%d, %d), so it was adjusted to " "(%d, %d). This adjustment will be done to all images " "whose sizes are not multiples of 4" % (ow, oh, w, h))
         __print_size_warning.has_printed = True
+
+def pad_if_needed(array: np.ndarray, desired_h: int, desired_w: int, channels_last: bool = False, mode: str = 'constant') -> np.ndarray:
+    if array.ndim == 2:
+        h, w = array.shape
+    else:
+        if channels_last:
+            h, w = array.shape[:-1]
+        else:
+            h, w = array.shape[-2:]
+    pad_h = max(desired_h - h, 0)
+    pad_w = max(desired_w - w, 0)
+    if pad_h == 0 and pad_w == 0:
+        return array
+    pad_top = pad_h // 2
+    pad_bottom = pad_h - pad_top
+    pad_left = pad_w // 2
+    pad_right = pad_w - pad_left
+    if array.ndim == 2:
+        return np.pad(array, ((pad_top, pad_bottom), (pad_left, pad_right)), mode=mode)
+    elif array.ndim == 3:
+        if channels_last:
+            return np.pad(array, ((pad_top, pad_bottom), (pad_left, pad_right), (0, 0)), mode=mode)
+        else:
+            return np.pad(array, ((0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode=mode)
+    else:
+        raise ValueError
+
+
+def crop(array: np.ndarray, y: int, x: int, crop_h: int, crop_w: int, channels_last: bool = False) -> np.ndarray:
+    if array.ndim == 2:
+        array = array[y:y + crop_h, x:x + crop_w]
+    elif array.ndim == 3:
+        if channels_last:
+            array = array[y:y+crop_h, x:x+crop_w, :]
+        else:
+            array = array[:, y:y+crop_h, x:x+crop_w]
+    else:
+        raise ValueError
+    return array
+
+def crop_pad(array: np.ndarray, y: int, x: int, desired_h: int, desired_w: int, channels_last: bool = True, pad_mode: str = 'constant') -> tuple[np.ndarray, tuple[int, ...]]:
+    """Crop, then pad if needed."""
+    array = crop(array=array, y=y, x=x, crop_h=desired_h, crop_w=desired_w, channels_last=channels_last)
+    pre_pad_shape = array.shape
+    array = pad_if_needed(array=array, desired_h=desired_h, desired_w=desired_w, channels_last=channels_last, mode=pad_mode)
+    return array, pre_pad_shape

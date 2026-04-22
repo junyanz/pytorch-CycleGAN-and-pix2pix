@@ -25,6 +25,7 @@ from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
 from util.util import init_ddp, cleanup_ddp
+from util.logging import ProgressLogger
 
 
 if __name__ == "__main__":
@@ -46,6 +47,8 @@ if __name__ == "__main__":
         # Set epoch for DistributedSampler
         if hasattr(dataset, "set_epoch"):
             dataset.set_epoch(epoch)
+
+        progress_logger = ProgressLogger(desc=f'train epoch {epoch}', total=dataset_size)
 
         for i, data in enumerate(dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
@@ -74,6 +77,7 @@ if __name__ == "__main__":
                 model.save_networks(save_suffix)
 
             iter_data_time = time.time()
+            progress_logger.log_progress()
 
         model.update_learning_rate()  # update learning rates at the end of every epoch
 

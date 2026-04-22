@@ -1,0 +1,17 @@
+[project]
+name = "pytorch-cyclegan-and-pix2pix"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "albumentationsx[headless]>=2.2.2",
+    "dominate>=2.9.1",
+    "loguru>=0.7.3",
+    "matplotlib>=3.10.8",
+    "numpy>=2.4.4",
+    "pillow>=12.2.0",
+    "scikit-image>=0.26.0",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
+    "wandb>=0.26.0",
+]
