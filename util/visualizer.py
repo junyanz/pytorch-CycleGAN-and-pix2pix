@@ -107,9 +107,15 @@ class Visualizer:
         if self.use_wandb:
             ims_dict = {}
             for label, image in visuals.items():
-                image_numpy = util.tensor2im(image)
-                wandb_image = wandb.Image(image_numpy, caption=f"{label} - Step {total_iters}")
-                ims_dict[f"results/{label}"] = wandb_image
+                if 'pad_mask' in label:
+                    continue
+                pad_mask = visuals['pad_mask_A'] if label.endswith('A') else visuals['pad_mask_B']
+                batch_size = image.shape[0]
+                for sample_idx in range(batch_size):
+                    image[sample_idx][~pad_mask[sample_idx].bool()] = torch.nan
+                    image_numpy = util.tensor2im(image[sample_idx])
+                    wandb_image = wandb.Image(image_numpy, caption=f"{label} - Step {total_iters}")
+                    ims_dict[f"results/{label}_{sample_idx}"] = wandb_image
             self.wandb_run.log(ims_dict, step=total_iters)
 
         if self.use_html and (save_result or not self.saved):  # save images to an HTML file if they haven't been saved.
