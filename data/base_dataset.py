@@ -93,7 +93,7 @@ def get_transform(grayscale=False, convert=True):
 
     if convert:
         if grayscale:
-            transform_list += [albumentations.Normalize((0.5,), (0.5,))]
+            transform_list += [albumentations.Normalize((0.5,), (0.5,), max_pixel_value=1.0)]
         else:
             transform_list += [albumentations.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         transform_list += [albumentations.ToTensorV2()]

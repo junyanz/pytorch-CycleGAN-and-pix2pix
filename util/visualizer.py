@@ -2,6 +2,9 @@ import numpy as np
 import sys
 import ntpath
 import time
+
+import torch
+
 from . import util, html
 from pathlib import Path
 import wandb
@@ -113,9 +116,15 @@ class Visualizer:
             self.saved = True
             # save images to the disk
             for label, image in visuals.items():
-                image_numpy = util.tensor2im(image)
-                img_path = self.img_dir / f"epoch{epoch:03d}_{label}.png"
-                util.save_image(image_numpy, img_path)
+                if 'pad_mask' in label:
+                    continue
+                pad_mask = visuals['pad_mask_A'] if label.endswith('A') else visuals['pad_mask_B']
+                batch_size = image.shape[0]
+                for sample_idx in range(batch_size):
+                    image[sample_idx][~pad_mask[sample_idx].bool()] = torch.nan
+                    image_numpy = util.tensor2im(image[sample_idx])
+                    img_path = self.img_dir / f"epoch{epoch:03d}_{label}_{sample_idx}.png"
+                    util.save_image(image_numpy, img_path)
 
             # update website
             webpage = html.HTML(self.web_dir, f"Experiment name = {self.name}", refresh=1)
