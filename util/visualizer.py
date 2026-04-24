@@ -112,6 +112,7 @@ class Visualizer:
                 pad_mask = visuals['pad_mask_A'] if label.endswith('A') else visuals['pad_mask_B']
                 batch_size = image.shape[0]
                 for sample_idx in range(batch_size):
+                    image = image.clone()
                     image[sample_idx][~pad_mask[sample_idx].bool()] = torch.nan
                     image_numpy = util.tensor2im(image[sample_idx])
                     wandb_image = wandb.Image(image_numpy, caption=f"{label} - Step {total_iters}")
@@ -127,6 +128,7 @@ class Visualizer:
                 pad_mask = visuals['pad_mask_A'] if label.endswith('A') else visuals['pad_mask_B']
                 batch_size = image.shape[0]
                 for sample_idx in range(batch_size):
+                    image = image.clone()
                     image[sample_idx][~pad_mask[sample_idx].bool()] = torch.nan
                     image_numpy = util.tensor2im(image[sample_idx])
                     img_path = self.img_dir / f"epoch{epoch:03d}_{label}_{sample_idx}.png"
