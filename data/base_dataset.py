@@ -86,10 +86,6 @@ def get_transform(grayscale=False, convert=True):
     transform_list = []
 
     transform_list.append(albumentations.SquareSymmetry())
-    transform_list.append(albumentations.Rotate(border_mode=cv2.BORDER_CONSTANT))
-    transform_list.append(albumentations.GaussNoise(std_range=(0.05, 0.12)))
-    transform_list.append(albumentations.RandomBrightnessContrast(brightness_by_max=False, ensure_safe_output=True))
-    transform_list.append(albumentations.GridDistortion(border_mode=cv2.BORDER_CONSTANT))
 
     if convert:
         if grayscale:
