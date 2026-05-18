@@ -67,13 +67,13 @@ class UnalignedDataset(BaseDataset):
         B_img, B_pre_pad_shape = self._crop_pad_img(img=B_img)
 
         A_img = rescale_intensity(
-            image=A_img.astype('float32'),
-            in_range=(0, np.iinfo('uint16').max),
+            image=A_img.astype('uint8'),
+            in_range=(0, np.iinfo('uint8').max),
             out_range=(0, 1)
         )
         B_img = rescale_intensity(
-            image=B_img.astype('float32'),
-            in_range=(0, np.iinfo('uint16').max),
+            image=B_img.astype('uint8'),
+            in_range=(0, np.iinfo('uint8').max),
             out_range=(0, 1)
         )
 
