@@ -2,6 +2,7 @@ import torch
 import itertools
 
 from torch import nn
+from skimage.metrics import normalized_mutual_information
 
 from util.image_pool import ImagePool
 from .base_model import BaseModel
@@ -45,6 +46,7 @@ class CycleGANModel(BaseModel):
         if is_train:
             parser.add_argument("--lambda_A", type=float, default=10.0, help="weight for cycle loss (A -> B -> A)")
             parser.add_argument("--lambda_B", type=float, default=10.0, help="weight for cycle loss (B -> A -> B)")
+            parser.add_argument("--lambda_mask", type=float, default=1.0, help="weight for generated-image tissue mask BCE + Dice loss; active when --masks_path is set")
             parser.add_argument(
                 "--lambda_identity",
                 type=float,
@@ -63,6 +65,9 @@ class CycleGANModel(BaseModel):
         BaseModel.__init__(self, opt)
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ["D_A", "G_A", "cycle_A", "idt_A", "D_B", "G_B", "cycle_B", "idt_B"]
+        self.use_mask_loss = self.isTrain and opt.lambda_mask > 0 and getattr(opt, "masks_path", None)
+        if self.use_mask_loss:
+            self.loss_names.extend(["mask_A2B", "mask_A2B_bce", "mask_A2B_dice", "mask_B2A", "mask_B2A_bce", "mask_B2A_dice"])
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         visual_names_A = ["real_A", "fake_B", "rec_A", "pad_mask_A"]
         visual_names_B = ["real_B", "fake_A", "rec_B", "pad_mask_B"]
@@ -74,6 +79,8 @@ class CycleGANModel(BaseModel):
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>.
         if self.isTrain:
             self.model_names = ["G_A", "G_B", "D_A", "D_B"]
+            if self.use_mask_loss:
+                self.model_names.append("Seg")
         else:  # during test time, only load Gs
             self.model_names = ["G_A", "G_B"]
 
@@ -82,6 +89,8 @@ class CycleGANModel(BaseModel):
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
         self.netG_A = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm, not opt.no_dropout, opt.init_type, opt.init_gain)
         self.netG_B = networks.define_G(opt.output_nc, opt.input_nc, opt.ngf, opt.netG, opt.norm, not opt.no_dropout, opt.init_type, opt.init_gain)
+        if self.use_mask_loss:
+            self.netSeg = networks.define_segmentation_head(opt.output_nc, opt.init_type, opt.init_gain)
 
         if self.isTrain:  # define discriminators
             self.netD_A = networks.define_D(opt.output_nc, opt.ndf, opt.netD, opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain)
@@ -96,8 +105,13 @@ class CycleGANModel(BaseModel):
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
             self.criterionCycle = masked_l1
             self.criterionIdt = masked_l1
+            if self.use_mask_loss:
+                self.criterionMaskBCE = nn.BCEWithLogitsLoss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
-            self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_A.parameters(), self.netG_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
+            generator_params = itertools.chain(self.netG_A.parameters(), self.netG_B.parameters())
+            if self.use_mask_loss:
+                generator_params = itertools.chain(self.netG_A.parameters(), self.netG_B.parameters(), self.netSeg.parameters())
+            self.optimizer_G = torch.optim.Adam(generator_params, lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_A.parameters(), self.netD_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
@@ -116,6 +130,9 @@ class CycleGANModel(BaseModel):
 
         self.pad_mask_A = input["A_pad_mask"].to(self.device).unsqueeze(dim=1).float()
         self.pad_mask_B = input["B_pad_mask"].to(self.device).unsqueeze(dim=1).float()
+        if self.use_mask_loss:
+            self.mask_A = input["A_mask" if AtoB else "B_mask"].to(self.device).float()
+            self.mask_B = input["B_mask" if AtoB else "A_mask"].to(self.device).float()
 
         self.image_paths = input["A_paths" if AtoB else "B_paths"]
 
@@ -185,8 +202,22 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = self.criterionCycle(pred=self.rec_A, target=self.real_A, mask=self.pad_mask_A) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
         self.loss_cycle_B = self.criterionCycle(pred=self.rec_B, target=self.real_B, mask=self.pad_mask_B) * lambda_B
+        if self.use_mask_loss:
+            fake_B_mask_logits = self.netSeg(self.fake_B)
+            fake_A_mask_logits = self.netSeg(self.fake_A)
+
+            self.loss_mask_A2B_bce = self.criterionMaskBCE(fake_B_mask_logits, self.mask_A)
+            self.loss_mask_A2B_dice = networks.dice_loss_from_logits(fake_B_mask_logits, self.mask_A)
+            self.loss_mask_A2B = self.opt.lambda_mask * (self.loss_mask_A2B_bce + self.loss_mask_A2B_dice)
+
+            self.loss_mask_B2A_bce = self.criterionMaskBCE(fake_A_mask_logits, self.mask_B)
+            self.loss_mask_B2A_dice = networks.dice_loss_from_logits(fake_A_mask_logits, self.mask_B)
+            self.loss_mask_B2A = self.opt.lambda_mask * (self.loss_mask_B2A_bce + self.loss_mask_B2A_dice)
+        else:
+            self.loss_mask_A2B = 0
+            self.loss_mask_B2A = 0
         # combined loss and calculate gradients
-        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B + self.loss_mask_A2B + self.loss_mask_B2A
         self.loss_G.backward()
 
     def optimize_parameters(self):
@@ -204,3 +235,107 @@ class CycleGANModel(BaseModel):
         self.backward_D_A()  # calculate gradients for D_A
         self.backward_D_B()  # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
+
+    def validate(self, dataset, visualizer, epoch: int, total_iters: int, num_visuals: int):
+        """Run paired A->B validation and log scalar metrics plus a small image subset."""
+        if not self.use_mask_loss:
+            print("Validation skipped: --masks_path and --lambda_mask > 0 are required for generated-mask Dice.")
+            return
+
+        was_training = {name: getattr(self, "net" + name).training for name in self.model_names}
+        for name in self.model_names:
+            getattr(self, "net" + name).eval()
+
+        nmi_sum = 0.0
+        dice_sum = 0.0
+        mask_bce_sum = 0.0
+        mask_dice_loss_sum = 0.0
+        mask_loss_sum = 0.0
+        num_samples = 0
+        val_images = []
+
+        with torch.no_grad():
+            for batch in dataset:
+                result = self.validate_batch(batch)
+                batch_size = result["real_A"].shape[0]
+                nmi_sum += result["nmi"] * batch_size
+                dice_sum += result["dice"].item() * batch_size
+                mask_bce_sum += result["mask_bce"].item() * batch_size
+                mask_dice_loss_sum += result["mask_dice_loss"].item() * batch_size
+                mask_loss_sum += result["mask_loss"].item() * batch_size
+                num_samples += batch_size
+
+                real_A = result["real_A"].detach().cpu()
+                real_B = result["real_B"].detach().cpu()
+                fake_B = result["fake_B"].detach().cpu()
+                target_mask = result["target_mask"].detach().cpu()
+                pred_mask = result["pred_mask"].detach().cpu()
+                for sample_idx in range(batch_size):
+                    val_images.append({
+                        "real_A": real_A[sample_idx],
+                        "real_B": real_B[sample_idx],
+                        "fake_B": fake_B[sample_idx],
+                        "mask_error_B": self.mask_error_image(pred_mask[sample_idx], target_mask[sample_idx]),
+                    })
+
+        if num_samples == 0:
+            print("Validation skipped: validation dataset is empty.")
+        else:
+            metrics = {
+                "val/NMI": nmi_sum / num_samples,
+                "val/Dice_B": dice_sum / num_samples,
+                "val/mask_A2B_bce": mask_bce_sum / num_samples,
+                "val/mask_A2B_dice_loss": mask_dice_loss_sum / num_samples,
+                "val/loss_mask_A2B": mask_loss_sum / num_samples,
+                "epoch": epoch,
+            }
+            print(f"Val NMI: {metrics['val/NMI']:.4f}")
+            print(f"Val Dice_B: {metrics['val/Dice_B']:.4f}")
+            visualizer.log_validation(metrics=metrics, images=val_images, epoch=epoch, total_iters=total_iters, num_visuals=num_visuals)
+
+        for name, training in was_training.items():
+            getattr(self, "net" + name).train(training)
+
+    def validate_batch(self, batch):
+        """Validate one paired batch in the A->B direction."""
+        real_A = batch["A"].to(self.device)
+        real_B = batch["B"].to(self.device)
+        target_mask = batch["A_mask"].to(self.device).float()
+
+        fake_B = self.netG_A(real_A)
+        fake_B_mask_logits = self.netSeg(fake_B)
+        pred_mask = (torch.sigmoid(fake_B_mask_logits) > 0.5).float()
+
+        nmi = 0.0
+        real_B_np = real_B.detach().cpu().numpy()
+        fake_B_np = fake_B.detach().cpu().numpy()
+        for sample_idx in range(real_B.shape[0]):
+            nmi += normalized_mutual_information(real_B_np[sample_idx].squeeze(), fake_B_np[sample_idx].squeeze())
+        nmi /= real_B.shape[0]
+
+        mask_bce = self.criterionMaskBCE(fake_B_mask_logits, target_mask)
+        mask_dice_loss = networks.dice_loss_from_logits(fake_B_mask_logits, target_mask)
+        mask_loss = self.opt.lambda_mask * (mask_bce + mask_dice_loss)
+        dice = networks.dice_score(pred_mask, target_mask)
+        return {
+            "real_A": real_A,
+            "real_B": real_B,
+            "fake_B": fake_B,
+            "target_mask": target_mask,
+            "pred_mask": pred_mask,
+            "nmi": nmi,
+            "dice": dice,
+            "mask_bce": mask_bce,
+            "mask_dice_loss": mask_dice_loss,
+            "mask_loss": mask_loss,
+        }
+
+    @staticmethod
+    def mask_error_image(pred_mask, target_mask):
+        pred_mask = pred_mask.squeeze(0) > 0.5
+        target_mask = target_mask.squeeze(0) > 0.5
+        mask_error = torch.zeros(3, *target_mask.shape, dtype=torch.float32)
+        mask_error[1][pred_mask & target_mask] = 1.0
+        mask_error[0][pred_mask & ~target_mask] = 1.0
+        mask_error[2][~pred_mask & target_mask] = 1.0
+        return mask_error

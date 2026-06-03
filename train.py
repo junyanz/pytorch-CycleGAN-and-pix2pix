@@ -20,6 +20,8 @@ See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-a
 """
 
 import time
+import copy
+from pathlib import Path
 from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
@@ -34,6 +36,18 @@ if __name__ == "__main__":
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(dataset)  # get the number of images in the dataset.
     print(f"The number of training images = {dataset_size}")
+    val_dataset = None
+    if opt.val_freq > 0:
+        val_opt = copy.copy(opt)
+        val_opt.phase = "val"
+        val_opt.serial_batches = True
+        val_opt.max_dataset_size = float("inf")
+        val_dir = Path(opt.dataroot) / val_opt.phase
+        if (val_dir / "A").is_dir() and (val_dir / "B").is_dir():
+            val_dataset = create_dataset(val_opt)
+            print(f"The number of validation images = {len(val_dataset)}")
+        else:
+            print(f"Validation disabled: expected paired folders at {val_dir / 'A'} and {val_dir / 'B'}")
 
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
@@ -80,6 +94,9 @@ if __name__ == "__main__":
             progress_logger.log_progress()
 
         model.update_learning_rate()  # update learning rates at the end of every epoch
+
+        if val_dataset is not None and epoch % opt.val_freq == 0:
+            model.validate(val_dataset, visualizer, epoch=epoch, total_iters=total_iters, num_visuals=opt.num_val_visuals)
 
         if epoch % opt.save_epoch_freq == 0:  # cache our model every <save_epoch_freq> epochs
             print(f"saving the model at the end of epoch {epoch}, iters {total_iters}")

@@ -162,6 +162,29 @@ class Visualizer:
         if self.use_wandb:
             self.wandb_run.log(losses, step=total_iters)
 
+    def log_validation(self, metrics, images, epoch: int, total_iters: int, num_visuals: int):
+        """Log validation metrics and a fixed-size random image subset to W&B."""
+        if dist.is_initialized() and dist.get_rank() != 0:
+            return
+
+        if not self.use_wandb:
+            return
+
+        log_dict = dict(metrics)
+        sample_count = min(num_visuals, len(images))
+        if sample_count > 0:
+            sample_indices = np.random.choice(len(images), sample_count, replace=False)
+            for sample_idx, val_idx in enumerate(sample_indices):
+                for name, tensor in images[val_idx].items():
+                    if name == "mask_error_B":
+                        arr = (tensor.permute(1, 2, 0) * 255).numpy().astype("uint8")
+                    elif "mask" in name:
+                        arr = (tensor * 255).numpy().astype("uint8")
+                    else:
+                        arr = util.tensor2im(tensor)
+                    log_dict[f"val/{epoch}/{sample_idx}/{name}"] = wandb.Image(arr, caption=f"{name} - epoch {epoch}")
+        self.wandb_run.log(log_dict, step=total_iters)
+
     def print_current_losses(self, epoch, iters, losses, t_comp, t_data):
         """print current losses on console; also save the losses to the disk
 

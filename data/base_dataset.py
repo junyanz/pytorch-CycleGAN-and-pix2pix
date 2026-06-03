@@ -82,10 +82,22 @@ def get_params(opt, size):
     return {"crop_pos": (x, y), "flip": flip}
 
 
-def get_transform(grayscale=False, convert=True):
+def get_transform(grayscale=False, convert=True, size=None, additional_targets=None, stage="train"):
     transform_list = []
 
-    transform_list.append(albumentations.SquareSymmetry())
+    if stage != "val":
+        transform_list.append(albumentations.SquareSymmetry())
+        transform_list.append(albumentations.RandomScale(scale_range=(-0.25, 0.0)))
+    if size is not None:
+        transform_list.extend([
+            albumentations.LongestMaxSize(max_size=size),
+            albumentations.PadIfNeeded(
+                min_height=size,
+                min_width=size,
+                fill=0,
+                fill_mask=0,
+            ),
+        ])
 
     if convert:
         if grayscale:
@@ -93,7 +105,7 @@ def get_transform(grayscale=False, convert=True):
         else:
             transform_list += [albumentations.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         transform_list += [albumentations.ToTensorV2()]
-    return albumentations.Compose(transform_list)
+    return albumentations.Compose(transform_list, additional_targets=additional_targets)
 
 
 def __transforms2pil_resize(method):

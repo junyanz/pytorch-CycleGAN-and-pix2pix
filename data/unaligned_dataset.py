@@ -4,11 +4,13 @@ import PIL
 import numpy as np
 import torch
 from skimage.exposure import rescale_intensity
+from skimage import io
 
-from data.base_dataset import BaseDataset, get_transform, crop, pad_if_needed, crop_pad
+from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
 from PIL import Image
 import random
+from pathlib import Path
 
 
 class UnalignedDataset(BaseDataset):
@@ -39,8 +41,15 @@ class UnalignedDataset(BaseDataset):
         btoA = self.opt.direction == "BtoA"
         input_nc = self.opt.output_nc if btoA else self.opt.input_nc  # get the number of channels of input image
         output_nc = self.opt.input_nc if btoA else self.opt.output_nc  # get the number of channels of output image
-        self.transform_A = get_transform(grayscale=(input_nc == 1))
-        self.transform_B = get_transform(grayscale=(output_nc == 1))
+        additional_targets = {"tissue_mask": "mask"} if opt.masks_path else None
+        self.transform_A = get_transform(grayscale=(input_nc == 1), size=opt.crop_size, additional_targets=additional_targets, stage=opt.phase)
+        self.transform_B = get_transform(grayscale=(output_nc == 1), size=opt.crop_size, additional_targets=additional_targets, stage=opt.phase)
+        self.masks_path = Path(opt.masks_path) if opt.masks_path else None
+
+    @staticmethod
+    def modify_commandline_options(parser, is_train):
+        parser.add_argument("--masks_path", type=str, default=None, help="optional path containing <image_stem>_mask.png tissue masks")
+        return parser
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.
@@ -63,36 +72,35 @@ class UnalignedDataset(BaseDataset):
         A_img = Image.open(A_path)
         B_img = Image.open(B_path)
 
-        A_img, A_pre_pad_shape = self._crop_pad_img(img=A_img)
-        B_img, B_pre_pad_shape = self._crop_pad_img(img=B_img)
-
         A_img = rescale_intensity(
-            image=A_img.astype('uint8'),
+            image=np.array(A_img).astype('uint8'),
             in_range=(0, np.iinfo('uint8').max),
             out_range=(0, 1)
         )
         B_img = rescale_intensity(
-            image=B_img.astype('uint8'),
+            image=np.array(B_img).astype('uint8'),
             in_range=(0, np.iinfo('uint8').max),
             out_range=(0, 1)
         )
 
-        A_pad_mask = _construct_pad_mask(
-            img=A_img,
-            pre_pad_h=A_pre_pad_shape[0],
-            pre_pad_w=A_pre_pad_shape[1]
-        )
-        B_pad_mask = _construct_pad_mask(
-            img=B_img,
-            pre_pad_h=B_pre_pad_shape[0],
-            pre_pad_w=B_pre_pad_shape[1]
-        )
+        A_pad_mask = np.ones(A_img.shape[:2], dtype='uint8')
+        B_pad_mask = np.ones(B_img.shape[:2], dtype='uint8')
 
         # apply image transformation
-        A = self.transform_A(image=A_img, mask=A_pad_mask.astype('uint8'))
-        B = self.transform_B(image=B_img, mask=B_pad_mask.astype('uint8'))
+        if self.masks_path:
+            A_tissue_mask = _load_tissue_mask(self.masks_path, A_path)
+            B_tissue_mask = _load_tissue_mask(self.masks_path, B_path)
+            A = self.transform_A(image=A_img, mask=A_pad_mask, tissue_mask=A_tissue_mask)
+            B = self.transform_B(image=B_img, mask=B_pad_mask, tissue_mask=B_tissue_mask)
+        else:
+            A = self.transform_A(image=A_img, mask=A_pad_mask)
+            B = self.transform_B(image=B_img, mask=B_pad_mask)
 
-        return {"A": A['image'], "B": B['image'], "A_paths": A_path, "B_paths": B_path, "A_pad_mask": A['mask'], "B_pad_mask": B['mask']}
+        item = {"A": A['image'], "B": B['image'], "A_paths": A_path, "B_paths": B_path, "A_pad_mask": A['mask'], "B_pad_mask": B['mask']}
+        if self.masks_path:
+            item["A_mask"] = A["tissue_mask"].float().unsqueeze(0)
+            item["B_mask"] = B["tissue_mask"].float().unsqueeze(0)
+        return item
 
     def __len__(self):
         """Return the total number of images in the dataset.
@@ -103,27 +111,12 @@ class UnalignedDataset(BaseDataset):
         return max(self.A_size, self.B_size)
 
 
-    def _crop_pad_img(self, img: PIL.Image) -> tuple[np.ndarray, tuple[int, ...]]:
-        crop_h, crop_w = self.opt.crop_size, self.opt.crop_size
-        h, w = img.size
-        max_y = max(h - crop_h, 0)
-        max_x = max(w - crop_w, 0)
-        crop_y = np.random.randint(0, max_y + 1)
-        crop_x = np.random.randint(0, max_x + 1)
-        img, pre_pad_shape = crop_pad(
-            array=np.array(img),
-            y=crop_y,
-            x=crop_x,
-            desired_h=self.opt.load_size,
-            desired_w=self.opt.load_size
-        )
-        return img, pre_pad_shape
+def _load_tissue_mask(masks_path: Path, image_path: str) -> np.ndarray:
+    mask_path = masks_path / f"{Path(image_path).stem}_mask.png"
+    if not mask_path.exists():
+        raise FileNotFoundError(f"Mask not found: expected {mask_path}")
 
-
-def _construct_pad_mask(img: np.ndarray, pre_pad_w: int, pre_pad_h: int):
-    pad_mask = np.zeros(img.shape).astype('bool')
-    H, W = pad_mask.shape
-    pad_top = (H - pre_pad_h) // 2
-    pad_left = (W - pre_pad_w) // 2
-    pad_mask[pad_top:pad_top + pre_pad_h, pad_left:pad_left + pre_pad_w] = 1.0
-    return pad_mask
+    mask = io.imread(mask_path)
+    if mask.ndim == 3:
+        mask = mask[..., 0]
+    return (mask > 0).astype('uint8')

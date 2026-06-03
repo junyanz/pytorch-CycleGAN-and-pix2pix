@@ -204,9 +204,35 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm="batch", init_type="normal"
     return net
 
 
+def define_segmentation_head(input_nc, init_type="normal", init_gain=0.02):
+    """Create a lightweight segmentation head that predicts one mask-logit channel."""
+    net = SegmentationHead(input_nc)
+    return net
+
+
 ##############################################################################
 # Classes
 ##############################################################################
+class SegmentationHead(nn.Module):
+    def __init__(self, input_nc):
+        super().__init__()
+        self.model = nn.Sequential(
+            nn.ReflectionPad2d(3),
+            nn.Conv2d(input_nc, 32, 7),
+            nn.InstanceNorm2d(32),
+            nn.ReLU(inplace=True),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(32, 32, 3),
+            nn.InstanceNorm2d(32),
+            nn.ReLU(inplace=True),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(32, 1, 3),
+        )
+
+    def forward(self, x):
+        return self.model(x)
+
+
 class GANLoss(nn.Module):
     """Define different GAN objectives.
 
@@ -290,6 +316,17 @@ def masked_mse(pred: torch.Tensor, target: torch.Tensor, mask: torch.Tensor):
     numerator = (error * mask).sum(dim=(-2, -1))  # (B, 1)
     denominator = mask.sum(dim=(-2, -1)).clamp(min=1.0)
     return (numerator / denominator).mean()
+
+def dice_score(pred_mask: torch.Tensor, target_mask: torch.Tensor, eps=1e-7):
+    pred_mask = pred_mask.float()
+    target_mask = target_mask.float()
+    intersection = (pred_mask * target_mask).sum(dim=(1, 2, 3))
+    denominator = pred_mask.sum(dim=(1, 2, 3)) + target_mask.sum(dim=(1, 2, 3))
+    return ((2 * intersection + eps) / (denominator + eps)).mean()
+
+def dice_loss_from_logits(logits: torch.Tensor, target_mask: torch.Tensor, eps=1e-7):
+    pred_mask = torch.sigmoid(logits)
+    return 1 - dice_score(pred_mask=pred_mask, target_mask=target_mask, eps=eps)
 
 def cal_gradient_penalty(netD, real_data, fake_data, device, type="mixed", constant=1.0, lambda_gp=10.0):
     """Calculate the gradient penalty loss, used in WGAN-GP paper https://arxiv.org/abs/1704.00028
