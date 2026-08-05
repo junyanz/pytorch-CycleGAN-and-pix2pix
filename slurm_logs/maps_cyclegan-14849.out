@@ -1,0 +1,97 @@
+----------------- Options ---------------
+               batch_size: 1                             
+                    beta1: 0.5                           
+          checkpoints_dir: ./checkpoints                 
+           continue_train: False                         
+                crop_size: 256                           
+                 dataroot: ./datasets/maps               	[default: None]
+             dataset_mode: unaligned                     
+                direction: AtoB                          
+             display_freq: 400                           
+          display_winsize: 256                           
+                    epoch: latest                        
+              epoch_count: 1                             
+                 gan_mode: lsgan                         
+                init_gain: 0.02                          
+                init_type: normal                        
+                 input_nc: 3                             
+                  isTrain: True                          	[default: None]
+                 lambda_A: 10.0                          
+                 lambda_B: 10.0                          
+          lambda_identity: 0.5                           
+                load_iter: 0                             	[default: 0]
+                load_size: 286                           
+                       lr: 0.0002                        
+           lr_decay_iters: 50                            
+                lr_policy: linear                        
+         max_dataset_size: inf                           
+                    model: cycle_gan                     
+                 n_epochs: 100                           
+           n_epochs_decay: 100                           
+               n_layers_D: 3                             
+                     name: maps_cyclegan_slurm           	[default: experiment_name]
+                      ndf: 64                            
+                     netD: basic                         
+                     netG: resnet_9blocks                
+                      ngf: 64                            
+               no_dropout: True                          
+                  no_flip: False                         
+                  no_html: False                         
+                     norm: instance                      
+              num_threads: 4                             
+                output_nc: 3                             
+                    phase: train                         
+                pool_size: 50                            
+               preprocess: resize_and_crop               
+               print_freq: 100                           
+             save_by_iter: False                         
+          save_epoch_freq: 5                             
+         save_latest_freq: 5000                          
+           serial_batches: False                         
+                   suffix:                               
+         update_html_freq: 1000                          
+                use_wandb: True                          	[default: False]
+                  verbose: False                         
+       wandb_project_name: CycleGAN-and-pix2pix          
+----------------- End -------------------
+Initialized with device cuda:0
+dataset [UnalignedDataset] was created
+The number of training images = 1096
+model [CycleGANModel] was created
+Initialized with device cuda:0
+initialize network with normal
+Initialized with device cuda:0
+initialize network with normal
+Initialized with device cuda:0
+initialize network with normal
+Initialized with device cuda:0
+initialize network with normal
+---------- Networks initialized -------------
+[Network G_A] Total number of parameters : 11.378 M
+[Network G_B] Total number of parameters : 11.378 M
+[Network D_A] Total number of parameters : 2.765 M
+[Network D_B] Total number of parameters : 2.765 M
+-----------------------------------------------
+create web directory checkpoints/maps_cyclegan_slurm/web...
+[Rank 0] (epoch: 1, iters: 100, time: 0.050, data: 0.716) , D_A: 0.302, G_A: 0.407, cycle_A: 2.765, idt_A: 0.472, D_B: 0.866, G_B: 0.591, cycle_B: 0.758, idt_B: 1.060
+
+[Rank 0] (epoch: 1, iters: 200, time: 0.050, data: 0.001) , D_A: 0.299, G_A: 0.413, cycle_A: 2.020, idt_A: 0.427, D_B: 0.282, G_B: 0.320, cycle_B: 0.737, idt_B: 1.155
+
+[Rank 0] (epoch: 1, iters: 300, time: 0.050, data: 0.001) , D_A: 0.185, G_A: 0.291, cycle_A: 1.548, idt_A: 0.522, D_B: 0.182, G_B: 0.309, cycle_B: 1.141, idt_B: 0.695
+
+[Rank 0] (epoch: 1, iters: 400, time: 0.300, data: 0.001) , D_A: 0.301, G_A: 0.161, cycle_A: 2.034, idt_A: 1.031, D_B: 0.647, G_B: 0.636, cycle_B: 2.107, idt_B: 1.052
+
+[Rank 0] (epoch: 1, iters: 500, time: 0.050, data: 0.001) , D_A: 0.353, G_A: 0.667, cycle_A: 1.517, idt_A: 0.526, D_B: 0.253, G_B: 0.364, cycle_B: 1.147, idt_B: 0.704
+
+[Rank 0] (epoch: 1, iters: 600, time: 0.050, data: 0.001) , D_A: 0.269, G_A: 0.490, cycle_A: 1.577, idt_A: 0.560, D_B: 0.180, G_B: 0.520, cycle_B: 1.065, idt_B: 0.769
+
+[Rank 0] (epoch: 1, iters: 700, time: 0.050, data: 0.001) , D_A: 0.382, G_A: 0.439, cycle_A: 2.913, idt_A: 0.313, D_B: 0.179, G_B: 0.267, cycle_B: 0.627, idt_B: 1.449
+
+[Rank 0] (epoch: 1, iters: 800, time: 0.114, data: 0.001) , D_A: 0.134, G_A: 0.508, cycle_A: 1.705, idt_A: 0.305, D_B: 0.209, G_B: 0.332, cycle_B: 0.699, idt_B: 0.915
+
+[Rank 0] (epoch: 1, iters: 900, time: 0.050, data: 0.001) , D_A: 0.102, G_A: 0.690, cycle_A: 1.202, idt_A: 0.869, D_B: 0.298, G_B: 0.267, cycle_B: 1.274, idt_B: 0.545
+
+[Rank 0] (epoch: 1, iters: 1000, time: 0.050, data: 0.001) , D_A: 0.269, G_A: 0.599, cycle_A: 1.459, idt_A: 0.225, D_B: 0.268, G_B: 0.302, cycle_B: 0.502, idt_B: 0.722
+
+learning rate 0.0002000 -> 0.0002000
+End of epoch 1 / 200 	 Time Taken: 52 sec
