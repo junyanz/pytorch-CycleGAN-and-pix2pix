@@ -1,4 +1,5 @@
-"""General-purpose training script for image-to-image translation.
+"""
+General-purpose training script for image-to-image translation.
 
 This script works for various models (with option '--model': e.g., pix2pix, cyclegan, colorization) and
 different datasets (with option '--dataset_mode': e.g., aligned, unaligned, single, colorization).
@@ -82,5 +83,4 @@ if __name__ == "__main__":
             model.save_networks(epoch)
 
         print(f"End of epoch {epoch} / {opt.n_epochs + opt.n_epochs_decay} \t Time Taken: {time.time() - epoch_start_time:.0f} sec")
-
     cleanup_ddp()

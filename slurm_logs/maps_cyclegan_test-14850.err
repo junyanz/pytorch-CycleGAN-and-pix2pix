@@ -1,0 +1,116 @@
++ cd /lustre/disk/home/users/mfaizan/motion_correction/cycleGANS_on_2d_images/pytorch-CycleGAN-and-pix2pix
++ source /lustre/disk/home/users/mfaizan/miniconda3/etc/profile.d/conda.sh
+++ export CONDA_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/conda
+++ CONDA_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/conda
+++ export _CONDA_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/conda
+++ _CONDA_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/python
+++ export _CONDA_ROOT=/lustre/disk/home/users/mfaizan/miniconda3
+++ _CONDA_ROOT=/lustre/disk/home/users/mfaizan/miniconda3
+++ '[' -z x ']'
++ conda activate pytorch-img2img
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate pytorch-img2img
++ '[' -n '' ']'
++ local ask_conda
+++ PS1=
+++ __conda_exe shell.posix activate pytorch-img2img
+++ '[' -n '' ']'
+++ /lustre/disk/home/users/mfaizan/miniconda3/bin/conda shell.posix activate pytorch-img2img
++ ask_conda='export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+PS1='\''(pytorch-img2img) '\''
+export PATH='\''/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/lustre/disk/home/users/mfaizan/.vscode-server/cli/servers/Stable-e4c7e7b1d6d060162f4aa7f8225271b67ce1df75/server/bin/remote-cli:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/bin:/lustre/disk/home/users/mfaizan/miniconda3/condabin:/lustre/disk/home/users/mfaizan/.local/bin:/lustre/disk/home/users/mfaizan/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/c3/bin:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static'\''
+export CONDA_PREFIX='\''/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''pytorch-img2img'\''
+export CONDA_PROMPT_MODIFIER='\''(pytorch-img2img) '\''
+export CONDA_PREFIX_1='\''/lustre/disk/home/users/mfaizan/miniconda3'\''
+export CONDA_EXE='\''/lustre/disk/home/users/mfaizan/miniconda3/bin/conda'\''
+export _CONDA_EXE='\''/lustre/disk/home/users/mfaizan/miniconda3/bin/conda'\''
+export CONDA_PYTHON_EXE='\''/lustre/disk/home/users/mfaizan/miniconda3/bin/python'\''
+export _CONDA_ROOT='\''/lustre/disk/home/users/mfaizan/miniconda3'\''
+. "/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/conda/activate.d/libblas_mkl_activate.sh"
+. "/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/conda/activate.d/libglib_activate.sh"
+. "/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/conda/activate.d/libxml2-split_activate.sh"'
++ eval 'export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+PS1='\''(pytorch-img2img) '\''
+export PATH='\''/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/lustre/disk/home/users/mfaizan/.vscode-server/cli/servers/Stable-e4c7e7b1d6d060162f4aa7f8225271b67ce1df75/server/bin/remote-cli:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/bin:/lustre/disk/home/users/mfaizan/miniconda3/condabin:/lustre/disk/home/users/mfaizan/.local/bin:/lustre/disk/home/users/mfaizan/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/c3/bin:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static'\''
+export CONDA_PREFIX='\''/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''pytorch-img2img'\''
+export CONDA_PROMPT_MODIFIER='\''(pytorch-img2img) '\''
+export CONDA_PREFIX_1='\''/lustre/disk/home/users/mfaizan/miniconda3'\''
+export CONDA_EXE='\''/lustre/disk/home/users/mfaizan/miniconda3/bin/conda'\''
+export _CONDA_EXE='\''/lustre/disk/home/users/mfaizan/miniconda3/bin/conda'\''
+export CONDA_PYTHON_EXE='\''/lustre/disk/home/users/mfaizan/miniconda3/bin/python'\''
+export _CONDA_ROOT='\''/lustre/disk/home/users/mfaizan/miniconda3'\''
+. "/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/conda/activate.d/libblas_mkl_activate.sh"
+. "/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/conda/activate.d/libglib_activate.sh"
+. "/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/conda/activate.d/libxml2-split_activate.sh"'
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ PS1='(pytorch-img2img) '
+++ export PATH=/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/lustre/disk/home/users/mfaizan/.vscode-server/cli/servers/Stable-e4c7e7b1d6d060162f4aa7f8225271b67ce1df75/server/bin/remote-cli:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/bin:/lustre/disk/home/users/mfaizan/miniconda3/condabin:/lustre/disk/home/users/mfaizan/.local/bin:/lustre/disk/home/users/mfaizan/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/c3/bin:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static
+++ PATH=/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/lustre/disk/home/users/mfaizan/.vscode-server/cli/servers/Stable-e4c7e7b1d6d060162f4aa7f8225271b67ce1df75/server/bin/remote-cli:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/fsl/share/fsl/bin:/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/bin:/lustre/disk/home/users/mfaizan/miniconda3/condabin:/lustre/disk/home/users/mfaizan/.local/bin:/lustre/disk/home/users/mfaizan/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/c3/bin:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static:/usr/diags/scripts:/usr/diags/bin/non-mpi:/usr/diags/bin/nvidia/gpuburn_static
+++ export CONDA_PREFIX=/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img
+++ CONDA_PREFIX=/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img
+++ export CONDA_SHLVL=2
+++ CONDA_SHLVL=2
+++ export CONDA_DEFAULT_ENV=pytorch-img2img
+++ CONDA_DEFAULT_ENV=pytorch-img2img
+++ export 'CONDA_PROMPT_MODIFIER=(pytorch-img2img) '
+++ CONDA_PROMPT_MODIFIER='(pytorch-img2img) '
+++ export CONDA_PREFIX_1=/lustre/disk/home/users/mfaizan/miniconda3
+++ CONDA_PREFIX_1=/lustre/disk/home/users/mfaizan/miniconda3
+++ export CONDA_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/conda
+++ CONDA_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/conda
+++ export _CONDA_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/conda
+++ _CONDA_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/conda
+++ export CONDA_PYTHON_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/lustre/disk/home/users/mfaizan/miniconda3/bin/python
+++ export _CONDA_ROOT=/lustre/disk/home/users/mfaizan/miniconda3
+++ _CONDA_ROOT=/lustre/disk/home/users/mfaizan/miniconda3
+++ . /lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/conda/activate.d/libblas_mkl_activate.sh
++++ export CONDA_MKL_INTERFACE_LAYER_BACKUP=
++++ CONDA_MKL_INTERFACE_LAYER_BACKUP=
++++ export MKL_INTERFACE_LAYER=LP64,GNU
++++ MKL_INTERFACE_LAYER=LP64,GNU
+++ . /lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/conda/activate.d/libglib_activate.sh
++++ export GSETTINGS_SCHEMA_DIR_CONDA_BACKUP=
++++ GSETTINGS_SCHEMA_DIR_CONDA_BACKUP=
++++ export GSETTINGS_SCHEMA_DIR=/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/share/glib-2.0/schemas
++++ GSETTINGS_SCHEMA_DIR=/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/share/glib-2.0/schemas
+++ . /lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/conda/activate.d/libxml2-split_activate.sh
++++ test -n ''
++++ xml_catalog_files_libxml2=
++++ XML_CATALOG_FILES=
++++ conda_catalog_files=
++++ ifs_libxml2=' 	
+'
++++ IFS=' '
++++ rem=/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img
++++ for pre in ${rem}
++++ test '' = /lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img
++++ conda_catalog_files=/lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img
++++ rem=
++++ IFS=' 	
+'
++++ conda_catalog_files='file:///lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/xml/catalog file:///etc/xml/catalog'
++++ export 'XML_CATALOG_FILES=file:///lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/xml/catalog file:///etc/xml/catalog'
++++ XML_CATALOG_FILES='file:///lustre/disk/home/users/mfaizan/miniconda3/envs/pytorch-img2img/etc/xml/catalog file:///etc/xml/catalog'
++++ unset conda_catalog_files ifs_libxml2 rem
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ python test.py --dataroot ./datasets/maps --name maps_cyclegan_slurm --model cycle_gan --no_dropout --phase test --num_test 1098 --serial_batches --eval --results_dir /lustre/disk/home/users/mfaizan/motion_correction/cycleGANS_on_2d_images/maps_cyclegan_slurm_evaluation/test_results

@@ -9,6 +9,7 @@
                 "host": "gpu01",
                 "port": 5678
             },
+            
             "pathMappings": [
                 {
                     "localRoot": "${workspaceFolder}",
