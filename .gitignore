@@ -44,3 +44,8 @@ test/data/legacy_serialized.pt
 
 #Ignore Wandb
 wandb/
+maps_cyclegan_slurm_evaluation/
+
+# SLURM job stdout/stderr logs -- ephemeral operational output, not source code
+data_preprocessing/**/logs/
+fMRI_dataset/**/logs/

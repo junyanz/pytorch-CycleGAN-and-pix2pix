@@ -1,0 +1,3 @@
+subject_id,session_id,run_id,task,preprocessed_bold_file,x_lo,x_hi,y_lo,y_hi,z_lo,z_hi,n_volumes
+ICC103A,1,1,videos,/lustre/disk/home/shared/cusacklab/foundcog/bids/derivatives/normalized_to_common_space_cycleGANS_preprocessed_data/_subject_id_ICC103A/_referencetype_standard/_run_001_session_1_task_name_videos/sub-ICC103A_ses-1_task-videos_dir-AP_run-001_bold_mcf_corrected_flirt_masked.nii.gz,18,78,25,97,11,67,485
+ICC103A,1,2,videos,/lustre/disk/home/shared/cusacklab/foundcog/bids/derivatives/normalized_to_common_space_cycleGANS_preprocessed_data/_subject_id_ICC103A/_referencetype_standard/_run_002_session_1_task_name_videos/sub-ICC103A_ses-1_task-videos_dir-AP_run-002_bold_mcf_corrected_flirt_masked.nii.gz,18,78,25,97,11,67,485
